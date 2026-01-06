@@ -31,3 +31,8 @@ output "cloud_sql_connection_name" {
   description = "The connection name of the Cloud SQL instance to be used by the bootstrap script."
   value       = module.creative_studio_platform.cloud_sql_connection_name
 }
+
+output "openfga_store_id" {
+  description = "The ID of the OpenFGA store."
+  value       = openfga_store.creative_studio_store.id
+}

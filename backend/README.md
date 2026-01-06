@@ -56,6 +56,27 @@ If you want to start just the backend you can run the following command:
 docker compose up backend
 ```
 
+The backend will be available at `http://localhost:9000`.
+
+### 3. Local Authorization (OpenFGA)
+
+To enable fine-grained authorization locally using OpenFGA:
+
+1.  **Start the services:**
+    ```bash
+    docker compose up
+    ```
+
+    The backend will automatically:
+    *   Connect to the local OpenFGA service.
+    *   Create the "Creative Studio" store if it doesn't exist.
+    *   Configure the Authorization Model.
+    *   Set the `OPENFGA_STORE_ID` for the current session.
+
+    **Note:** You do NOT need to manually configure `OPENFGA_STORE_ID` in `.env` for local development anymore, as it's handled automatically on startup.
+
+You can access the OpenFGA Playground at [http://localhost:3000/playground](http://localhost:3000/playground).
+
 ## Code Styling & Commit Guidelines
 
 To maintain code quality and consistency:

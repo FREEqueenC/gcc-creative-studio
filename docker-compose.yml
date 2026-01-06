@@ -19,8 +19,10 @@ services:
       dockerfile: Dockerfile
     container_name: creative-studio-backend
     ports:
-      - "8080:8080"
+      - "9000:8080"
     restart: unless-stopped
+    depends_on:
+      - openfga
 
     env_file:
       - ./backend/.env # Update as needed, for ex to './backend/.local.env'
@@ -42,6 +44,22 @@ services:
       # Mount the gcloud ADC directory. Replace with the correct path for your OS if different. :ro - read-only for better security
       - ~/.config/gcloud/:/root/.config/gcloud:ro # Linux/macOS example:
       # - %APPDATA%/gcloud:/root/.config/gcloud:ro # Windows example:
+
+  # Make sure to disable the  Local Network Access Checks on Chrome when trying this
+  # https://github.com/openfga/openfga/issues/338#issuecomment-3511304207
+  openfga:
+    image: openfga/openfga:latest
+    container_name: creative-studio-openfga
+    command: run
+    ports:
+      - "8080:8080" # Expose on 8080 (Default for FGA)
+      - "8082:8081" # gRPC
+      - "3000:3000"
+    environment:
+      - OPENFGA_PLAYGROUND_ENABLED=true
+      - OPENFGA_CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+      - OPENFGA_CORS_ALLOWED_HEADERS=*
+    restart: unless-stopped
 
   frontend:
     build:

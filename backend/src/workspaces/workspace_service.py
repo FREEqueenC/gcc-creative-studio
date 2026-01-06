@@ -29,6 +29,9 @@ from src.workspaces.schema.workspace_model import (
 )
 
 
+from src.core.fga import fga_client
+from openfga_sdk.client.models import ClientWriteRequest, ClientTuple
+
 class WorkspaceService:
     """
     Handles the business logic for workspace management.
@@ -58,7 +61,29 @@ class WorkspaceService:
             name=create_dto.name,
             owner_id=user.id,
         )
-        return await self.workspace_repo.create(new_workspace, initial_members=[owner_as_member])
+        created_workspace = await self.workspace_repo.create(new_workspace, initial_members=[owner_as_member])
+
+        # 3. Write tuple to OpenFGA
+        try:
+            await fga_client.write(
+                ClientWriteRequest(
+                    writes=[
+                        ClientTuple(
+                            user=f"user:{user.id}",
+                            relation="owner",
+                            object=f"workspace:{created_workspace.id}",
+                        )
+                    ]
+                )
+            )
+        except Exception as e:
+            # Log error but don't fail creation? Or fail?
+            # If FGA fails, we might have inconsistency.
+            # Ideally we should rollback or retry.
+            # For now, we log.
+            print(f"Failed to write tuple to OpenFGA: {e}")
+        
+        return created_workspace
 
     async def invite_user_to_workspace(
         self,
@@ -103,8 +128,30 @@ class WorkspaceService:
             workspace_id, new_member, invited_user.id
         )
 
-        # 4. Send an invitation email to the user.
+        # 4. Write tuple to OpenFGA
         if updated_workspace:
+            fga_relation = "viewer"
+            if invite_dto.role == WorkspaceRoleEnum.EDITOR:
+                fga_relation = "editor"
+            elif invite_dto.role == WorkspaceRoleEnum.OWNER or invite_dto.role == WorkspaceRoleEnum.ADMIN:
+                fga_relation = "owner"
+            
+            try:
+                await fga_client.write(
+                    ClientWriteRequest(
+                        writes=[
+                            ClientTuple(
+                                user=f"user:{invited_user.id}",
+                                relation=fga_relation,
+                                object=f"workspace:{workspace_id}",
+                            )
+                        ]
+                    )
+                )
+            except Exception as e:
+                print(f"Failed to write tuple to OpenFGA: {e}")
+
+            # 5. Send an invitation email to the user.
             self.email_service.send_workspace_invitation_email(
                 recipient_email=invited_user.email,
                 inviter_name=current_user.name,

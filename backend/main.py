@@ -25,9 +25,10 @@ from os import getenv
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from starlette.middleware.sessions import SessionMiddleware
 
 from src.audios.audio_controller import router as audio_router
-from src.auth import firebase_client_service
+from src.auth.auth_controller import router as auth_router
 from src.brand_guidelines.brand_guideline_controller import (
     router as brand_guideline_router,
 )
@@ -88,14 +89,6 @@ async def lifespan(app: FastAPI):
     # --- Startup ---
     logger.info("Starting up application...")
     
-    # Initialize Firebase Admin SDK (Auth only)
-    try:
-        from src.auth.firebase_client_service import firebase_client
-        # Trigger initialization
-        _ = firebase_client
-    except Exception as e:
-        logger.error(f"Failed to initialize Firebase: {e}")
-
     # Run Database Migrations
     try:
         from src.database_migrations import run_pending_migrations
@@ -104,6 +97,15 @@ async def lifespan(app: FastAPI):
         logger.error(f"Failed to run database migrations: {e}")
         # We might want to stop startup here if migrations fail
         raise e
+
+    # Initialize OpenFGA
+    try:
+        from src.core.fga import fga_client
+        from src.core.fga_setup import setup_fga
+        await setup_fga(fga_client)
+    except Exception as e:
+        logger.error(f"Failed to initialize OpenFGA: {e}")
+
 
     logger.info("Creating ThreadPoolExecutor...")
     # Create the pool and attach it to the app's state
@@ -155,8 +157,18 @@ def version():
     return "v0.0.1"
 
 
+# Add Session Middleware
+# WARNING: Use a strong secret key in production!
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=getenv("SECRET_KEY", "unsafe-secret-key-for-dev"),
+    https_only=getenv("ENVIRONMENT") == "production",
+    same_site="lax",
+)
+
 configure_cors(app)
 
+app.include_router(auth_router)
 app.include_router(imagen_router)
 app.include_router(audio_router)
 app.include_router(video_router)

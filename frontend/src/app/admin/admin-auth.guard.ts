@@ -80,10 +80,9 @@ export class AdminAuthGuard implements CanActivate {
       handleErrorSnackbar(this._snackBar, { message: `Access Denied: Your email (${userEmail}) is not authorized or login session expired.` }, 'Access Denied');
 
       // Use async logout and navigate *after* logout completes
-      this.authService.logout().then(() => {
-        console.log('Forced logout due to DEV email restriction complete.');
-        // Navigation is handled by the logout method itself
-      });
+      // Use async logout and navigate *after* logout completes
+      this.authService.logout();
+      console.log('Forced logout due to DEV email restriction complete.');
       return false; // Prevent navigation
     }
   }

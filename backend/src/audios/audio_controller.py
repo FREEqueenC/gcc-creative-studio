@@ -20,7 +20,7 @@ from google.cloud import speech
 
 from src.audios.audio_service import AudioService
 from src.audios.dto.create_audio_dto import CreateAudioDto
-from src.auth.auth_guard import RoleChecker, get_current_user
+from src.auth.auth_service import RoleChecker, get_current_user_model as get_current_user
 from src.galleries.dto.gallery_response_dto import MediaItemResponse
 from src.users.user_model import UserModel, UserRoleEnum
 

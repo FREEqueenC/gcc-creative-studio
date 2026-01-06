@@ -14,24 +14,12 @@
  * limitations under the License.
  */
 
-import {Injectable, PLATFORM_ID, inject} from '@angular/core';
-import {
-  Firestore,
-  collection,
-  deleteDoc,
-  doc,
-  getDoc,
-  setDoc,
-  updateDoc,
-} from '@angular/fire/firestore';
+import {Injectable} from '@angular/core';
 import {UserModel} from '../models/user.model';
 import {environment} from '../../../environments/environment';
 import {HttpClient} from '@angular/common/http';
 import {Observable} from 'rxjs';
-import {user} from '@angular/fire/auth';
-import {isPlatformBrowser} from '@angular/common';
 
-const USER_COLLECTION = 'users';
 interface LooseObject {
   [key: string]: any;
 }
@@ -42,37 +30,24 @@ const badgeURL = `${environment.backendURL}/`;
   providedIn: 'root',
 })
 export class UserService {
-  private readonly firestore: Firestore = inject(Firestore);
-  private platformId = inject(PLATFORM_ID);
-
   constructor(private http: HttpClient) {}
 
-  async get(uid: string): Promise<UserModel> {
-    const userRef = doc(this.firestore, USER_COLLECTION, uid);
-    const userDoc = await getDoc(userRef);
-    return userDoc.data() as UserModel;
+  get(id: number): Observable<UserModel> {
+    return this.http.get<UserModel>(`${environment.backendURL}/users/${id}`);
   }
 
-  async delete(uid: string) {
-    const userRef = doc(this.firestore, USER_COLLECTION, uid);
-    await deleteDoc(userRef);
+  delete(id: number): Observable<void> {
+    return this.http.delete<void>(`${environment.backendURL}/users/${id}`);
   }
 
+  // Deprecated: Use AuthService.getUser() or AuthService.getCurrentUserValue()
+  // Keeping for compatibility if needed, but better to refactor consumers
   getUserDetails(): UserModel | null {
-    if (!isPlatformBrowser(this.platformId)) return null;
-
-    if (localStorage.getItem('USER_DETAILS') !== null) {
-      const userObj = localStorage.getItem('USER_DETAILS');
-      return JSON.parse(userObj || '{}') as UserModel;
-    } else {
-      const userDetails: LooseObject = {};
-      userDetails['name'] = '';
-      userDetails['email'] = '';
-      userDetails['photoURL'] = '';
-      userDetails['domain'] = '';
-      userDetails['roles'] = [];
-      return userDetails as UserModel;
+    const userStr = localStorage.getItem('USER_DETAILS');
+    if (userStr) {
+      return JSON.parse(userStr) as UserModel;
     }
+    return null;
   }
 
   getUserBadges(userEmail: string) {

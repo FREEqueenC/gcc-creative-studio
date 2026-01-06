@@ -28,6 +28,11 @@ variable "environment" {
   description = "The name of the environment, e.g., 'development'."
 }
 
+variable "openfga_api_url" {
+  type        = string
+  description = "The API URL for OpenFGA."
+}
+
 # --- Service Names ---
 variable "backend_service_name" {
   type        = string

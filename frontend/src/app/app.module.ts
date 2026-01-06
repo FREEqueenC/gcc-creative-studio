@@ -20,7 +20,6 @@ import {NotificationContainerComponent} from './common/components/notification-c
 import {BrowserModule, provideClientHydration} from '@angular/platform-browser';
 import {MatTooltipModule} from '@angular/material/tooltip';
 import {initializeApp, provideFirebaseApp} from '@angular/fire/app';
-import {provideAuth, getAuth} from '@angular/fire/auth';
 import {provideFirestore, getFirestore} from '@angular/fire/firestore';
 import {environment} from '../environments/environment';
 import {MatToolbarModule} from '@angular/material/toolbar';
@@ -49,7 +48,6 @@ import {MatCheckboxModule} from '@angular/material/checkbox';
 import {provideAnalytics, getAnalytics} from '@angular/fire/analytics';
 import {MatRadioModule} from '@angular/material/radio';
 import {AngularFireModule} from '@angular/fire/compat';
-import {AngularFireAuthModule} from '@angular/fire/compat/auth';
 import {AngularFireDatabaseModule} from '@angular/fire/compat/database';
 import {AngularFirestoreModule} from '@angular/fire/compat/firestore';
 import {
@@ -151,12 +149,10 @@ import { FlowPromptBoxComponent } from "./common/components/flow-prompt-box/flow
     provideClientHydration(),
     provideHttpClient(withInterceptorsFromDi()),
     provideFirebaseApp(() => initializeApp(environment.firebase)),
-    provideAuth(() => getAuth()),
     provideFirestore(() => getFirestore()),
     provideAnalytics(() => getAnalytics()),
     importProvidersFrom([
       AngularFireModule.initializeApp(environment.firebase),
-      AngularFireAuthModule,
       AngularFirestoreModule,
       AngularFireDatabaseModule,
       AngularFireAnalyticsModule,

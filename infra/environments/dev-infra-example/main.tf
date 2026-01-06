@@ -16,7 +16,12 @@ terraform {
   required_providers {
     google      = { source = "hashicorp/google" }
     google-beta = { source = "hashicorp/google-beta" }
+    openfga     = { source = "openfga/openfga" }
   }
+}
+
+provider "openfga" {
+  api_url = var.openfga_api_url
 }
 
 provider "google" {

@@ -14,7 +14,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from src.auth.auth_guard import RoleChecker, get_current_user
+from src.auth.auth_service import RoleChecker, get_current_user_model as get_current_user
 from src.common.dto.pagination_response_dto import PaginationResponseDto
 from src.users.dto.user_create_dto import UserCreateDto, UserUpdateRoleDto
 from src.users.dto.user_search_dto import UserSearchDto

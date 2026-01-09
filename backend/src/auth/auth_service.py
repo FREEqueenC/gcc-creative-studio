@@ -11,10 +11,10 @@ from src.users.user_service import UserService
 from src.users.user_model import UserModel
 
 # We will use environment variables for configuration
-GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+GOOGLE_TOKEN_AUDIENCE = os.getenv("GOOGLE_TOKEN_AUDIENCE")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 
-if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
+if not GOOGLE_TOKEN_AUDIENCE or not GOOGLE_CLIENT_SECRET:
     # This might be acceptable during build/test if not running the app, 
     # but critical for runtime. We'll log a warning or just let it fail later if used.
     pass
@@ -24,11 +24,11 @@ oauth = OAuth(config)
 
 oauth.register(
     name="google",
-    client_id=GOOGLE_CLIENT_ID,
+    client_id=GOOGLE_TOKEN_AUDIENCE,
     client_secret=GOOGLE_CLIENT_SECRET,
     server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
     client_kwargs={
-        "scope": "openid email profile https://www.googleapis.com/auth/cloud-platform",
+        "scope": "openid email profile",
     },
 )
 
@@ -40,7 +40,10 @@ class UserProfile(BaseModel):
     groups: list[str] = []
 
 async def login_google(request: Request):
-    redirect_uri = request.url_for("auth_callback")
+    # Use API_EXTERNAL_URL to ensure the redirect URI matches what is registered in Google Cloud Console
+    # and is accessible by the browser.
+    api_external_url = os.getenv("API_EXTERNAL_URL", "http://localhost:9000")
+    redirect_uri = f"{api_external_url}/api/auth/callback"
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 async def auth_callback(request: Request) -> Dict[str, Any]:

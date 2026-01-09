@@ -14,7 +14,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status, Header
 
-from src.auth.auth_guard import RoleChecker, get_current_user
+from src.auth.auth_service import RoleChecker, get_current_user
 from src.common.dto.pagination_response_dto import PaginationResponseDto
 from src.users.user_model import UserModel, UserRoleEnum
 from src.workflows.dto.workflow_search_dto import WorkflowSearchDto

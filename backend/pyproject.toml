@@ -35,8 +35,10 @@ dependencies = [
     "cloud-sql-python-connector[asyncpg]>=1.0.0",
     "alembic>=1.13.0",
     "openfga-sdk>=0.6.0",
-    "google-api-python-client>=2.0.0",
     "google-auth-httplib2>=0.2.0",
+    "pyyaml>=6.0.3",
+    "google-cloud-workflows>=1.19.0",
+    "google-api-python-client>=2.187.0",
 ]
 
 [project.optional-dependencies]
@@ -75,3 +77,8 @@ addopts = "--cov --cov-report=lcov:lcov.info --cov-report=term"
 
 [tool.isort]
 profile = "black"
+
+[[tool.uv.index]]
+name = "pypi"
+url = "https://pypi.org/simple"
+default = true

@@ -554,6 +554,60 @@ populate_oauth_secrets() {
     echo -n "$AUTO_OAUTH_CLIENT_ID" | gcloud secrets versions add GOOGLE_TOKEN_AUDIENCE --data-file="-" --project="$GCP_PROJECT_ID" --quiet
     success "Secrets 'GOOGLE_CLIENT_ID' and 'GOOGLE_TOKEN_AUDIENCE' have been populated."
 
+    # --- Handle Client Secret ---
+    info "Checking for 'GOOGLE_CLIENT_SECRET'..."
+    if gcloud secrets describe "GOOGLE_CLIENT_SECRET" --project="$GCP_PROJECT_ID" > /dev/null 2>&1; then
+        info "Secret 'GOOGLE_CLIENT_SECRET' already exists. Skipping creation."
+    else
+        warn "Secret 'GOOGLE_CLIENT_SECRET' not found."
+        info "Attempting to reset/retrieve the client secret via gcloud..."
+        
+        # Try to reset the secret. This returns the new secret.
+        # Note: This invalidates the old secret!
+        local NEW_SECRET=""
+        if [ -n "$AUTO_OAUTH_CLIENT_ID" ]; then
+             info "Resolving full IAP Client name..."
+             # We need to find the full resource name.
+             # 1. Get the Brand Name (usually projects/NUMBER/brands/NUMBER)
+             local BRAND_NAME=$(gcloud iap oauth-brands list --project="$GCP_PROJECT_ID" --format="value(name)" 2>/dev/null | head -n 1)
+             
+             if [ -n "$BRAND_NAME" ]; then
+                 # 2. Find the client in this brand that matches our Client ID
+                 local FULL_CLIENT_NAME=$(gcloud iap oauth-clients list --brand="$BRAND_NAME" --project="$GCP_PROJECT_ID" --format="value(name)" 2>/dev/null | grep "$AUTO_OAUTH_CLIENT_ID")
+                 
+                 if [ -n "$FULL_CLIENT_NAME" ]; then
+                     info "Resetting secret for: $FULL_CLIENT_NAME"
+                     NEW_SECRET=$(gcloud iap oauth-clients reset-secret "$FULL_CLIENT_NAME" --project="$GCP_PROJECT_ID" --format="value(secret)" 2>/dev/null)
+                 else
+                     warn "Could not find IAP Client matching ID: $AUTO_OAUTH_CLIENT_ID"
+                 fi
+             else
+                 warn "No IAP Brand found. Skipping automatic secret reset."
+             fi
+        fi
+
+        if [ -n "$NEW_SECRET" ]; then
+            info "Successfully retrieved a new Client Secret."
+            echo -n "$NEW_SECRET" | gcloud secrets create "GOOGLE_CLIENT_SECRET" --data-file="-" --project="$GCP_PROJECT_ID" --quiet
+            success "Secret 'GOOGLE_CLIENT_SECRET' created and populated."
+        else
+            warn "Could not automatically reset/retrieve the Client Secret."
+            info "Please perform the following manual steps:"
+            echo "1. Go to: ${C_YELLOW}https://console.cloud.google.com/apis/credentials?project=${GCP_PROJECT_ID}${C_RESET}"
+            echo "2. Click on your OAuth 2.0 Client ID."
+            echo "3. Copy the 'Client secret' (or reset it if needed)."
+            prompt "Paste the Client Secret here:"
+            read -s -p "   Client Secret: " MANUAL_SECRET < /dev/tty; echo
+            
+            if [ -n "$MANUAL_SECRET" ]; then
+                 echo -n "$MANUAL_SECRET" | gcloud secrets create "GOOGLE_CLIENT_SECRET" --data-file="-" --project="$GCP_PROJECT_ID" --quiet
+                 success "Secret 'GOOGLE_CLIENT_SECRET' created and populated manually."
+            else
+                 fail "Client Secret is required. Please restart the script."
+            fi
+        fi
+    fi
+
     info "Updating audiences in $TFVARS_FILE_PATH..."
     sed -i.bak "s|your-custom-audience.apps.googleusercontent.com|$AUTO_OAUTH_CLIENT_ID|g" "$TFVARS_FILE_PATH"
     rm -f "$TFVARS_FILE_PATH.bak"
@@ -662,6 +716,7 @@ update_secrets() {
             # GOOGLE_CLIENT_ID is handled by populate_oauth_secrets, so we skip it here
             "GOOGLE_CLIENT_ID")               info "  Value is handled by the OAuth population step. Skipping."; continue ;;
             "GOOGLE_TOKEN_AUDIENCE")          info "  Value is handled by the OAuth population step. Skipping."; continue ;;
+            "GOOGLE_CLIENT_SECRET")           info "  Value is handled by the OAuth population step. Skipping."; continue ;;
         esac
 
         if [ "$AUTO_DISCOVERED" = true ] && [ -n "$SECRET_VALUE" ]; then

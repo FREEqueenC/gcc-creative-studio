@@ -1,4 +1,4 @@
-# 🚀 GCC Creative Studio
+# Google Cloud Creative Studio Platform 🚀
 
 ![Angular](https://img.shields.io/badge/angular-%23DD0031.svg?style=for-the-badge&logo=angular&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)
@@ -8,14 +8,14 @@
 [![Code Style: Google](https://img.shields.io/badge/code%20style-google-blueviolet.svg?style=for-the-badge)](https://github.com/google/gts)
 ![TailwindCSS](https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white)
 
-Creative Studio is a comprehensive, all-in-one Generative AI platform designed as a deployable solution for your own Google Cloud project. It serves as a powerful reference implementation and creative suite, showcasing the full spectrum of Google's state-of-the-art generative AI models on Vertex AI.
+Google Cloud Creative Studio Platform is a comprehensive, all-in-one Generative AI platform designed as a deployable solution for your own Google Cloud project. It serves as a powerful reference implementation and creative suite, showcasing the full spectrum of Google's state-of-the-art generative AI models on Vertex AI.
 
 Built for creators, marketers, and developers, this application provides a hands-on, interactive experience with cutting-edge multimodal capabilities.
 
 > ###### _This is not an officially supported Google product. This project is not eligible for the [Google Open Source Software Vulnerability Rewards Program](https://bughunters.google.com/open-source-security)._
 
 ## Core Features 🎨
-Creative Studio goes beyond simple demos, implementing advanced, real-world features that developers can learn from and build upon:
+Google Cloud Creative Studio Platform goes beyond simple demos, implementing advanced, real-world features that developers can learn from and build upon:
 
 **🎬 Advanced Video Generation (Veo):**
 - Generate high-quality videos from text prompts.

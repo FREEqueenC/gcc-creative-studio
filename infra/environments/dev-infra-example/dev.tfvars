@@ -53,10 +53,12 @@ frontend_secrets = [
 
 backend_secrets = [
   "GOOGLE_TOKEN_AUDIENCE",
+  "GOOGLE_CLIENT_SECRET",
 ]
 
 backend_runtime_secrets = {
   "GOOGLE_TOKEN_AUDIENCE" = "GOOGLE_TOKEN_AUDIENCE"
+  "GOOGLE_CLIENT_SECRET"  = "GOOGLE_CLIENT_SECRET"
 }
 
 apis_to_enable = [

@@ -70,7 +70,9 @@ class Workspace(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String, nullable=False)
     owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
-    organization_id: Mapped[int] = mapped_column(ForeignKey("organizations.id"), nullable=True) # Nullable for migration, but should be required later
+    
+    # TODO: Nullable for migration, should be required in a couple of months
+    organization_id: Mapped[int] = mapped_column(ForeignKey("organizations.id"), nullable=True)
     scope: Mapped[str] = mapped_column(String, default=WorkspaceScopeEnum.PRIVATE.value)
 
     # Relationships

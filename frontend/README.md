@@ -1,4 +1,4 @@
-# Creative Studio Frontend
+# Google Cloud Creative Studio Platform | Frontend
 
 ## 🚀 Frontend Setup
 

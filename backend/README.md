@@ -1,4 +1,4 @@
-# Creative Studio Backend
+# Google Cloud Creative Studio Platform | Backend
 
 ## System Architecture and DB Schema
 ![](../screenshots/creative-studio-architecture.png)

@@ -20,6 +20,13 @@ export enum UserRolesEnum {
   CREATOR = 'creator',
 }
 
+export interface UserOrganizationSummary {
+  id: number;
+  name: string;
+  domain?: string;
+  role: string;
+}
+
 export interface UserModel {
   id?: number | string;
   name?: string;
@@ -28,4 +35,5 @@ export interface UserModel {
   picture?: string;
   createdAt?: string;
   updatedAt?: string;
+  organizations?: UserOrganizationSummary[];
 }

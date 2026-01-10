@@ -57,12 +57,27 @@ async def setup_fga(client: OpenFgaClient):
     type_definitions = [
         {"type": "user"},
         {
-            "type": "group",
+            "type": "platform",
             "relations": {
-                "member": {"this": {}}
+                "super_admin": {"this": {}}
             },
             "metadata": {
                 "relations": {
+                    "super_admin": {"directly_related_user_types": [{"type": "user"}]}
+                }
+            }
+        },
+        {
+            "type": "organization",
+            "relations": {
+                "platform": {"this": {}},
+                "admin": {"union": {"child": [{"this": {}}, {"tupleToUserset": {"computedUserset": {"object": "", "relation": "super_admin"}, "tupleset": {"object": "", "relation": "platform"}}}]}},
+                "member": {"union": {"child": [{"this": {}}, {"computedUserset": {"object": "", "relation": "admin"}}]}}
+            },
+            "metadata": {
+                "relations": {
+                    "platform": {"directly_related_user_types": [{"type": "platform"}]},
+                    "admin": {"directly_related_user_types": [{"type": "user"}]},
                     "member": {"directly_related_user_types": [{"type": "user"}]}
                 }
             }
@@ -70,15 +85,43 @@ async def setup_fga(client: OpenFgaClient):
         {
             "type": "workspace",
             "relations": {
-                "owner": {"this": {}},
-                "editor": {"union": {"child": [{"this": {}}, {"computedUserset": {"object": "", "relation": "owner"}}]}},
-                "viewer": {"union": {"child": [{"this": {}}, {"computedUserset": {"object": "", "relation": "editor"}}]}}
+                "parent": {"this": {}},
+                "admin": {"union": {"child": [{"this": {}}, {"tupleToUserset": {"computedUserset": {"object": "", "relation": "admin"}, "tupleset": {"object": "", "relation": "parent"}}}]}},
+                "editor": {"union": {"child": [{"this": {}}, {"computedUserset": {"object": "", "relation": "admin"}}]}},
+                "viewer": {"union": {"child": [{"this": {}}, {"computedUserset": {"object": "", "relation": "editor"}}]}},
+                
+                # Feature permissions
+                "can_manage_workflows": {"computedUserset": {"object": "", "relation": "editor"}},
+                "can_view_workflows": {"union": {"child": [{"computedUserset": {"object": "", "relation": "viewer"}}, {"computedUserset": {"object": "", "relation": "can_manage_workflows"}}]}},
+                
+                "can_generate_images": {"computedUserset": {"object": "", "relation": "editor"}},
+                "can_view_images": {"union": {"child": [{"computedUserset": {"object": "", "relation": "viewer"}}, {"computedUserset": {"object": "", "relation": "can_generate_images"}}]}},
+                
+                "can_generate_videos": {"computedUserset": {"object": "", "relation": "editor"}},
+                "can_view_videos": {"union": {"child": [{"computedUserset": {"object": "", "relation": "viewer"}}, {"computedUserset": {"object": "", "relation": "can_generate_videos"}}]}},
+
+                "can_generate_audio": {"computedUserset": {"object": "", "relation": "editor"}},
+                "can_view_audio": {"union": {"child": [{"computedUserset": {"object": "", "relation": "viewer"}}, {"computedUserset": {"object": "", "relation": "can_generate_audio"}}]}},
+
+                "can_generate_vto": {"computedUserset": {"object": "", "relation": "editor"}},
+                "can_view_vto": {"union": {"child": [{"computedUserset": {"object": "", "relation": "viewer"}}, {"computedUserset": {"object": "", "relation": "can_generate_vto"}}]}}
             },
             "metadata": {
                 "relations": {
-                    "owner": {"directly_related_user_types": [{"type": "user"}, {"type": "group", "relation": "member"}]},
-                    "editor": {"directly_related_user_types": [{"type": "user"}, {"type": "group", "relation": "member"}]},
-                    "viewer": {"directly_related_user_types": [{"type": "user"}, {"type": "user", "wildcard": {}}, {"type": "group", "relation": "member"}]}
+                    "parent": {"directly_related_user_types": [{"type": "organization"}]},
+                    "admin": {"directly_related_user_types": [{"type": "user"}]},
+                    "editor": {"directly_related_user_types": [{"type": "user"}]},
+                    "viewer": {"directly_related_user_types": [{"type": "user"}, {"type": "user", "wildcard": {}}]},
+                    "can_manage_workflows": {"directly_related_user_types": []},
+                    "can_view_workflows": {"directly_related_user_types": []},
+                    "can_generate_images": {"directly_related_user_types": []},
+                    "can_view_images": {"directly_related_user_types": []},
+                    "can_generate_videos": {"directly_related_user_types": []},
+                    "can_view_videos": {"directly_related_user_types": []},
+                    "can_generate_audio": {"directly_related_user_types": []},
+                    "can_view_audio": {"directly_related_user_types": []},
+                    "can_generate_vto": {"directly_related_user_types": []},
+                    "can_view_vto": {"directly_related_user_types": []}
                 }
             }
         },

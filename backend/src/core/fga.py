@@ -5,7 +5,7 @@ from fastapi import Depends, HTTPException, status
 from openfga_sdk import ClientConfiguration, OpenFgaClient
 from openfga_sdk.credentials import Credentials
 
-from src.auth.auth_service import get_current_user
+from src.auth.session import get_current_user
 from src.users.user_model import UserModel
 
 logger = logging.getLogger(__name__)
@@ -23,7 +23,32 @@ config = ClientConfiguration(
     # credentials=Credentials(...) # If needed for Auth0 FGA or similar
 )
 
-fga_client = OpenFgaClient(config)
+class FGAClientWrapper:
+    def __init__(self):
+        self._client = None
+
+    def set_client(self, client: OpenFgaClient):
+        self._client = client
+
+    async def check(self, body):
+        if not self._client:
+             # Fallback or error if not initialized
+             # For now, we assume it will be initialized in lifespan
+             # But if we really need to, we could try to init here, but that risks the loop issue again if called too early.
+             # However, check() is async, so we are in a loop.
+             # But we want to avoid implicit init if possible.
+             logger.warning("FGA Client not initialized, returning False")
+             from openfga_sdk.models.check_response import CheckResponse
+             return CheckResponse(allowed=False)
+        return await self._client.check(body)
+
+    async def write(self, body):
+        if not self._client:
+            logger.warning("FGA Client not initialized, skipping write")
+            return
+        return await self._client.write(body)
+
+fga_client = FGAClientWrapper()
 
 class FgaPermissionChecker:
     def __init__(self, object_type: str, relation: str):

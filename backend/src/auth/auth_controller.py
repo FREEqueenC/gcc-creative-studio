@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Request, Depends, HTTPException, status
 from fastapi.responses import RedirectResponse
-from src.auth.auth_service import login_google, auth_callback, get_current_user
+from src.auth.auth_service import login_google, auth_callback
+from src.auth.session import get_current_user
 
 router = APIRouter(prefix="/api", tags=["Authentication"])
 

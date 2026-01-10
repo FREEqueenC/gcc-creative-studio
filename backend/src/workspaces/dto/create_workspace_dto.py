@@ -20,5 +20,6 @@ class CreateWorkspaceDto(BaseModel):
     """Data transfer object for creating a new workspace."""
 
     name: str = Field(..., min_length=3, max_length=100)
+    organization_id: int | None = Field(default=None, description="The organization ID to create the workspace in.")
 
     model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)

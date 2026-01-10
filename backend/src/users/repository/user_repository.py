@@ -18,11 +18,14 @@ from fastapi import Depends
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from sqlalchemy.orm import selectinload
+
 from src.common.base_repository import BaseRepository
 from src.common.dto.pagination_response_dto import PaginationResponseDto
 from src.database import get_db
 from src.users.dto.user_search_dto import UserSearchDto
 from src.users.user_model import User, UserModel
+from src.organizations.organization_model import UserOrganization
 
 
 class UserRepository(BaseRepository[User, UserModel]):
@@ -38,7 +41,9 @@ class UserRepository(BaseRepository[User, UserModel]):
         Finds a single user by their email address.
         """
         result = await self.db.execute(
-            select(self.model).where(self.model.email == email)
+            select(self.model)
+            .where(self.model.email == email)
+            .options(selectinload(self.model.organizations).selectinload(UserOrganization.organization))
         )
         user = result.scalar_one_or_none()
         if not user:

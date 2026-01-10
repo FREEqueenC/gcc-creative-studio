@@ -24,6 +24,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.common.base_repository import BaseDocument
 from src.database import Base
 from src.users.user_model import User
+# Import Organization for type hinting if needed, but string reference is fine for relationship
+# from src.organizations.organization_model import Organization
 
 class WorkspaceRoleEnum(str, Enum):
     """Defines the permissions a user has within a single workspace."""
@@ -68,10 +70,12 @@ class Workspace(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String, nullable=False)
     owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    organization_id: Mapped[int] = mapped_column(ForeignKey("organizations.id"), nullable=True) # Nullable for migration, but should be required later
     scope: Mapped[str] = mapped_column(String, default=WorkspaceScopeEnum.PRIVATE.value)
 
     # Relationships
     owner: Mapped["User"] = relationship()
+    organization: Mapped["Organization"] = relationship(back_populates="workspaces")
     members: Mapped[List["WorkspaceMemberAssociation"]] = relationship(
         back_populates="workspace",
         cascade="all, delete-orphan",
@@ -130,3 +134,5 @@ class WorkspaceModel(BaseDocument):
         default=WorkspaceScopeEnum.PRIVATE,
         description="Public workspaces are visible to all users. Private ones are visible only to members.",
     )
+    organization_id: Optional[int] = None
+    organization_name: Optional[str] = None

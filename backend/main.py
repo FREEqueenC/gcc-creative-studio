@@ -105,11 +105,24 @@ async def lifespan(app: FastAPI):
 
     # Initialize OpenFGA
     try:
-        from src.core.fga import fga_client
+        from src.core.fga import fga_client, config as fga_config
+        from openfga_sdk import OpenFgaClient
         from src.core.fga_setup import setup_fga
-        await setup_fga(fga_client)
+        
+        # Initialize the real client here, inside the loop
+        real_fga_client = OpenFgaClient(fga_config)
+        fga_client.set_client(real_fga_client)
+        
+        await setup_fga(real_fga_client)
     except Exception as e:
         logger.error(f"Failed to initialize OpenFGA: {e}")
+
+    # Run Organization Backfill
+    try:
+        from src.backfill_organizations import backfill_organizations
+        await backfill_organizations()
+    except Exception as e:
+        logger.error(f"Failed to run organization backfill: {e}")
 
 
     logger.info("Creating ThreadPoolExecutor...")

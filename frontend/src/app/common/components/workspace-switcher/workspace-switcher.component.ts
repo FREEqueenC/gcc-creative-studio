@@ -71,6 +71,10 @@ export class WorkspaceSwitcherComponent implements OnInit {
     this.isBrowser = isPlatformBrowser(platformId);
   }
 
+  get currentOrganizationName(): string {
+    return this.currentUser?.organizations?.[0]?.name || 'Personal Organization';
+  }
+
   ngOnInit(): void {
     this.loadWorkspaces();
     this.workspaceStateService.activeWorkspaceId$.subscribe(id => {

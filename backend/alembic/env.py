@@ -29,6 +29,7 @@ from src.common.schema.media_item_model import MediaItem
 from src.media_templates.schema.media_template_model import MediaTemplate
 from src.source_assets.schema.source_asset_model import SourceAsset
 from src.workflows.schema.workflow_model import Workflow
+from src.organizations.organization_model import Organization
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

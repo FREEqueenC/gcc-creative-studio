@@ -14,12 +14,12 @@
 
 import datetime
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, Any
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, BaseModel
 from sqlalchemy import String, func, DateTime
 from sqlalchemy.dialects.postgresql import ARRAY
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.common.base_repository import BaseDocument
 from src.database import Base
@@ -60,6 +60,21 @@ class User(Base):
         server_default=func.now()
     )
 
+    # Relationships
+    organizations: Mapped[List["UserOrganization"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+
+
+class UserOrganizationSummary(BaseModel):
+    """
+    Summary of an organization a user belongs to, including their role.
+    """
+    id: int
+    name: str
+    domain: Optional[str] = None
+    role: str
 
 class UserModel(BaseDocument):
     """
@@ -72,6 +87,7 @@ class UserModel(BaseDocument):
     roles: List[UserRoleEnum] = Field(default_factory=list)
     name: str
     picture: str = ""
+    organizations: List[UserOrganizationSummary] = Field(default_factory=list)
 
     @field_validator("roles", mode="after")
     @classmethod
@@ -85,3 +101,29 @@ class UserModel(BaseDocument):
         if not roles:
             return [UserRoleEnum.USER]
         return roles
+
+    @field_validator("organizations", mode="before")
+    @classmethod
+    def map_organizations(cls, v: Any) -> List[UserOrganizationSummary]:
+        """
+        Maps SQLAlchemy User.organizations (list of UserOrganization) to UserOrganizationSummary list.
+        """
+        if not v:
+            return []
+        
+        # If it's already a list of dicts or objects (e.g. from Pydantic), return as is
+        if isinstance(v, list) and len(v) > 0 and isinstance(v[0], (dict, UserOrganizationSummary)):
+            return v
+
+        # Assuming v is a list of UserOrganization SQLAlchemy objects
+        summaries = []
+        for uo in v:
+            # Check if organization is loaded
+            if hasattr(uo, "organization") and uo.organization:
+                summaries.append(UserOrganizationSummary(
+                    id=uo.organization.id,
+                    name=uo.organization.name,
+                    domain=uo.organization.domain,
+                    role=uo.role
+                ))
+        return summaries

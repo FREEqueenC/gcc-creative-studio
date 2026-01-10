@@ -28,4 +28,6 @@ export interface Workspace {
   scope: WorkspaceScope;
   members: WorkspaceMember[];
   memberIds: string[];
+  organizationId?: number;
+  organizationName?: string;
 }

@@ -17,6 +17,7 @@ from typing import List, Optional
 from fastapi import Depends
 from sqlalchemy import select, exists
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from src.common.base_repository import BaseRepository
 from src.database import get_db
@@ -54,9 +55,11 @@ class WorkspaceRepository(BaseRepository[Workspace, WorkspaceModel]):
         return self._map_to_schema(workspace)
 
     async def get_all_public_workspaces(self) -> List[WorkspaceModel]:
-        """Finds all workspaces that are marked as 'public'."""
+        """Finds all global public workspaces (not belonging to any specific organization)."""
         result = await self.db.execute(
-            select(self.model).where(self.model.scope == WorkspaceScopeEnum.PUBLIC.value)
+            select(self.model)
+            .where(self.model.scope == WorkspaceScopeEnum.PUBLIC.value)
+            .where(self.model.organization_id == None)
         )
         workspaces = result.scalars().all()
         return [self._map_to_schema(w) for w in workspaces]
@@ -130,6 +133,7 @@ class WorkspaceRepository(BaseRepository[Workspace, WorkspaceModel]):
             select(self.model)
             .join(WorkspaceMemberAssociation)
             .where(WorkspaceMemberAssociation.user_id == user_id)
+            .options(selectinload(self.model.organization))
         )
         workspaces = result.scalars().all()
         return [self._map_to_schema(w) for w in workspaces]
@@ -151,6 +155,43 @@ class WorkspaceRepository(BaseRepository[Workspace, WorkspaceModel]):
         )
         return result.scalar_one_or_none()
 
+    async def get_public_workspace_by_org_id(self, org_id: int) -> Optional[WorkspaceModel]:
+        """Finds the public workspace for a specific organization."""
+        result = await self.db.execute(
+            select(self.model)
+            .where(self.model.organization_id == org_id)
+            .where(self.model.scope == WorkspaceScopeEnum.PUBLIC.value)
+            .options(selectinload(self.model.organization))
+        )
+        workspace = result.scalar_one_or_none()
+        if not workspace:
+            return None
+        return self._map_to_schema(workspace)
+
+    async def find_accessible_by_user_and_orgs(self, user_id: int, org_ids: List[int]) -> List[WorkspaceModel]:
+        """
+        Finds workspaces that are either:
+        1. Explicitly joined by the user (member).
+        2. Public workspaces belonging to one of the user's organizations.
+        """
+        # Condition 1: User is a member
+        member_condition = self.model.members.any(WorkspaceMemberAssociation.user_id == user_id)
+        
+        # Condition 2: Public and in user's orgs
+        if org_ids:
+            org_public_condition = (self.model.organization_id.in_(org_ids)) & (self.model.scope == WorkspaceScopeEnum.PUBLIC.value)
+            combined_condition = member_condition | org_public_condition
+        else:
+            combined_condition = member_condition
+
+        result = await self.db.execute(
+            select(self.model)
+            .where(combined_condition)
+            .options(selectinload(self.model.organization))
+        )
+        workspaces = result.scalars().all()
+        return [self._map_to_schema(w) for w in workspaces]
+
     def _map_to_schema(self, workspace: Workspace) -> WorkspaceModel:
         """Helper to map SQLAlchemy Workspace to Pydantic WorkspaceModel."""
         # Create the Pydantic model
@@ -159,8 +200,13 @@ class WorkspaceRepository(BaseRepository[Workspace, WorkspaceModel]):
             "name": workspace.name,
             "owner_id": workspace.owner_id,
             "scope": workspace.scope,
+            "organization_id": workspace.organization_id,
             "created_at": workspace.created_at,
             "updated_at": workspace.updated_at
         }
+        
+        # Map organization name if available
+        if workspace.organization:
+            workspace_dict["organization_name"] = workspace.organization.name
         
         return self.schema.model_validate(workspace_dict)

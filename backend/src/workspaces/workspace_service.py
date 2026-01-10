@@ -26,11 +26,15 @@ from src.workspaces.schema.workspace_model import (
     WorkspaceMember,
     WorkspaceModel,
     WorkspaceRoleEnum,
+    WorkspaceScopeEnum
 )
 
 
 from src.core.fga import fga_client
 from openfga_sdk.client.models import ClientWriteRequest, ClientTuple
+
+from src.organizations.organization_service import OrganizationService
+from src.organizations.organization_model import OrganizationModel
 
 class WorkspaceService:
     """
@@ -42,39 +46,70 @@ class WorkspaceService:
         workspace_repo: WorkspaceRepository = Depends(),
         user_repo: UserRepository = Depends(),
         email_service: EmailService = Depends(),
+        organization_service: OrganizationService = Depends(),
     ):
         self.workspace_repo = workspace_repo
         self.user_repo = user_repo
         self.email_service = email_service
+        self.organization_service = organization_service
 
     async def create_workspace(
         self, user: UserModel, create_dto: CreateWorkspaceDto
     ) -> WorkspaceModel:
-        """Creates a new workspace with the creator as the owner."""
+        """Creates a new workspace with the creator as the admin."""
+        
+        # Determine Organization
+        org_id = create_dto.organization_id
+        if not org_id:
+            # Default to user's primary organization
+            user_orgs = await self.organization_service.get_user_organizations(user.id)
+            if user_orgs:
+                org_id = user_orgs[0].id
+            else:
+                # Should ideally not happen if ensure_user_organization is called on login
+                # But as a fallback, we can create one or raise error.
+                # Let's try to ensure it again or just raise.
+                # Raising is safer for now to detect issues.
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="User does not belong to any organization. Please login again.",
+                )
+
         # 1. Create the owner as the first member of the workspace
+        # We use ADMIN role for the creator in the new model
         owner_as_member = WorkspaceMember(
-            user_id=user.id, email=user.email, role=WorkspaceRoleEnum.OWNER
+            user_id=user.id, email=user.email, role=WorkspaceRoleEnum.ADMIN
         )
 
         # 2. Create the new Workspace model instance
         new_workspace = WorkspaceModel(
             name=create_dto.name,
             owner_id=user.id,
+            organization_id=org_id, # Might be None if we didn't resolve it yet
         )
         created_workspace = await self.workspace_repo.create(new_workspace, initial_members=[owner_as_member])
 
         # 3. Write tuple to OpenFGA
         try:
-            await fga_client.write(
-                ClientWriteRequest(
-                    writes=[
-                        ClientTuple(
-                            user=f"user:{user.id}",
-                            relation="owner",
-                            object=f"workspace:{created_workspace.id}",
-                        )
-                    ]
+            writes = [
+                ClientTuple(
+                    user=f"user:{user.id}",
+                    relation="admin",
+                    object=f"workspace:{created_workspace.id}",
                 )
+            ]
+            
+            if org_id:
+                 writes.append(
+                    ClientTuple(
+                        user=f"organization:{org_id}",
+                        relation="parent",
+                        object=f"workspace:{created_workspace.id}",
+                    )
+                 )
+
+            await fga_client.write(
+                ClientWriteRequest(writes=writes)
             )
         except Exception as e:
             # Log error but don't fail creation? Or fail?
@@ -163,19 +198,71 @@ class WorkspaceService:
     async def list_workspaces_for_user(self, user: UserModel) -> List[WorkspaceModel]:
         """
         Retrieves all workspaces a user has access to. This includes:
-        1. All public workspaces.
-        2. All private workspaces where the user is a member.
+        1. Workspaces where the user is explicitly a member.
+        2. Public workspaces within the user's organizations.
         """
-        # 1. Fetch all workspaces where the user is explicitly a member.
-        private_workspaces = await self.workspace_repo.find_by_member_id(user.id)
+        # Get user's organizations
+        user_orgs = await self.organization_service.get_user_organizations(user.id)
+        org_ids = [org.id for org in user_orgs]
+        
+        # Fetch accessible workspaces
+        return await self.workspace_repo.find_accessible_by_user_and_orgs(user.id, org_ids)
 
-        # 2. Fetch all public workspaces.
-        public_workspaces = await self.workspace_repo.get_all_public_workspaces()
+    async def ensure_default_workspaces(self, user: UserModel, org: OrganizationModel):
+        """
+        Ensures the user has the required default workspaces for their organization.
+        - Enterprise Org:
+            1. Public Workspace (Org-wide, shared)
+            2. Personal Workspace (Private, user-specific)
+        - Personal Org:
+            1. Personal Workspace (Private)
+        """
+        # 1. Ensure Personal Workspace
+        # Check if user already has a private workspace in this org
+        user_workspaces = await self.workspace_repo.find_by_member_id(user.id)
+        personal_workspace = next(
+            (w for w in user_workspaces if w.organization_id == org.id and w.scope == WorkspaceScopeEnum.PRIVATE and w.owner_id == user.id),
+            None
+        )
+        
+        if not personal_workspace:
+            # Create Personal Workspace
+            ws_name = f"{user.name}'s Workspace" if user.name else "My Workspace"
+            await self.create_workspace(
+                user,
+                CreateWorkspaceDto(
+                    name=ws_name,
+                    organization_id=org.id,
+                    scope=WorkspaceScopeEnum.PRIVATE
+                )
+            )
 
-        # 3. Combine the lists and remove duplicates.
-        # A dictionary is used to ensure uniqueness based on workspace ID.
-        all_workspaces_map = {w.id: w for w in private_workspaces}
-        for w in public_workspaces:
-            all_workspaces_map[w.id] = w
+        # 2. Ensure Public Workspace (Only for Enterprise Orgs)
+        if org.domain: # Enterprise Org has a domain
+            public_ws = await self.workspace_repo.get_public_workspace_by_org_id(org.id)
+            
+            if not public_ws:
+                # Create Public Workspace for the Org
+                ws_name = f"{org.name} Public Workspace"
+                created_public_ws = await self.create_workspace(
+                    user,
+                    CreateWorkspaceDto(
+                        name=ws_name,
+                        organization_id=org.id,
+                        scope=WorkspaceScopeEnum.PUBLIC
+                    )
+                )
+                public_ws = created_public_ws
+            
+            # Ensure user is a member of this public workspace (so it shows up in their list)
+            # Even if it's public, our list_workspaces_for_user logic might rely on membership for now?
+            # Actually list_workspaces_for_user fetches ALL public workspaces globally.
+            # We should probably refine that to only fetch Global Public + Org Public.
+            # But for now, let's just ensure they are a member to be safe and explicit.
+            # is_member = await self.workspace_repo.is_member(public_ws.id, user.id)
+            # if not is_member:
+            #    # Add as viewer
+            #    member = WorkspaceMember(user_id=user.id, email=user.email, role=WorkspaceRoleEnum.VIEWER)
+            #    await self.workspace_repo.add_member_to_workspace(public_ws.id, member, user.id)
+            pass
 
-        return list(all_workspaces_map.values())

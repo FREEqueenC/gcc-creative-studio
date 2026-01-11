@@ -48,7 +48,7 @@ from src.source_assets.schema.source_asset_model import (
     AssetTypeEnum,
     SourceAssetModel,
 )
-from src.users.user_model import UserModel, UserRoleEnum
+from src.users.user_model import UserModel
 
 logger = logging.getLogger(__name__)
 
@@ -374,7 +374,7 @@ class SourceAssetService:
         else:
             mime_type = MimeTypeEnum.IMAGE_PNG
 
-        is_admin = UserRoleEnum.ADMIN in user.roles
+        is_admin = user.is_super_admin
         final_scope = AssetScopeEnum.PRIVATE
         final_asset_type = asset_type or AssetTypeEnum.GENERIC_IMAGE
 
@@ -550,13 +550,33 @@ class SourceAssetService:
             return None
 
         # Authorization check
-        is_admin = UserRoleEnum.ADMIN in user.roles
+        # Allow if user is super admin, owner, or asset is system
+        is_super_admin = user.is_super_admin
         is_owner = asset.user_id == user.id
         is_system = asset.scope in [
             AssetScopeEnum.SYSTEM,
         ]
 
-        if not (is_admin or is_owner or is_system):
-            return None
+        # Note: This does NOT check workspace permissions (e.g. viewer).
+        # If we want workspace viewers to see assets, we should add that check here or in controller.
+        # For now, we keep it restricted to owner/system/super_admin for direct access.
+        
+        if is_super_admin or is_owner or is_system:
+            return await self._create_asset_response(asset)
 
-        return await self._create_asset_response(asset)
+        # Check if user is Workspace Admin (using FGA)
+        # This allows Org Admins to view assets in their workspace
+        from src.core.fga import check_permission
+        is_workspace_admin = await check_permission(user, "workspace", str(asset.workspace_id), "admin")
+        
+        if is_workspace_admin:
+            return await self._create_asset_response(asset)
+
+        return None
+
+    async def get_asset_model_by_id(self, asset_id: int) -> Optional[SourceAssetModel]:
+        """
+        Retrieves the raw asset model by ID without any authorization checks.
+        Use this ONLY when you perform authorization in the controller.
+        """
+        return await self.repo.get_by_id(asset_id)

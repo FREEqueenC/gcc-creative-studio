@@ -78,3 +78,43 @@ To maintain code quality and consistency:
     npm run fix
     ```
 
+## 🔐 Frontend Authorization Pattern
+
+We follow the **"Permissions over Roles"** pattern. The Frontend should never guess permissions based on roles (e.g., `if (user.role === 'admin')`). Instead, it should check explicit permission flags returned by the Backend.
+
+### 1. The `permissions` Object
+
+Every major resource (Workspace, Organization) returned from the API includes a `permissions` object calculated for the **current user**.
+
+**Example API Response:**
+```json
+{
+  "id": 123,
+  "name": "Marketing Campaign",
+  "permissions": {
+    "can_manage_members": true,
+    "can_edit": true,
+    "can_delete": false
+  }
+}
+```
+
+### 2. Usage in Templates (`*ngIf`)
+
+Use these flags directly in your Angular templates to show/hide UI elements.
+
+```html
+<!-- ✅ CORRECT: Check Permission -->
+<button *ngIf="workspace.permissions.can_manage_members" (click)="openInviteModal()">
+  Invite Member
+</button>
+
+<!-- ❌ WRONG: Check Role -->
+<button *ngIf="currentUser.role === 'admin'" ...>
+```
+
+### 3. Why?
+*   **Decoupling**: The Frontend doesn't need to know *why* a user has access (e.g., inherited from Org Admin), just that they *do*.
+*   **Flexibility**: If backend rules change (e.g., Editors can now invite members), the Frontend code doesn't need to change.
+
+

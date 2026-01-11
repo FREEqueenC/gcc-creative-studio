@@ -2,6 +2,8 @@ from fastapi import APIRouter, Request, Depends, HTTPException, status
 from fastapi.responses import RedirectResponse
 from src.auth.auth_service import login_google, auth_callback, get_current_user_model
 from src.auth.session import get_current_user
+from src.auth.dto.permission_check_dto import PermissionCheckDto
+from src.core.fga import check_permission
 
 router = APIRouter(prefix="/api", tags=["Authentication"])
 
@@ -35,3 +37,19 @@ async def get_me(user = Depends(get_current_user_model)):
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
     return user
+
+@router.post("/auth/check-permission")
+async def check_user_permission(
+    check_dto: PermissionCheckDto,
+    user: dict = Depends(get_current_user)
+):
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+    
+    allowed = await check_permission(
+        user=user,
+        object_type=check_dto.object_type,
+        object_id=check_dto.object_id,
+        relation=check_dto.relation
+    )
+    return {"allowed": allowed}

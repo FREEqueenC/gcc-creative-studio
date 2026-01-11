@@ -54,7 +54,7 @@ from src.brand_guidelines.schema.brand_guideline_model import (
 from src.common.schema.media_item_model import JobStatusEnum
 from src.common.storage_service import GcsService
 from src.multimodal.gemini_service import GeminiService
-from src.users.user_model import UserModel, UserRoleEnum
+from src.users.user_model import UserModel
 from src.workspaces.repository.workspace_repository import WorkspaceRepository
 from fastapi import Depends
 
@@ -391,7 +391,7 @@ class BrandGuidelineService:
         in a background job.
         """
         # 1. Authorization Check
-        is_system_admin = UserRoleEnum.ADMIN in current_user.roles
+        is_system_admin = current_user.is_super_admin
 
         if workspace_id:
             workspace = await self.workspace_repo.get_by_id(workspace_id)
@@ -466,7 +466,7 @@ class BrandGuidelineService:
         if not guideline:
             return None
 
-        is_system_admin = UserRoleEnum.ADMIN in current_user.roles
+        is_system_admin = current_user.is_super_admin
 
         # Global guidelines can be seen by any authenticated user
         if not guideline.workspace_id:
@@ -504,7 +504,7 @@ class BrandGuidelineService:
             )
 
         if not workspace.scope == WorkspaceScopeEnum.PUBLIC:
-            is_system_admin = UserRoleEnum.ADMIN in current_user.roles
+            is_system_admin = current_user.is_super_admin
             if (
                 not is_system_admin
                 and current_user.id not in workspace.member_ids
@@ -541,7 +541,7 @@ class BrandGuidelineService:
             return
 
         # 2. Authorization Check
-        is_system_admin = UserRoleEnum.ADMIN in current_user.roles
+        is_system_admin = current_user.is_super_admin
 
         # Global guidelines can only be deleted by admins
         if not guideline.workspace_id:

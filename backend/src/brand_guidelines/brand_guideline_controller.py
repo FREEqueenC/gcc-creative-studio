@@ -25,7 +25,7 @@ from fastapi import (
     status,
 )
 
-from src.auth.auth_service import RoleChecker, get_current_user_model as get_current_user
+from src.auth.auth_service import get_current_user_model as get_current_user
 from src.brand_guidelines.brand_guideline_service import BrandGuidelineService
 from src.brand_guidelines.dto.brand_guideline_response_dto import (
     BrandGuidelineResponseDto,
@@ -37,19 +37,13 @@ from src.brand_guidelines.dto.generate_upload_url_dto import (
 )
 from src.workspaces.repository.workspace_repository import WorkspaceRepository
 from src.workspaces.workspace_auth_guard import workspace_auth_service
-from src.users.user_model import UserModel, UserRoleEnum
+from src.users.user_model import UserModel
 
 MAX_UPLOAD_SIZE_BYTES = 500 * 1024 * 1024  # 500 MB
-
-# Define role checkers for convenience
-user_only = Depends(
-    RoleChecker(allowed_roles=[UserRoleEnum.USER, UserRoleEnum.ADMIN])
-)
 
 router = APIRouter(
     prefix="/api/brand-guidelines",
     tags=["Brand Guidelines"],
-    dependencies=[user_only],
 )
 
 

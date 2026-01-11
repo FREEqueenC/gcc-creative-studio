@@ -109,3 +109,70 @@ To maintain code quality and consistency:
     ```bash
     python -m black . --line-length=80
     ```
+
+## 🔐 OpenFGA Authorization Model
+
+This section details the Types, Relations, and Inheritance rules defined in our OpenFGA store.
+
+### 1. The Hierarchy (Inheritance Flow)
+
+The power flows downwards. If you have a role at the top, you inherit permissions below.
+
+```mermaid
+graph TD
+    Platform[Platform (Super Admin)] -->|Inherits| Org[Organization (Admin)]
+    Org -->|Inherits| WS[Workspace (Admin)]
+    WS -->|Inherits| Asset[Asset (Edit/View)]
+```
+
+### 2. Type Definitions & Permissions
+
+#### A. Platform (`platform`)
+The root level singleton.
+*   **Object ID**: `platform:creative-studio`
+*   **Relations**:
+    *   `super_admin`: The "God Mode" role. Has full access to everything.
+
+#### B. Organization (`organization`)
+Represents a tenant (e.g., "Acme Corp" or "User's Personal Org").
+*   **Relations**:
+    *   `admin`: Full control over the organization.
+        *   *Inheritance*: Includes `platform:super_admin`.
+    *   `member`: Basic membership.
+        *   *Inheritance*: Includes `admin` (Admins are also Members).
+
+#### C. Workspace (`workspace`)
+A project or folder within an organization.
+*   **Relations (Roles)**:
+    *   `admin`: Can manage settings, members, and delete the workspace.
+        *   *Inheritance*: Includes `organization:admin`.
+    *   `editor`: Can create/edit content.
+        *   *Inheritance*: Includes `admin`.
+    *   `viewer`: Can view content.
+        *   *Inheritance*: Includes `editor`.
+*   **Permissions (Computed)**:
+    *   `can_manage_workflows`: Checks `editor`.
+    *   `can_view_workflows`: Checks `viewer` OR `can_manage_workflows`.
+    *   `can_generate_images`: Checks `editor`.
+    *   `can_view_images`: Checks `viewer` OR `can_generate_images`.
+    *   *(Same pattern for Videos, Audio, VTO)*
+
+#### D. Asset (`asset`)
+A specific file (Image, Video, etc.) inside a workspace.
+*   **Relations**:
+    *   `parent`: The workspace it belongs to.
+    *   `can_edit`: Checks `workspace:editor`.
+    *   `can_view`: Checks `workspace:viewer`.
+
+### 3. "How Do I Check...?" (Cheat Sheet)
+
+| Question | FGA Check (Object, Relation) |
+| :--- | :--- |
+| **Is User a Super Admin?** | `platform:creative-studio`, `super_admin` |
+| **Is User an Org Admin?** | `organization:{id}`, `admin` |
+| **Is User an Org Member?** | `organization:{id}`, `member` |
+| **Can User Manage Workspace?** | `workspace:{id}`, `admin` |
+| **Can User Edit Workspace?** | `workspace:{id}`, `editor` |
+| **Can User View Workspace?** | `workspace:{id}`, `viewer` |
+| **Can User Generate Images?** | `workspace:{id}`, `can_generate_images` |
+

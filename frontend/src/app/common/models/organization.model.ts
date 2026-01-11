@@ -14,10 +14,17 @@
  * limitations under the License.
  */
 
-import {DocumentData} from '@angular/fire/firestore';
+export interface OrganizationPermissions {
+  can_manage_members: boolean;
+  can_edit: boolean;
+  can_delete: boolean;
+  is_admin: boolean;
+}
 
-export interface Organization extends DocumentData {
-  orgId: string;
-  orgName: string;
-  status: string;
+export interface Organization {
+  id: number;
+  name: string;
+  domain?: string;
+  role?: string;
+  permissions?: OrganizationPermissions;
 }

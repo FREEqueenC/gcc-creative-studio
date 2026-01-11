@@ -26,7 +26,7 @@ from fastapi import (
     status,
 )
 
-from src.auth.auth_service import RoleChecker, get_current_user_model as get_current_user
+from src.auth.auth_service import get_current_user_model as get_current_user
 from src.common.base_dto import AspectRatioEnum
 from src.common.dto.pagination_response_dto import PaginationResponseDto
 from src.source_assets.dto.source_asset_response_dto import (
@@ -41,19 +41,19 @@ from src.source_assets.schema.source_asset_model import (
 )
 from src.source_assets.source_asset_service import SourceAssetService
 from src.users.repository.user_repository import UserRepository
-from src.users.user_model import UserModel, UserRoleEnum
+from src.users.user_model import UserModel
 from src.workspaces.repository.workspace_repository import WorkspaceRepository
 from src.workspaces.workspace_auth_guard import workspace_auth_service
+
+from src.core.fga import check_permission
+from src.auth.permissions import require_super_admin
+from src.auth.session import get_current_user
 
 router = APIRouter(
     prefix="/api/source_assets",
     tags=["User Assets"],
     responses={404: {"description": "Not found"}},
-    dependencies=[
-        Depends(
-            RoleChecker(allowed_roles=[UserRoleEnum.USER, UserRoleEnum.ADMIN])
-        )
-    ],
+    dependencies=[Depends(get_current_user)],
 )
 
 
@@ -125,7 +125,7 @@ async def list_source_assets(
     """
     target_user_id: Optional[int] = None
 
-    is_admin = UserRoleEnum.ADMIN in current_user.roles
+    is_admin = current_user.is_super_admin
 
     if not is_admin:
         # For regular users, force the search to their own ID.
@@ -176,21 +176,53 @@ async def get_vto_assets(
 @router.delete(
     "/{asset_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    dependencies=[Depends(RoleChecker(allowed_roles=[UserRoleEnum.ADMIN]))],
+    dependencies=[Depends(get_current_user)],
 )
 async def delete_source_asset(
     asset_id: int,
+    current_user: UserModel = Depends(get_current_user),
     service: SourceAssetService = Depends(),
+    workspace_repo: WorkspaceRepository = Depends(),
 ):
     """
-    Deletes a source asset by its ID. (Admin only)
-    This will also remove the corresponding file from Google Cloud Storage.
+    Deletes a source asset by its ID.
+    Allowed if:
+    - User is Platform Super Admin
+    - User is the Owner of the asset
+    - User is an Admin of the Workspace the asset belongs to
     """
-    success = await service.delete_asset(asset_id)
-    if not success:
+    # 1. Fetch the asset first to check ownership/workspace
+    asset = await service.get_asset_model_by_id(asset_id)
+    if not asset:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Source asset not found.",
+        )
+
+    # 2. Check Permissions
+    is_super_admin = current_user.is_super_admin
+    is_owner = asset.user_id == current_user.id
+    
+    if is_super_admin or is_owner:
+        # Allowed
+        pass
+    else:
+        # Check if user is Admin of the workspace
+        # We use 'admin' permission check
+        await workspace_auth_service.authorize(
+            workspace_id=asset.workspace_id,
+            user=current_user,
+            workspace_repo=workspace_repo,
+            permission="admin"
+        )
+
+    # 3. Proceed with deletion
+    success = await service.delete_asset(asset_id)
+    if not success:
+        # Should not happen since we found it above, but good for safety
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Source asset not found during deletion.",
         )
     # On success, a 204 No Content response is automatically returned.
 

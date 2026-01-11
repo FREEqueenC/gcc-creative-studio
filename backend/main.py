@@ -117,14 +117,6 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"Failed to initialize OpenFGA: {e}")
 
-    # Run Organization Backfill
-    try:
-        from src.backfill_organizations import backfill_organizations
-        await backfill_organizations()
-    except Exception as e:
-        logger.error(f"Failed to run organization backfill: {e}")
-
-
     logger.info("Creating ThreadPoolExecutor...")
     # Create the pool and attach it to the app's state
     app.state.executor = ThreadPoolExecutor(max_workers=4)

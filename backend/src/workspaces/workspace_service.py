@@ -18,7 +18,7 @@ from fastapi import Depends, HTTPException, status
 
 from src.common.email_service import EmailService
 from src.users.repository.user_repository import UserRepository
-from src.users.user_model import UserModel, UserRoleEnum
+from src.users.user_model import UserModel
 from src.workspaces.dto.create_workspace_dto import CreateWorkspaceDto
 from src.workspaces.dto.invite_user_dto import InviteUserDto
 from src.workspaces.repository.workspace_repository import WorkspaceRepository
@@ -36,6 +36,8 @@ from openfga_sdk.client.models import ClientWriteRequest, ClientTuple
 from src.organizations.organization_service import OrganizationService
 from src.organizations.organization_model import OrganizationModel
 
+from src.common.permission_service import PermissionService
+
 class WorkspaceService:
     """
     Handles the business logic for workspace management.
@@ -52,6 +54,7 @@ class WorkspaceService:
         self.user_repo = user_repo
         self.email_service = email_service
         self.organization_service = organization_service
+        self.permission_service = PermissionService()
 
     async def create_workspace(
         self, user: UserModel, create_dto: CreateWorkspaceDto
@@ -118,6 +121,23 @@ class WorkspaceService:
             # For now, we log.
             print(f"Failed to write tuple to OpenFGA: {e}")
         
+        # Populate permissions for the new workspace (Admin)
+        created_workspace.permissions = {
+            "can_manage_members": True,
+            "can_edit": True,
+            "can_delete": True,
+            "can_view_workflows": True,
+            "can_manage_workflows": True,
+            "can_view_images": True,
+            "can_generate_images": True,
+            "can_view_videos": True,
+            "can_generate_videos": True,
+            "can_view_audio": True,
+            "can_generate_audio": True,
+            "can_view_vto": True,
+            "can_generate_vto": True
+        }
+
         return created_workspace
 
     async def invite_user_to_workspace(
@@ -139,7 +159,7 @@ class WorkspaceService:
                 detail="Workspace not found.",
             )
 
-        is_system_admin = UserRoleEnum.ADMIN in current_user.roles
+        is_system_admin = current_user.is_super_admin
         is_workspace_owner = current_user.id == workspace.owner_id
 
         if not (is_system_admin or is_workspace_owner):
@@ -201,12 +221,23 @@ class WorkspaceService:
         1. Workspaces where the user is explicitly a member.
         2. Public workspaces within the user's organizations.
         """
-        # Get user's organizations
-        user_orgs = await self.organization_service.get_user_organizations(user.id)
-        org_ids = [org.id for org in user_orgs]
+        # Check if user is Super Admin
+        if user.is_super_admin:
+            workspaces = await self.workspace_repo.get_all_workspaces()
+        else:
+            # Get user's organizations
+            user_orgs = await self.organization_service.get_user_organizations(user.id)
+            org_ids = [org.id for org in user_orgs]
+            
+            # Fetch accessible workspaces
+            workspaces = await self.workspace_repo.find_accessible_by_user_and_orgs(user.id, org_ids)
         
-        # Fetch accessible workspaces
-        return await self.workspace_repo.find_accessible_by_user_and_orgs(user.id, org_ids)
+        # Populate permissions for each workspace
+        for ws in workspaces:
+            perms = await self.permission_service.get_permissions_for_workspace(user.id, ws.id)
+            ws.permissions = perms
+            
+        return workspaces
 
     async def ensure_default_workspaces(self, user: UserModel, org: OrganizationModel):
         """

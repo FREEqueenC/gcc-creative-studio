@@ -17,7 +17,7 @@ from typing import Annotated
 from fastapi import Depends, HTTPException, status
 
 from src.auth.auth_service import get_current_user_model as get_current_user
-from src.users.user_model import UserModel, UserRoleEnum
+from src.users.user_model import UserModel
 from src.workspaces.repository.workspace_repository import WorkspaceRepository
 from src.workspaces.schema.workspace_model import (
     WorkspaceModel,
@@ -36,6 +36,7 @@ class WorkspaceAuth:
         workspace_id: int,
         user: UserModel = Depends(get_current_user),
         workspace_repo: WorkspaceRepository = Depends(),
+        permission: str = "viewer",
     ) -> WorkspaceModel | None:
         """
         The core authorization logic. Checks if a user has rights to a workspace.
@@ -52,13 +53,31 @@ class WorkspaceAuth:
                 detail=f"Workspace with ID '{workspace_id}' not found.",
             )
 
-        # Authorization checks
-        is_admin = UserRoleEnum.ADMIN in user.roles
+        # Authorization checks using OpenFGA
+        # We check if the user has the requested permission (default 'viewer') on the workspace.
+        # 'viewer' includes 'editor' and 'admin' via FGA hierarchy.
+        
+        from src.core.fga import check_permission
+        
         is_public = scope == WorkspaceScopeEnum.PUBLIC
-
-        if not (is_admin or is_public):
-            is_member = await workspace_repo.is_member(workspace_id, user.id)
-            if not is_member:
+        
+        # Public workspaces are viewable by everyone, but might require higher permissions for other actions.
+        # If permission is 'viewer' and workspace is public, we skip FGA check.
+        # If permission is 'admin' or 'editor', we MUST check FGA even if public (usually).
+        # Assuming 'public' only implies 'viewer' access.
+        
+        if not (is_public and permission == "viewer"):
+            # Check FGA permission
+            # We check the requested relation on 'workspace' object
+            has_permission = await check_permission(user, "workspace", str(workspace_id), permission)
+            
+            if not has_permission:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"You do not have '{permission}' permission on this workspace.",
+                )
+            
+            if not has_permission:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="You do not have permission to access this workspace.",

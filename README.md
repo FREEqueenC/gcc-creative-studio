@@ -24,7 +24,7 @@ Google Cloud Creative Studio Platform goes beyond simple demos, implementing adv
 
 **🖼️ High-Fidelity Image Generation (Imagen):**
 - Create stunning images from detailed text descriptions.
-- Explore a wide range of creative styles, lighting, and composition controls.
+- Explore a wide range of creative styles, lighting, and composition controls.P
 
 **✍️ Gemini-Powered Prompt Engineering:**
 - **Prompt Rewriting:** Automatically enhance and expand user prompts for superior generation results.

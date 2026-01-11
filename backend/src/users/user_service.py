@@ -18,7 +18,7 @@ from src.common.dto.pagination_response_dto import PaginationResponseDto
 from src.users.dto.user_create_dto import UserCreateDto, UserUpdateRoleDto
 from src.users.dto.user_search_dto import UserSearchDto
 from src.users.repository.user_repository import UserRepository
-from src.users.user_model import UserModel, UserRoleEnum
+from src.users.user_model import UserModel
 
 
 
@@ -59,7 +59,6 @@ class UserService:
         # If we pass UserCreateDto, we miss 'roles'.
         # We can pass a dict that includes roles.
         user_data = new_user_dto.model_dump()
-        user_data["roles"] = [UserRoleEnum.USER]
 
         # 3. Call the repository's create() method
         return await self.user_repo.create(user_data)
@@ -80,7 +79,7 @@ class UserService:
         """Updates the role of a specific user."""
             
         # Convert the list of enums to a list of strings for DB
-        roles_as_strings = [role.value for role in role_data.roles]
+        roles_as_strings = role_data.roles
 
         # The update method in the repository would handle updating the 'role' field
         return await self.user_repo.update(user_id, {"roles": roles_as_strings})

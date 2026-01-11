@@ -19,7 +19,7 @@ import {Router} from '@angular/router';
 import {HttpClient} from '@angular/common/http';
 import {environment} from '../../../environments/environment';
 import {BehaviorSubject, Observable, of} from 'rxjs';
-import {catchError, tap} from 'rxjs/operators';
+import {catchError, tap, map} from 'rxjs/operators';
 import {isPlatformBrowser} from '@angular/common';
 import {UserModel, UserRolesEnum} from '../models/user.model';
 
@@ -108,11 +108,22 @@ export class AuthService {
 
   isUserAdmin(): boolean {
     const user = this.currentUserSubject.value;
-    return user?.roles?.includes(UserRolesEnum.ADMIN) || false;
+    return user?.isSuperAdmin || user?.roles?.includes(UserRolesEnum.ADMIN) || false;
   }
   
   // Helper to get current value synchronously if needed
   getCurrentUserValue(): UserModel | null {
     return this.currentUserSubject.value;
+  }
+
+  checkPermission(objectType: string, objectId: string, relation: string): Observable<boolean> {
+    return this.httpClient.post<{allowed: boolean}>(`${environment.backendURL}/auth/check-permission`, {
+      object_type: objectType,
+      object_id: objectId,
+      relation: relation
+    }).pipe(
+      map(response => response.allowed),
+      catchError(() => of(false))
+    );
   }
 }

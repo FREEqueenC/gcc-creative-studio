@@ -21,13 +21,30 @@ export enum WorkspaceScope {
   PRIVATE = 'private',
 }
 
+export interface WorkspacePermissions {
+  can_manage_members: boolean;
+  can_edit: boolean;
+  can_delete: boolean;
+  can_view_workflows: boolean;
+  can_manage_workflows: boolean;
+  can_view_images: boolean;
+  can_generate_images: boolean;
+  can_view_videos: boolean;
+  can_generate_videos: boolean;
+  can_view_audio: boolean;
+  can_generate_audio: boolean;
+  can_view_vto: boolean;
+  can_generate_vto: boolean;
+}
+
 export interface Workspace {
   id: number;
   name: string;
-  ownerId: string;
+  ownerId: number; // Updated to number to match backend
   scope: WorkspaceScope;
   members: WorkspaceMember[];
   memberIds: string[];
   organizationId?: number;
   organizationName?: string;
+  permissions?: WorkspacePermissions;
 }

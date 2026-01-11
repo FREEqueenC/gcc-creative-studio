@@ -94,29 +94,25 @@ async def check_permission(
     # Actually, usually contextual tuples are used to assert membership in the group FOR THIS REQUEST.
     # So we say "User X is member of Group Y" contextually.
     
+    from openfga_sdk.client.models import ClientCheckRequest, ClientTuple
+
     for group in groups:
-        contextual_tuples.append({
-            "user": f"user:{user_id}",
-            "relation": "member",
-            "object": f"group:{group}",
-        })
+        contextual_tuples.append(ClientTuple(
+            user=f"user:{user_id}",
+            relation="member",
+            object=f"group:{group}",
+        ))
 
     try:
         # Check permission
-        # user: user:<id>
-        # relation: <relation>
-        # object: <object_type>:<object_id>
+        request = ClientCheckRequest(
+            user=f"user:{user_id}",
+            relation=relation,
+            object=f"{object_type}:{object_id}",
+            contextual_tuples=contextual_tuples if contextual_tuples else None
+        )
         
-        body = {
-            "user": f"user:{user_id}",
-            "relation": relation,
-            "object": f"{object_type}:{object_id}",
-            "contextual_tuples": {
-                "tuple_keys": contextual_tuples
-            }
-        }
-        
-        response = await fga_client.check(body)
+        response = await fga_client.check(request)
         return response.allowed
     except Exception as e:
         logger.error(f"FGA Check failed: {e}")

@@ -14,7 +14,7 @@
 
 from typing import List, Optional
 from pydantic import BaseModel, EmailStr, Field
-from src.users.user_model import UserRoleEnum
+
 
 
 class UserCreateDto(BaseModel):
@@ -30,6 +30,6 @@ class UserCreateDto(BaseModel):
 class UserUpdateRoleDto(BaseModel):
     """Data Transfer Object for updating a user's role."""
 
-    roles: List[UserRoleEnum] = Field(
-        description="A list of new roles to assign to the user."
+    roles: List[str] = Field(
+        description="A list of new roles to assign to the user. (Deprecated)"
     )

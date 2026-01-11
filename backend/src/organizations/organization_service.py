@@ -15,10 +15,14 @@
 from typing import List, Optional
 
 from fastapi import Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.database import get_db
 from src.organizations.organization_model import OrganizationModel, OrganizationRoleEnum
 from src.organizations.repository.organization_repository import OrganizationRepository
+from src.organizations.organization_seeder import OrganizationSeeder
 from src.users.user_model import UserModel
+from src.users.repository.user_repository import UserRepository
 
 GENERIC_DOMAINS = {
     "gmail.com",
@@ -35,20 +39,34 @@ GENERIC_DOMAINS = {
 from src.core.fga import fga_client
 from openfga_sdk.client.models import ClientWriteRequest, ClientTuple
 
+from src.common.permission_service import PermissionService
+
 class OrganizationService:
     """
     Service for managing organizations and user memberships.
     """
 
-    def __init__(self, repo: OrganizationRepository = Depends()):
+    def __init__(self, repo: OrganizationRepository = Depends(), db: AsyncSession = Depends(get_db)):
         self.repo = repo
+        self.db = db
+        self.seeder = OrganizationSeeder(db)
+        self.user_repo = UserRepository(db)
+        self.permission_service = PermissionService()
 
     async def get_user_organizations(self, user_id: int) -> List[OrganizationModel]:
         """Finds all organizations a user belongs to."""
-        return await self.repo.get_user_organizations(user_id)
+        orgs = await self.repo.get_user_organizations(user_id)
+        
+        # Populate permissions for each org
+        # TODO: Optimize with a batch call if possible, but for now loop is fine (usually few orgs per user)
+        for org in orgs:
+            perms = await self.permission_service.get_permissions_for_organization(user_id, org.id)
+            org.permissions = perms
+            
+        return orgs
 
     async def create_organization(self, schema: OrganizationModel, user_id: int) -> OrganizationModel:
-        """Creates a new organization and writes FGA tuples."""
+        """Creates a new organization, writes FGA tuples, and seeds default data."""
         created_org = await self.repo.create(schema, user_id)
         
         # Write FGA tuple
@@ -67,6 +85,25 @@ class OrganizationService:
         except Exception as e:
             print(f"Failed to write tuple to OpenFGA: {e}")
             
+        # Seed Organization Data (Workspaces, Assets)
+        try:
+            # We need the full user model for seeding (to set owner)
+            user = await self.user_repo.get(user_id)
+            if user:
+                await self.seeder.seed_organization(created_org.id, user)
+            else:
+                print(f"User {user_id} not found, skipping seeding for org {created_org.id}")
+        except Exception as e:
+             print(f"Failed to seed organization {created_org.id}: {e}")
+
+        # Populate permissions for the new org (Admin)
+        created_org.permissions = {
+            "can_manage_members": True,
+            "can_edit": True,
+            "can_delete": True,
+            "is_admin": True
+        }
+
         return created_org
 
     async def ensure_user_organization(self, user: UserModel) -> OrganizationModel:
@@ -112,10 +149,6 @@ class OrganizationService:
         
         if org:
             # Join as MEMBER if not already
-            # We need to check if they are already a member to avoid DB constraints or unnecessary writes
-            # The repo.add_member handles check? 
-            # Repo implementation: "Check if already member... if not existing: append"
-            # So it's safe to call.
             await self.repo.add_member(org.id, user.id, OrganizationRoleEnum.MEMBER)
             
             # Write FGA tuple for member
@@ -134,6 +167,11 @@ class OrganizationService:
             except Exception as e:
                 print(f"Failed to write tuple to OpenFGA: {e}")
 
+            # Populate permissions
+            # Since we just added them as member, we can guess, but better to fetch
+            perms = await self.permission_service.get_permissions_for_organization(user.id, org.id)
+            org.permissions = perms
+            
             return org
         else:
             # Create new Org as ADMIN
@@ -144,3 +182,4 @@ class OrganizationService:
                 domain=domain
             )
             return await self.create_organization(new_org, user.id)
+

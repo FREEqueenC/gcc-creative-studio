@@ -118,6 +118,25 @@ class WorkspaceMemberAssociation(Base):
         return self.user.email if self.user else "unknown"
 
 
+class WorkspacePermissions(BaseModel):
+    """
+    Computed permissions for the current user on this workspace.
+    """
+    can_manage_members: bool = False
+    can_edit: bool = False
+    can_delete: bool = False
+    can_view_workflows: bool = False
+    can_manage_workflows: bool = False
+    can_view_images: bool = False
+    can_generate_images: bool = False
+    can_view_videos: bool = False
+    can_generate_videos: bool = False
+    can_view_audio: bool = False
+    can_generate_audio: bool = False
+    can_view_vto: bool = False
+    can_generate_vto: bool = False
+
+
 class WorkspaceModel(BaseDocument):
     """
     COLLECTION: workspaces (Root-Level Collection)
@@ -138,3 +157,8 @@ class WorkspaceModel(BaseDocument):
     )
     organization_id: Optional[int] = None
     organization_name: Optional[str] = None
+    
+    permissions: Optional[WorkspacePermissions] = Field(
+        default=None,
+        description="Computed permissions for the current user."
+    )

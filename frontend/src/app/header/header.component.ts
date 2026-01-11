@@ -24,8 +24,8 @@ import {environment} from '../../environments/environment';
 import {UserModel} from '../common/models/user.model';
 import {animate, style, transition, trigger} from '@angular/animations';
 import {BreakpointObserver, Breakpoints} from '@angular/cdk/layout';
-import {Subject} from 'rxjs';
-import {takeUntil} from 'rxjs/operators';
+import {Subject, Observable, of} from 'rxjs';
+import {takeUntil, switchMap, shareReplay} from 'rxjs/operators';
 import {isPlatformBrowser} from '@angular/common';
 
 @Component({
@@ -54,6 +54,7 @@ export class HeaderComponent implements OnDestroy {
   currentUser: UserModel | null;
   menuFixed = false;
   menuIsHovered = false;
+  isAdmin$: Observable<boolean>;
 
   isDesktop = false;
   private readonly destroy$ = new Subject<void>();
@@ -92,6 +93,15 @@ export class HeaderComponent implements OnDestroy {
       );
 
     this.currentUser = this.userService.getUserDetails();
+
+    this.isAdmin$ = this.authService.currentUser$.pipe(
+      switchMap(user => {
+        if (!user) return of(false);
+        // Use the flag returned by the backend
+        return of(!!user.isSuperAdmin);
+      }),
+      shareReplay(1)
+    );
 
     this.breakpointObserver
       .observe([Breakpoints.Medium, Breakpoints.Large, Breakpoints.XLarge])

@@ -25,16 +25,6 @@ from src.common.base_repository import BaseDocument
 from src.database import Base
 
 
-class UserRoleEnum(str, Enum):
-    """
-    Defines the distinct roles a user can have within the application,
-    enabling role-based access control.
-    """
-
-    USER = "user"  # Basic access to browse and use public features.
-    CREATOR = "creator"  # Can create and manage their own content.
-    ADMIN = "admin"  # Has full administrative privileges, including user management.
-
 
 class User(Base):
     """
@@ -44,6 +34,7 @@ class User(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     email: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
+    # TODO: Deprecated. Will be removed in future release. Use OpenFGA.
     roles: Mapped[List[str]] = mapped_column(ARRAY(String), default=[])
     name: Mapped[str] = mapped_column(String, default="")
     picture: Mapped[str] = mapped_column(String, default="")
@@ -76,6 +67,7 @@ class UserOrganizationSummary(BaseModel):
     domain: Optional[str] = None
     role: str
 
+
 class UserModel(BaseDocument):
     """
     Represents a user document (DTO) for the API.
@@ -84,22 +76,24 @@ class UserModel(BaseDocument):
     # ID is required for Read DTOs
     id: int
     email: str
-    roles: List[UserRoleEnum] = Field(default_factory=list)
+    # TODO: Deprecated. Will be removed in future release. Use OpenFGA.
+    roles: List[str] = Field(default_factory=list, description="Deprecated. Use OpenFGA for authorization.")
     name: str
     picture: str = ""
+    is_super_admin: bool = False
     organizations: List[UserOrganizationSummary] = Field(default_factory=list)
 
     @field_validator("roles", mode="after")
     @classmethod
     def default_to_user_role(
-        cls, roles: List[UserRoleEnum]
-    ) -> List[UserRoleEnum]:
+        cls, roles: List[str]
+    ) -> List[str]:
         """
         Ensures that if the 'roles' list is empty after initialization,
-        it defaults to containing the 'USER' role.
+        it defaults to containing the 'user' role.
         """
         if not roles:
-            return [UserRoleEnum.USER]
+            return ["user"]
         return roles
 
     @field_validator("organizations", mode="before")

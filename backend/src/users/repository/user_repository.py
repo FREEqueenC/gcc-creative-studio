@@ -57,7 +57,9 @@ class UserRepository(BaseRepository[User, UserModel]):
         Performs a paginated query that includes the total document count.
         """
         # 1. Build the base query
-        query = select(self.model)
+        query = select(self.model).options(
+            selectinload(self.model.organizations).selectinload(UserOrganization.organization)
+        )
         
         if search_dto.email:
             query = query.where(self.model.email == search_dto.email)

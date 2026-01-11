@@ -15,27 +15,21 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi import status as Status
 
-from src.auth.auth_service import RoleChecker, get_current_user_model as get_current_user
+from src.auth.auth_service import get_current_user_model as get_current_user
 from src.galleries.dto.gallery_response_dto import MediaItemResponse
 from src.images.dto.create_imagen_dto import CreateImagenDto
 from src.images.dto.upscale_imagen_dto import UpscaleImagenDto
 from src.images.dto.vto_dto import VtoDto
 from src.images.imagen_service import ImagenService
 from src.images.schema.imagen_result_model import ImageGenerationResult
-from src.users.user_model import UserModel, UserRoleEnum
+from src.users.user_model import UserModel
 from src.workspaces.workspace_auth_guard import workspace_auth_service
 from src.workspaces.repository.workspace_repository import WorkspaceRepository
-
-# Define role checkers for convenience
-user_only = Depends(
-    RoleChecker(allowed_roles=[UserRoleEnum.USER, UserRoleEnum.ADMIN])
-)
 
 router = APIRouter(
     prefix="/api/images",
     tags=["Google Imagen APIs"],
     responses={404: {"description": "Not found"}},
-    dependencies=[user_only],
 )
 
 

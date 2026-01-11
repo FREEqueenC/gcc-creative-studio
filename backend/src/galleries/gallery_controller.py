@@ -14,12 +14,12 @@
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from src.auth.auth_service import RoleChecker, get_current_user_model as get_current_user
+from src.auth.auth_service import get_current_user_model as get_current_user
 from src.common.dto.pagination_response_dto import PaginationResponseDto
 from src.galleries.dto.gallery_response_dto import MediaItemResponse
 from src.galleries.dto.gallery_search_dto import GallerySearchDto
 from src.galleries.gallery_service import GalleryService
-from src.users.user_model import UserModel, UserRoleEnum
+from src.users.user_model import UserModel
 from src.workspaces.repository.workspace_repository import WorkspaceRepository
 from src.workspaces.workspace_auth_guard import workspace_auth_service
 
@@ -27,16 +27,7 @@ router = APIRouter(
     prefix="/api/gallery",
     tags=["Creative Studio Media Gallery"],
     responses={404: {"description": "Not found"}},
-    dependencies=[
-        Depends(
-            RoleChecker(
-                allowed_roles=[
-                    UserRoleEnum.ADMIN,
-                    UserRoleEnum.USER,
-                ]
-            )
-        )
-    ],
+    dependencies=[Depends(get_current_user)],
 )
 
 

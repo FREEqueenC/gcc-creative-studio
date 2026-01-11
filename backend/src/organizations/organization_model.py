@@ -37,7 +37,8 @@ class Organization(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String, nullable=False)
-    domain: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=True) # Nullable for "Personal" orgs if we want, or just use "gmail.com" etc.
+    # For "Personal" orgs we just use "gmail.com" etc.
+    domain: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
     
     created_at: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True),
@@ -75,6 +76,16 @@ class UserOrganization(Base):
     user: Mapped["User"] = relationship(back_populates="organizations")
     organization: Mapped["Organization"] = relationship(back_populates="members")
 
+class OrganizationPermissions(BaseModel):
+    """
+    Computed permissions for the current user on this organization.
+    """
+    can_manage_members: bool = False
+    can_edit: bool = False
+    can_delete: bool = False
+    is_admin: bool = False
+
+
 class OrganizationModel(BaseDocument):
     """
     DTO for Organization.
@@ -85,4 +96,8 @@ class OrganizationModel(BaseDocument):
     role: Optional[OrganizationRoleEnum] = Field(
         default=None, 
         description="The role of the current user in this organization (if applicable)."
+    )
+    permissions: Optional[OrganizationPermissions] = Field(
+        default=None,
+        description="Computed permissions for the current user."
     )

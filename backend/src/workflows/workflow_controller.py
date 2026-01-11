@@ -14,27 +14,23 @@
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status, Header
 
-from src.auth.auth_service import RoleChecker, get_current_user_model
+from src.auth.auth_service import get_current_user_model
 from src.common.dto.pagination_response_dto import PaginationResponseDto
-from src.users.user_model import UserModel, UserRoleEnum
+from src.users.user_model import UserModel
 from src.workflows.dto.workflow_search_dto import WorkflowSearchDto
 from src.workflows.schema.workflow_model import WorkflowCreateDto, WorkflowModel, WorkflowExecuteDto
 from src.workflows.workflow_service import WorkflowService
 from src.workspaces.workspace_auth_guard import workspace_auth_service
 
+from src.core.fga import check_permission
+from src.auth.permissions import require_super_admin
+from src.auth.session import get_current_user
+
 router = APIRouter(
     prefix="/api/workflows",
     tags=["Workflows"],
     responses={404: {"description": "Not found"}},
-    dependencies=[
-        Depends(
-            RoleChecker(
-                allowed_roles=[
-                    UserRoleEnum.ADMIN,
-                ]
-            )
-        )
-    ],
+    dependencies=[Depends(require_super_admin)],
 )
 
 

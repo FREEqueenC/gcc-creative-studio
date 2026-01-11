@@ -37,7 +37,7 @@ from src.images.repository.media_item_repository import MediaRepository
 from src.source_assets.repository.source_asset_repository import (
     SourceAssetRepository,
 )
-from src.users.user_model import UserModel, UserRoleEnum
+from src.users.user_model import UserModel
 from src.workspaces.repository.workspace_repository import WorkspaceRepository
 from src.workspaces.schema.workspace_model import WorkspaceScopeEnum
 from src.workspaces.workspace_auth_guard import workspace_auth_service
@@ -232,7 +232,7 @@ class GalleryService:
         Performs a paginated and filtered search for media items.
         Authorization is handled by a dependency in the controller.
         """
-        is_admin = UserRoleEnum.ADMIN in current_user.roles
+        is_admin = current_user.is_super_admin
         # If the user is not an admin, force the search to only show completed items
         if not is_admin:
             search_dto.status = JobStatusEnum.COMPLETED

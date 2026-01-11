@@ -60,6 +60,16 @@ class WorkspaceRepository(BaseRepository[Workspace, WorkspaceModel]):
             select(self.model)
             .where(self.model.scope == WorkspaceScopeEnum.PUBLIC.value)
             .where(self.model.organization_id == None)
+            .options(selectinload(self.model.organization))
+        )
+        workspaces = result.scalars().all()
+        return [self._map_to_schema(w) for w in workspaces]
+
+    async def get_all_workspaces(self) -> List[WorkspaceModel]:
+        """Finds all workspaces in the system (for Super Admins)."""
+        result = await self.db.execute(
+            select(self.model)
+            .options(selectinload(self.model.organization))
         )
         workspaces = result.scalars().all()
         return [self._map_to_schema(w) for w in workspaces]

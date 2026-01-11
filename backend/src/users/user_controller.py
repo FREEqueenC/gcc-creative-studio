@@ -14,16 +14,17 @@
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from src.auth.auth_service import RoleChecker, get_current_user_model as get_current_user
+from typing import Dict, Any
+from src.core.fga import check_permission
+from src.auth.permissions import require_super_admin
+from src.auth.session import get_current_user
+from src.auth.auth_service import get_current_user_model
+from src.users.user_model import UserModel
 from src.common.dto.pagination_response_dto import PaginationResponseDto
-from src.users.dto.user_create_dto import UserCreateDto, UserUpdateRoleDto
 from src.users.dto.user_search_dto import UserSearchDto
-from src.users.user_model import UserModel, UserRoleEnum
 from src.users.user_service import UserService
 
-# Define role checkers for convenience and clean code
-admin_only = Depends(RoleChecker(allowed_roles=[UserRoleEnum.ADMIN]))
-any_authenticated_user = Depends(get_current_user)
+# Define FGA checker for Super Admin (Removed local definition)
 
 router = APIRouter(
     prefix="/api/users",
@@ -37,7 +38,7 @@ router = APIRouter(
 async def get_my_profile(
     # This is the magic. FastAPI runs get_current_user, which authenticates
     # the user and provides their UserData object here.
-    current_user: UserModel = Depends(get_current_user),
+    current_user: UserModel = Depends(get_current_user_model),
 ):
     """
     Retrieves the profile for the currently authenticated user.
@@ -56,7 +57,7 @@ async def get_my_profile(
     "",
     response_model=PaginationResponseDto[UserModel],
     summary="List All Users (Admin Only)",
-    dependencies=[admin_only],
+    dependencies=[Depends(require_super_admin)],
 )
 async def list_all_users(
     search_params: UserSearchDto = Depends(),
@@ -73,7 +74,7 @@ async def list_all_users(
     "/{user_id}",
     response_model=UserModel,
     summary="Get User by ID (Admin Only)",
-    dependencies=[admin_only],
+    dependencies=[Depends(require_super_admin)],
 )
 async def get_user_by_id(user_id: int, user_service: UserService = Depends()):
     """
@@ -87,32 +88,11 @@ async def get_user_by_id(user_id: int, user_service: UserService = Depends()):
     return user
 
 
-@router.put(
-    "/{user_id}",
-    response_model=UserModel,
-    summary="Update a User's Role (Admin Only)",
-    dependencies=[admin_only],
-)
-async def update_user_role(
-    user_id: int,
-    role_data: UserUpdateRoleDto,
-    user_service: UserService = Depends(),
-):
-    """
-    Updates the role of a specific user (e.g., promote to 'admin' or 'creator').
-    This functionality is restricted to administrators.
-    """
-    updated_user = await user_service.update_user_role(user_id, role_data)
-    if not updated_user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return updated_user
-
-
 @router.delete(
     "/{user_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete a User (Admin Only)",
-    dependencies=[admin_only],
+    dependencies=[Depends(require_super_admin)],
 )
 async def delete_user(user_id: int, user_service: UserService = Depends()):
     """

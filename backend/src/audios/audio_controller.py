@@ -20,9 +20,12 @@ from google.cloud import speech
 
 from src.audios.audio_service import AudioService
 from src.audios.dto.create_audio_dto import CreateAudioDto
-from src.auth.auth_service import RoleChecker, get_current_user_model as get_current_user
+from src.auth.auth_service import get_current_user_model as get_current_user
 from src.galleries.dto.gallery_response_dto import MediaItemResponse
-from src.users.user_model import UserModel, UserRoleEnum
+from src.users.user_model import UserModel
+
+from src.workspaces.repository.workspace_repository import WorkspaceRepository
+from src.workspaces.workspace_auth_guard import workspace_auth_service
 
 logger = logging.getLogger(__name__)
 
@@ -30,16 +33,6 @@ router = APIRouter(
     prefix="/api/audios",
     tags=["Audio Generation - Chirp 3 HD, Lyria, Google TTS"],
     responses={404: {"description": "Not found"}},
-    dependencies=[
-        Depends(
-            RoleChecker(
-                allowed_roles=[
-                    UserRoleEnum.ADMIN,
-                    UserRoleEnum.USER,
-                ]
-            )
-        )
-    ],
 )
 
 
@@ -48,10 +41,18 @@ async def generate_audio(
     create_audio_dto: CreateAudioDto,
     current_user: UserModel = Depends(get_current_user),
     audio_service: AudioService = Depends(),
+    workspace_repo: WorkspaceRepository = Depends(),
 ):
     """
     Generates audio based on the selected model (Lyria for music, Chirp/Gemini for speech).
     """
+    # Authorize user for the workspace
+    await workspace_auth_service.authorize(
+        workspace_id=create_audio_dto.workspace_id,
+        user=current_user,
+        workspace_repo=workspace_repo,
+    )
+
     return await audio_service.generate_audio(create_audio_dto, current_user)
 
 

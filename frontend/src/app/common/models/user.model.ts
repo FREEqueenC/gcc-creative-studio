@@ -36,4 +36,5 @@ export interface UserModel {
   createdAt?: string;
   updatedAt?: string;
   organizations?: UserOrganizationSummary[];
+  isSuperAdmin?: boolean;
 }

@@ -9,6 +9,7 @@ from pydantic import BaseModel
 # Import UserService to bridge session to DB user
 from src.users.user_service import UserService
 from src.users.user_model import UserModel
+# from src.users.google_directory_service import google_directory_service
 
 # We will use environment variables for configuration
 GOOGLE_TOKEN_AUDIENCE = os.getenv("GOOGLE_TOKEN_AUDIENCE")
@@ -65,13 +66,22 @@ async def auth_callback(request: Request) -> Dict[str, Any]:
             detail="Could not get user info",
         )
     
-    # TODO: Fetch groups if needed. For now we just return user info.
-    # If we need to fetch groups from Directory API, we would do it here using the token.
-    # For this refactor, we'll start with basic profile.
+    # TODO: Fetch groups from Google Directory API in the future
+    # We do this here to store them in the session for Contextual Tuples
+    # email = user_info.get("email")
+    # if email:
+    #     try:
+    #         groups = google_directory_service.get_user_groups(email)
+    #         user_info["groups"] = groups
+    #     except Exception as e:
+    #         # Log error but don't fail login
+    #         # logger.error(f"Failed to fetch groups for {email}: {e}")
+    #         user_info["groups"] = []
     
     return user_info
 
 from src.auth.session import get_current_user
+from src.core.fga import check_permission
 
 from src.organizations.organization_service import OrganizationService
 from src.workspaces.workspace_service import WorkspaceService
@@ -117,29 +127,17 @@ async def get_current_user_model(
     # To avoid circular imports if workspace_service imports auth_service (unlikely but possible)
     # But here we are in auth_service.
     # We need to add workspace_service to arguments.
+    # Ensure default workspaces exist (Personal + Public for Enterprise)
+    # We need to add workspace_service to arguments.
     await workspace_service.ensure_default_workspaces(user_model, org)
+
+    # Check if user is Super Admin (Platform Level)
+    # We must use the DB ID because that's what we write to FGA
+    # Construct a minimal user dict with the correct ID for the check
+    check_user = {"id": str(user_model.id)}
+    is_super_admin = await check_permission(check_user, "platform", "creative-studio", "super_admin")
+    user_model.is_super_admin = is_super_admin
 
     return user_model
 
-class RoleChecker:
-    def __init__(self, allowed_roles: list[str]):
-        self.allowed_roles = allowed_roles
 
-    def __call__(self, user: UserModel = Depends(get_current_user_model)) -> UserModel:
-        # Check if user has any of the allowed roles
-        # User roles are stored as list of strings or Enums in DB
-        # UserModel.roles is likely list[UserRoleEnum] or list[str]
-        
-        # We assume user.roles is a list of Enums or strings.
-        # We convert allowed_roles to strings for comparison if needed, 
-        # or rely on Enum comparison if allowed_roles are Enums.
-        # user_controller passed UserRoleEnum.ADMIN.
-        
-        for role in self.allowed_roles:
-            if role in user.roles:
-                return user
-                
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Operation not permitted",
-        )

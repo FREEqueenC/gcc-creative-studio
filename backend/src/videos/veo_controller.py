@@ -15,25 +15,19 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi import status as Status
 
-from src.auth.auth_service import RoleChecker, get_current_user_model as get_current_user
+from src.auth.auth_service import get_current_user_model as get_current_user
 from src.galleries.dto.gallery_response_dto import MediaItemResponse
-from src.users.user_model import UserModel, UserRoleEnum
+from src.users.user_model import UserModel
 from src.videos.dto.concatenate_videos_dto import ConcatenateVideosDto
 from src.videos.dto.create_veo_dto import CreateVeoDto
 from src.videos.veo_service import VeoService
 from src.workspaces.repository.workspace_repository import WorkspaceRepository
 from src.workspaces.workspace_auth_guard import workspace_auth_service
 
-# Define role checkers for convenience
-user_only = Depends(
-    RoleChecker(allowed_roles=[UserRoleEnum.USER, UserRoleEnum.ADMIN])
-)
-
 router = APIRouter(
     prefix="/api/videos",
     tags=["Google Video APIs"],
     responses={404: {"description": "Not found"}},
-    dependencies=[user_only],
 )
 
 

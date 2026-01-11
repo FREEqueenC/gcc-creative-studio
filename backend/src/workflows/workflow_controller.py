@@ -14,7 +14,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status, Header
 
-from src.auth.auth_service import RoleChecker, get_current_user
+from src.auth.auth_service import RoleChecker, get_current_user_model
 from src.common.dto.pagination_response_dto import PaginationResponseDto
 from src.users.user_model import UserModel, UserRoleEnum
 from src.workflows.dto.workflow_search_dto import WorkflowSearchDto
@@ -41,7 +41,7 @@ router = APIRouter(
 @router.post("/search", response_model=PaginationResponseDto[WorkflowModel])
 async def search_workflows(
     search_params: WorkflowSearchDto,
-    current_user: UserModel = Depends(get_current_user),
+    current_user: UserModel = Depends(get_current_user_model),
     workflow_service: WorkflowService = Depends(),
 ):
     """Lists all workflows for the current user."""
@@ -54,7 +54,7 @@ async def search_workflows(
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def create_workflow(
     workflow_data: WorkflowCreateDto,
-    current_user: UserModel = Depends(get_current_user),
+    current_user: UserModel = Depends(get_current_user_model),
     workflow_service: WorkflowService = Depends(),
 ):
     """Creates a new workflow definition."""
@@ -69,7 +69,7 @@ async def create_workflow(
 async def update_workflow(
     workflow_id: str,
     workflow_data: WorkflowCreateDto,
-    current_user: UserModel = Depends(get_current_user),
+    current_user: UserModel = Depends(get_current_user_model),
     workflow_service: WorkflowService = Depends(),
 ):
     """Updates an existing workflow definition."""
@@ -99,7 +99,7 @@ async def update_workflow(
 @router.get("/{workflow_id}", response_model=WorkflowModel)
 async def get_workflow(
     workflow_id,
-    current_user: UserModel = Depends(get_current_user),
+    current_user: UserModel = Depends(get_current_user_model),
     workflow_service: WorkflowService = Depends(),
 ):
     try:
@@ -120,7 +120,7 @@ async def get_workflow(
 )
 async def delete_workflow(
     workflow_id: str,
-    current_user: UserModel = Depends(get_current_user),
+    current_user: UserModel = Depends(get_current_user_model),
     workflow_service: WorkflowService = Depends(),
 ):
     """
@@ -161,7 +161,7 @@ async def execute_workflow(
 async def get_execution(
     workflow_id: str,
     execution_id: str,
-    current_user: UserModel = Depends(get_current_user),
+    current_user: UserModel = Depends(get_current_user_model),
     workflow_service: WorkflowService = Depends(),
 ):
     """Retrieves the details of a workflow execution."""
@@ -184,7 +184,7 @@ async def list_executions(
     limit: int = 10,
     page_token: str = None,
     status: str = None,
-    current_user: UserModel = Depends(get_current_user),
+    current_user: UserModel = Depends(get_current_user_model),
     workflow_service: WorkflowService = Depends(),
 ):
     """Lists executions for a workflow."""

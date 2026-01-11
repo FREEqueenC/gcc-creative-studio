@@ -164,10 +164,10 @@ class MediaItem(Base):
     source_media_items: Mapped[Optional[List[dict]]] = mapped_column(JSONB, nullable=True)
     
     gcs_uris: Mapped[List[str]] = mapped_column(ARRAY(String), default=[])
+    thumbnail_uris: Mapped[List[str]] = mapped_column(ARRAY(String), default=[])
 
     # Video specific
     duration_seconds: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-    thumbnail_uris: Mapped[List[str]] = mapped_column(ARRAY(String), default=[])
     comment: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
     # Image specific

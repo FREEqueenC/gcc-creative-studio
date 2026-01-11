@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request, Depends, HTTPException, status
 from fastapi.responses import RedirectResponse
-from src.auth.auth_service import login_google, auth_callback
+from src.auth.auth_service import login_google, auth_callback, get_current_user_model
 from src.auth.session import get_current_user
 
 router = APIRouter(prefix="/api", tags=["Authentication"])
@@ -31,7 +31,7 @@ async def logout(request: Request):
     return RedirectResponse(url="/")
 
 @router.get("/me")
-async def get_me(user: dict = Depends(get_current_user)):
+async def get_me(user = Depends(get_current_user_model)):
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
     return user

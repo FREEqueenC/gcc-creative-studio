@@ -185,7 +185,7 @@
           >
             <ng-container *ngIf="media.mimeType?.startsWith('image/')">
               <img
-                *ngFor="let url of media.presignedUrls; let i = index"
+                *ngFor="let url of (media.presignedThumbnailUrls?.length ? media.presignedThumbnailUrls : media.presignedUrls); let i = index"
                 class="absolute top-0 left-0 h-full w-full cursor-pointer object-cover transition-opacity duration-500 group-hover:opacity-80"
                 [src]="url"
                 [alt]="getShortPrompt(media.originalPrompt)"

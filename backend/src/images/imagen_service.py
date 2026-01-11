@@ -21,6 +21,7 @@ import os
 import time
 import random
 import uuid
+import pathlib
 from typing import List, Optional, Literal
 
 from fastapi import Depends
@@ -43,6 +44,7 @@ from src.common.schema.media_item_model import (
     SourceAssetLink,
     SourceMediaItemLink,
 )
+from src.common.media_utils import generate_image_thumbnail_from_gcs
 from src.common.storage_service import GcsService
 from src.config.config_service import config_service
 from src.galleries.dto.gallery_response_dto import MediaItemResponse
@@ -116,6 +118,7 @@ def _process_vto_in_background(
                     media_repo = MediaRepository(db)
                     iam_signer_credentials = IamSignerCredentials()
                     source_asset_repo = SourceAssetRepository(db)
+                    gcs_service = GcsService()
                     cfg = config_service
 
                     try:
@@ -255,6 +258,15 @@ def _process_vto_in_background(
                             if img.image and img.image.gcs_uri
                         ]
 
+                        # Generate thumbnails
+                        thumbnail_uris = []
+                        for uri in permanent_gcs_uris:
+                            thumb_uri = generate_image_thumbnail_from_gcs(gcs_service, uri, mime_type.value)
+                            if thumb_uri:
+                                thumbnail_uris.append(thumb_uri)
+                            else:
+                                thumbnail_uris.append(uri)
+
                         # Generate presigned URLs
                         presigned_urls = [
                             iam_signer_credentials.generate_presigned_url(uri)
@@ -268,6 +280,7 @@ def _process_vto_in_background(
                         update_data = {
                             "status": JobStatusEnum.COMPLETED,
                             "gcs_uris": permanent_gcs_uris,
+                            "thumbnail_uris": thumbnail_uris,
                             "generation_time": generation_time,
                             "num_media": len(permanent_gcs_uris),
                             "mime_type": mime_type,
@@ -424,6 +437,10 @@ def gemini_flash_image_preview_generate_image(
                 time.sleep(2**attempt + random.random())
                 continue
             raise e
+
+
+
+
 
 
 # --- STANDALONE WORKER FUNCTION ---
@@ -722,6 +739,15 @@ def _process_image_in_background(
                                 if img.image and img.image.gcs_uri
                             ]
 
+                        # Generate thumbnails
+                        thumbnail_uris = []
+                        for uri in permanent_gcs_uris:
+                            thumb_uri = generate_image_thumbnail_from_gcs(gcs_service, uri, mime_type.value)
+                            if thumb_uri:
+                                thumbnail_uris.append(thumb_uri)
+                            else:
+                                thumbnail_uris.append(uri)
+
                         end_time = time.monotonic()
                         generation_time = end_time - start_time
 
@@ -730,6 +756,7 @@ def _process_image_in_background(
                             "status": JobStatusEnum.COMPLETED,
                             "prompt": rewritten_prompt,
                             "gcs_uris": permanent_gcs_uris,
+                            "thumbnail_uris": thumbnail_uris,
                             "generation_time": generation_time,
                             "num_media": len(permanent_gcs_uris),
                             "grounding_metadata": grounding_metadata,

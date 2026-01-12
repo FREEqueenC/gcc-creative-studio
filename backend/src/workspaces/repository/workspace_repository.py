@@ -28,6 +28,7 @@ from src.workspaces.schema.workspace_model import (
     WorkspaceModel,
     WorkspaceScopeEnum,
 )
+from src.workspaces.schema.workspace_model import WorkspaceRoleEnum
 
 
 class WorkspaceRepository(BaseRepository[Workspace, WorkspaceModel]):
@@ -209,6 +210,27 @@ class WorkspaceRepository(BaseRepository[Workspace, WorkspaceModel]):
         
         # We need to map the SQLAlchemy models back to the Pydantic model
         return self._map_to_schema(workspace)
+
+    async def update_member_role(self, workspace_id: int, user_id: int, role: WorkspaceRoleEnum) -> Optional[WorkspaceModel]:
+        """Updates a user's role in a workspace."""
+        from sqlalchemy import update
+        
+        # Update the role in the association table
+        stmt = (
+            update(WorkspaceMemberAssociation)
+            .where(WorkspaceMemberAssociation.workspace_id == workspace_id)
+            .where(WorkspaceMemberAssociation.user_id == user_id)
+            .values(role=role.value)
+        )
+        
+        result = await self.db.execute(stmt)
+        await self.db.commit()
+        
+        if result.rowcount == 0:
+            return None
+            
+        # Return the updated workspace
+        return await self.get_by_id(workspace_id)
 
     async def find_by_member_id(self, user_id: int) -> List[WorkspaceModel]:
         """Finds all workspaces where the user is a member."""

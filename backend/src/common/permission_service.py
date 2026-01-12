@@ -88,3 +88,22 @@ class PermissionService:
                 permissions[perm_name] = response.allowed
                 
         return permissions
+    async def has_permission(self, user: Any, object_type: str, object_id: str, relation: str) -> bool:
+        """
+        Checks a single permission for a user.
+        """
+        try:
+            # Handle both UserModel and user_id (int)
+            user_id = user.id if hasattr(user, "id") else user
+            
+            response = await self.client.check(
+                ClientCheckRequest(
+                    user=f"user:{user_id}",
+                    relation=relation,
+                    object=f"{object_type}:{object_id}"
+                )
+            )
+            return response.allowed
+        except Exception as e:
+            print(f"FGA check failed: {e}")
+            return False

@@ -101,6 +101,24 @@ export class UserService {
       .pipe(catchError(this.handleError));
   }
 
+  // PUT: Update Organization Role
+  updateOrganizationRole(orgId: number, userId: number, role: string): Observable<any> {
+    const url = `${environment.backendURL}/organizations/${orgId}/users/${userId}/role`;
+    const payload = { role };
+    return this.http
+      .put(url, payload, this.httpOptions)
+      .pipe(catchError(this.handleError));
+  }
+
+  // PUT: Update Workspace Role
+  updateWorkspaceRole(workspaceId: number, userId: number, role: string): Observable<any> {
+    const url = `${environment.backendURL}/workspaces/${workspaceId}/users/${userId}/role`;
+    const payload = { role };
+    return this.http
+      .put(url, payload, this.httpOptions)
+      .pipe(catchError(this.handleError));
+  }
+
   // Basic error handling
   private handleError(error: HttpErrorResponse) {
     let errorMessage = 'An unknown error occurred!';

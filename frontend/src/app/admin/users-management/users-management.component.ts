@@ -117,11 +117,21 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
     });
   }
 
-  onOrganizationChange() {
+  onOrganizationChange(newVal: number | null) {
+    console.log('onOrganizationChange:', newVal, typeof newVal);
+    this.selectedOrganizationId = newVal;
+    if (this.selectedOrganizationId != null) {
+      this.selectedWorkspaceId = null; // Clear workspace filter
+    }
     this.resetPaginationAndFetch();
   }
 
-  onWorkspaceChange() {
+  onWorkspaceChange(newVal: number | null) {
+    console.log('onWorkspaceChange:', newVal, typeof newVal);
+    this.selectedWorkspaceId = newVal;
+    if (this.selectedWorkspaceId != null) {
+      this.selectedOrganizationId = null; // Clear organization filter
+    }
     this.resetPaginationAndFetch();
   }
 
@@ -229,15 +239,80 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
 
     // Using a switch statement makes it easy to add more roles later
     switch (roleLower) {
+      case 'admin':
       case UserRolesEnum.ADMIN.toLowerCase():
         return '!bg-amber-500/20 !text-amber-300';
-      case UserRolesEnum.USER.toLowerCase():
+      case 'editor':
         return '!bg-blue-500/20 !text-blue-300';
+      case 'viewer':
+      case 'member':
+      case UserRolesEnum.USER.toLowerCase():
+        return '!bg-gray-500/20 !text-gray-300';
       case UserRolesEnum.CREATOR.toLowerCase():
         return '!bg-purple-500/20 !text-purple-300';
       default:
         // It's good practice to have a default style
         return '!bg-gray-500/20 !text-gray-300';
+    }
+  }
+
+  // --- Role Management ---
+
+  get isContextSelected(): boolean {
+    const selected = this.selectedOrganizationId != null || this.selectedWorkspaceId != null;
+    // console.log('isContextSelected:', selected, 'Org:', this.selectedOrganizationId, 'WS:', this.selectedWorkspaceId);
+    return selected;
+  }
+
+  get availableRoles(): string[] {
+    if (this.selectedOrganizationId != null) {
+      return ['admin', 'member'];
+    } else if (this.selectedWorkspaceId != null) {
+      return ['admin', 'editor', 'viewer'];
+    }
+    return [];
+  }
+
+  getContextRole(user: UserModel): string {
+    if (this.selectedOrganizationId != null) {
+      const org = user.organizations?.find(o => o.id === this.selectedOrganizationId);
+      // console.log('getContextRole (Org):', user.name, this.selectedOrganizationId, org);
+      return org?.role || 'member'; 
+    } else if (this.selectedWorkspaceId != null) {
+      const ws = user.workspaces?.find(w => w.id === this.selectedWorkspaceId);
+      return ws?.role || 'viewer';
+    }
+    return user.roles?.[0] || 'user';
+  }
+
+
+
+  async changeRole(user: UserModel, newRole: string) {
+    console.log('changeRole called:', user.id, newRole, 'Org:', this.selectedOrganizationId, 'WS:', this.selectedWorkspaceId);
+    if (!this.isContextSelected) {
+      console.warn('changeRole: No context selected');
+      return;
+    }
+
+    this.isLoading = true;
+    try {
+      if (this.selectedOrganizationId != null) {
+        console.log('Updating Org Role...');
+        await firstValueFrom(this.userService.updateOrganizationRole(this.selectedOrganizationId, Number(user.id), newRole));
+      } else if (this.selectedWorkspaceId != null) {
+        console.log('Updating Workspace Role...');
+        await firstValueFrom(this.userService.updateWorkspaceRole(this.selectedWorkspaceId, Number(user.id), newRole));
+      }
+      
+      handleSuccessSnackbar(this._snackBar, 'Role updated successfully!');
+      // Update local state to reflect change immediately without full reload if possible, 
+      // but fetching page is safer to ensure consistency.
+      this.fetchPage(this.currentPageIndex);
+    } catch (err) {
+      console.error(`Error updating role for user ${user.id}:`, err);
+      handleErrorSnackbar(this._snackBar, err, 'Update Role');
+    } finally {
+      this.isLoading = false;
     }
   }
 }

@@ -244,6 +244,82 @@ class WorkspaceService:
             
         return workspaces
 
+    async def update_member_role(
+        self, workspace_id: int, user_id: int, role: WorkspaceRoleEnum, current_user: UserModel
+    ) -> WorkspaceModel:
+        """
+        Updates a user's role in a workspace.
+        - Verifies permissions (Workspace Admin or Owner).
+        - Updates DB.
+        - Updates OpenFGA.
+        """
+        from fastapi import HTTPException, status
+        
+        # 1. Verify Permissions
+        # Check if user is Workspace Admin or Owner
+        is_admin = await self.permission_service.has_permission(
+            current_user, "workspace", str(workspace_id), "admin"
+        )
+        
+        if not is_admin:
+             raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient permissions to update member role."
+            )
+
+        # 2. Update DB
+        updated_workspace = await self.repo.update_member_role(workspace_id, user_id, role)
+        if not updated_workspace:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Workspace or user not found."
+            )
+
+        # 3. Update OpenFGA
+        # Remove old roles (viewer, editor, admin)
+        try:
+            await fga_client.write(
+                ClientWriteRequest(
+                    deletes=[
+                        ClientTuple(
+                            user=f"user:{user_id}",
+                            relation="viewer",
+                            object=f"workspace:{workspace_id}",
+                        ),
+                        ClientTuple(
+                            user=f"user:{user_id}",
+                            relation="editor",
+                            object=f"workspace:{workspace_id}",
+                        ),
+                        ClientTuple(
+                            user=f"user:{user_id}",
+                            relation="admin",
+                            object=f"workspace:{workspace_id}",
+                        )
+                    ]
+                )
+            )
+            
+            # Add new role
+            # Map Enum to FGA relation
+            relation = role.value # viewer, editor, admin
+            
+            await fga_client.write(
+                ClientWriteRequest(
+                    writes=[
+                        ClientTuple(
+                            user=f"user:{user_id}",
+                            relation=relation,
+                            object=f"workspace:{workspace_id}",
+                        )
+                    ]
+                )
+            )
+        except Exception as e:
+            print(f"Failed to update OpenFGA tuples: {e}")
+            
+        return updated_workspace
+
     async def search_workspaces(self, user: UserModel, query: str) -> List[WorkspaceModel]:
         """
         Searches for workspaces based on user role.

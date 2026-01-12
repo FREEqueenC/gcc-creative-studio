@@ -103,6 +103,27 @@ class OrganizationRepository(BaseRepository[Organization, OrganizationModel]):
             
         return self._map_to_schema(org)
 
+    async def update_member_role(self, org_id: int, user_id: int, role: OrganizationRoleEnum) -> Optional[OrganizationModel]:
+        """Updates a user's role in an organization."""
+        from sqlalchemy import update
+        
+        # Update the role in the association table
+        stmt = (
+            update(UserOrganization)
+            .where(UserOrganization.organization_id == org_id)
+            .where(UserOrganization.user_id == user_id)
+            .values(role=role.value)
+        )
+        
+        result = await self.db.execute(stmt)
+        await self.db.commit()
+        
+        if result.rowcount == 0:
+            return None
+            
+        # Return the updated organization
+        return await self.get_by_id(org_id)
+
     async def get_user_organizations(self, user_id: int) -> List[OrganizationModel]:
         """Finds all organizations a user belongs to."""
         result = await self.db.execute(

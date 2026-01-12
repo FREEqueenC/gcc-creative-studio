@@ -22,6 +22,7 @@ from src.common.dto.pagination_response_dto import PaginationResponseDto
 from src.workspaces.dto.workspace_search_dto import WorkspaceSearchDto
 from src.workspaces.dto.create_workspace_dto import CreateWorkspaceDto
 from src.workspaces.dto.invite_user_dto import InviteUserDto
+from src.workspaces.dto.update_workspace_role_dto import UpdateWorkspaceRoleDto
 from src.workspaces.schema.workspace_model import WorkspaceModel
 from src.workspaces.workspace_service import WorkspaceService
 
@@ -132,3 +133,23 @@ async def invite_user(
             detail="Workspace or user to invite not found.",
         )
     return updated_workspace
+
+@router.put(
+    "/{workspace_id}/users/{user_id}/role",
+    response_model=WorkspaceModel,
+    summary="Update Member Role",
+)
+async def update_member_role(
+    workspace_id: int,
+    user_id: int,
+    body: "UpdateWorkspaceRoleDto",
+    workspace_service: WorkspaceService = Depends(),
+    current_user: UserModel = Depends(get_current_user),
+):
+    """
+    Updates a user's role in a workspace (e.g. promote to Admin, demote to Viewer).
+    - Requires Workspace Admin or Owner permissions.
+    """
+    return await workspace_service.update_member_role(
+        workspace_id, user_id, body.role, current_user
+    )

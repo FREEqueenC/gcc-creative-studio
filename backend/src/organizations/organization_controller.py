@@ -18,6 +18,7 @@ from src.auth.auth_service import get_current_user
 from src.users.user_model import UserModel
 from src.common.dto.pagination_response_dto import PaginationResponseDto
 from src.organizations.dto.organization_search_dto import OrganizationSearchDto
+from src.organizations.dto.update_organization_role_dto import UpdateOrganizationRoleDto
 from src.organizations.organization_model import OrganizationModel
 from src.organizations.organization_service import OrganizationService
 
@@ -42,3 +43,23 @@ async def list_organizations(
     - Org Admins: Can see only organizations they administer.
     """
     return await organization_service.get_organizations_for_admin(current_user, search_params)
+
+@router.put(
+    "/{org_id}/users/{user_id}/role",
+    response_model=OrganizationModel,
+    summary="Update Member Role",
+)
+async def update_member_role(
+    org_id: int,
+    user_id: int,
+    body: "UpdateOrganizationRoleDto",
+    organization_service: OrganizationService = Depends(),
+    current_user: UserModel = Depends(get_current_user),
+):
+    """
+    Updates a user's role in an organization (e.g. promote to Admin, demote to Member).
+    - Requires Super Admin or Organization Admin permissions.
+    """
+    return await organization_service.update_member_role(
+        org_id, user_id, body.role, current_user
+    )

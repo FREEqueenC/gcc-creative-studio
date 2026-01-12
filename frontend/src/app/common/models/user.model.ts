@@ -27,6 +27,12 @@ export interface UserOrganizationSummary {
   role: string;
 }
 
+export interface UserWorkspaceSummary {
+  id: number;
+  name: string;
+  role: string;
+}
+
 export interface UserModel {
   id?: number | string;
   name?: string;
@@ -36,5 +42,6 @@ export interface UserModel {
   createdAt?: string;
   updatedAt?: string;
   organizations?: UserOrganizationSummary[];
+  workspaces?: UserWorkspaceSummary[];
   isSuperAdmin?: boolean;
 }

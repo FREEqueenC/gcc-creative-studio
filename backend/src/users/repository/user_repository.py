@@ -92,6 +92,10 @@ class UserRepository(BaseRepository[User, UserModel]):
         Performs a paginated query that includes the total document count.
         """
         # 1. Build the base query
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"UserRepository.query: search_dto={search_dto}")
+        
         query = select(self.model).options(
             selectinload(self.model.organizations).selectinload(UserOrganization.organization)
         )
@@ -108,6 +112,11 @@ class UserRepository(BaseRepository[User, UserModel]):
             query = query.join(self.model.organizations).where(
                 UserOrganization.organization_id == search_dto.organization_id
             )
+        elif search_dto.organization_ids:
+             # Filter by list of orgs
+             query = query.join(self.model.organizations).where(
+                UserOrganization.organization_id.in_(search_dto.organization_ids)
+             )
 
         if search_dto.workspace_id:
             # Join with WorkspaceMemberAssociation to filter by workspace

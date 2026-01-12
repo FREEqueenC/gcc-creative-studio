@@ -12,19 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Optional
+from typing import Optional, List
 
 from src.common.dto.base_search_dto import BaseSearchDto
 
 
-class UserSearchDto(BaseSearchDto):
+class OrganizationSearchDto(BaseSearchDto):
     """
-    Data Transfer Object for searching and filtering users.
-    Inherits pagination fields from BaseSearchDto.
+    Data Transfer Object for searching and filtering organizations.
     """
 
-    email: Optional[str] = None
-    role: Optional[str] = None
-    organization_id: Optional[int] = None
-    organization_ids: Optional[list[int]] = None
-    workspace_id: Optional[int] = None
+    name: Optional[str] = None
+    domain: Optional[str] = None
+    ids: Optional[List[int]] = None # For filtering by specific IDs (e.g. for Org Admins)

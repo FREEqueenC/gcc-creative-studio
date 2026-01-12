@@ -27,4 +27,6 @@ export interface Organization {
   domain?: string;
   role?: string;
   permissions?: OrganizationPermissions;
+  createdAt?: string;
+  updatedAt?: string;
 }

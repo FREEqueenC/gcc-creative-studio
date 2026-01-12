@@ -24,7 +24,8 @@ import {
   distinctUntilChanged,
   takeUntil,
 } from 'rxjs/operators';
-import {UserService, PaginatedResponse} from './user.service';
+import {UserService} from './user.service';
+import {PaginatedResponse} from '../../common/models/pagination.model';
 import {MatDialog} from '@angular/material/dialog';
 import {UserFormComponent} from './user-form.component';
 import {MatSnackBar} from '@angular/material/snack-bar';
@@ -54,7 +55,7 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
     new MatTableDataSource<UserModel>();
   isLoading = true;
   errorLoadingUsers: string | null = null;
-  lastResponse: PaginatedResponse | undefined;
+  lastResponse: PaginatedResponse<UserModel> | undefined;
 
   // --- Pagination State ---
   totalUsers = 0;
@@ -104,8 +105,8 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
     // For now, let's use listOrganizations if available or similar.
     // If not, we might need to add it.
     // Let's assume listOrganizations exists in OrganizationService
-    this.organizationService.listOrganizations().subscribe(orgs => {
-        this.organizations = orgs;
+    this.organizationService.listOrganizations().subscribe(response => {
+        this.organizations = response.data;
     });
   }
 

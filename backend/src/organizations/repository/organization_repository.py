@@ -113,3 +113,51 @@ class OrganizationRepository(BaseRepository[Organization, OrganizationModel]):
             "domain": org.domain,
         }
         return self.schema.model_validate(org_dict)
+
+    async def query(self, search_dto: "OrganizationSearchDto") -> "PaginationResponseDto[OrganizationModel]":
+        """
+        Performs a paginated query for organizations.
+        """
+        from src.organizations.dto.organization_search_dto import OrganizationSearchDto
+        from src.common.dto.pagination_response_dto import PaginationResponseDto
+        from sqlalchemy import func
+
+        # 1. Build Query
+        query = select(self.model)
+
+        if search_dto.name:
+            query = query.where(self.model.name.ilike(f"%{search_dto.name}%"))
+        
+        if search_dto.domain:
+            query = query.where(self.model.domain.ilike(f"%{search_dto.domain}%"))
+
+        if search_dto.ids:
+            query = query.where(self.model.id.in_(search_dto.ids))
+
+        # 2. Count
+        count_query = select(func.count()).select_from(query.subquery())
+        count_result = await self.db.execute(count_query)
+        total_count = count_result.scalar_one()
+
+        # 3. Pagination & Ordering
+        query = query.order_by(self.model.name.asc())
+        query = query.offset(search_dto.offset).limit(search_dto.limit)
+
+        # 4. Execute
+        result = await self.db.execute(query)
+        orgs = result.scalars().all()
+        
+        data = [self._map_to_schema(o) for o in orgs]
+
+        # 5. Response
+        page = (search_dto.offset // search_dto.limit) + 1
+        page_size = search_dto.limit
+        total_pages = (total_count + page_size - 1) // page_size
+
+        return PaginationResponseDto[OrganizationModel](
+            count=total_count,
+            page=page,
+            page_size=page_size,
+            total_pages=total_pages,
+            data=data,
+        )

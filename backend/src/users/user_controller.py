@@ -16,7 +16,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from typing import Dict, Any
 from src.core.fga import check_permission
-from src.auth.permissions import require_super_admin
+from src.auth.permissions import require_super_admin, require_admin_access
 from src.auth.auth_service import get_current_user
 from src.users.user_model import UserModel
 from src.common.dto.pagination_response_dto import PaginationResponseDto
@@ -56,17 +56,23 @@ async def get_my_profile(
     "",
     response_model=PaginationResponseDto[UserModel],
     summary="List All Users (Admin Only)",
-    dependencies=[Depends(require_super_admin)],
+    dependencies=[Depends(require_admin_access)],
 )
 async def list_all_users(
     search_params: UserSearchDto = Depends(),
     user_service: UserService = Depends(),
+    current_user: UserModel = Depends(get_current_user),
 ):
     """
     Retrieves a paginated list of all users in the system.
     This functionality is restricted to administrators.
     """
-    return await user_service.find_all_users(search_params)
+    # We need to ensure the user is at least an Admin of SOME organization or Super Admin.
+    # The `require_super_admin` dependency enforces Super Admin, but we want to allow Org Admins too.
+    # So we should probably remove `require_super_admin` from the router dependency and check manually or use a new dependency.
+    # But wait, the user asked for "Super Admin sees all, Org Admin sees theirs".
+    # So we need to relax the dependency.
+    return await user_service.find_all_users(search_params, current_user)
 
 
 @router.get(

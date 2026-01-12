@@ -105,6 +105,56 @@ class WorkspaceRepository(BaseRepository[Workspace, WorkspaceModel]):
         workspaces = result.scalars().all()
         return [self._map_to_schema(w) for w in workspaces]
 
+    async def query(self, search_dto: "WorkspaceSearchDto") -> "PaginationResponseDto[WorkspaceModel]":
+        """
+        Performs a paginated query for workspaces.
+        """
+        from src.workspaces.dto.workspace_search_dto import WorkspaceSearchDto
+        from src.common.dto.pagination_response_dto import PaginationResponseDto
+        from sqlalchemy import func
+
+        # 1. Build Query
+        query = select(self.model).options(selectinload(self.model.organization))
+
+        if search_dto.name:
+            query = query.where(self.model.name.ilike(f"%{search_dto.name}%"))
+        
+        if search_dto.organization_id:
+            query = query.where(self.model.organization_id == search_dto.organization_id)
+        elif search_dto.organization_ids:
+            query = query.where(self.model.organization_id.in_(search_dto.organization_ids))
+
+        if search_dto.ids:
+            query = query.where(self.model.id.in_(search_dto.ids))
+
+        # 2. Count
+        count_query = select(func.count()).select_from(query.subquery())
+        count_result = await self.db.execute(count_query)
+        total_count = count_result.scalar_one()
+
+        # 3. Pagination & Ordering
+        query = query.order_by(self.model.name.asc())
+        query = query.offset(search_dto.offset).limit(search_dto.limit)
+
+        # 4. Execute
+        result = await self.db.execute(query)
+        workspaces = result.scalars().all()
+        
+        data = [self._map_to_schema(w) for w in workspaces]
+
+        # 5. Response
+        page = (search_dto.offset // search_dto.limit) + 1
+        page_size = search_dto.limit
+        total_pages = (total_count + page_size - 1) // page_size
+
+        return PaginationResponseDto[WorkspaceModel](
+            count=total_count,
+            page=page,
+            page_size=page_size,
+            total_pages=total_pages,
+            data=data,
+        )
+
     async def create(
         self, schema: WorkspaceModel, initial_members: List[WorkspaceMember] = []
     ) -> WorkspaceModel:

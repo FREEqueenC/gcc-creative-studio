@@ -20,6 +20,8 @@ import {AdminLayoutComponent} from './admin-layout/admin-layout.component';
 import {UsersManagementComponent} from './users-management/users-management.component';
 import {MediaTemplatesManagementComponent} from './media-templates-management/media-templates-management.component';
 import {SourceAssetsManagementComponent} from './source-assets-management/source-assets-management.component';
+import {OrganizationsManagementComponent} from './organizations-management/organizations-management.component';
+import {WorkspacesManagementComponent} from './workspaces-management/workspaces-management.component';
 
 const routes: Routes = [
   {
@@ -30,6 +32,8 @@ const routes: Routes = [
       {path: 'users', component: UsersManagementComponent},
       {path: 'source-assets', component: SourceAssetsManagementComponent},
       {path: 'media-templates', component: MediaTemplatesManagementComponent},
+      {path: 'organizations', component: OrganizationsManagementComponent},
+      {path: 'workspaces', component: WorkspacesManagementComponent},
       // Add more routes for other entities here
       // Example: { path: 'orders', component: OrdersManagementComponent },
     ],

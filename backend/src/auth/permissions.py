@@ -19,3 +19,21 @@ async def require_super_admin(user: UserModel = Depends(get_current_user)) -> bo
             detail="Requires Platform Super Admin privileges"
         )
     return True
+
+
+async def require_admin_access(user: UserModel = Depends(get_current_user)) -> UserModel:
+    """
+    Ensures the user has SOME admin privileges (Super Admin OR Org Admin).
+    """
+    # 1. Check if Super Admin
+    if user.is_super_admin:
+        return user
+
+    # 2. Check if they manage ANY organization
+    if user.admin_org_ids and len(user.admin_org_ids) > 0:
+        return user
+
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Admin privileges required"
+    )

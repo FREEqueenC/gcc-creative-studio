@@ -267,6 +267,43 @@ class WorkspaceService:
         # Regular users cannot search for now
         return []
 
+    async def get_workspaces_for_admin(
+        self, user: UserModel, search_dto: "WorkspaceSearchDto"
+    ) -> "PaginationResponseDto[WorkspaceModel]":
+        """
+        Retrieves workspaces for admin view.
+        - Super Admin: All workspaces.
+        - Org Admin: Only workspaces in their organizations.
+        """
+        from src.common.dto.pagination_response_dto import PaginationResponseDto
+        
+        if user.is_super_admin:
+            # No restriction
+            pass
+        else:
+            # Restrict to Org Admin's organizations
+            admin_org_ids = [
+                org.id for org in user.organizations 
+                if org.role == "admin" # Check OrganizationRoleEnum.ADMIN
+            ]
+            
+            if not admin_org_ids:
+                 return PaginationResponseDto(
+                    count=0, page=1, page_size=search_dto.limit, total_pages=0, data=[]
+                )
+            
+            # If organization_id is passed, ensure it's allowed
+            if search_dto.organization_id:
+                if search_dto.organization_id not in admin_org_ids:
+                     return PaginationResponseDto(
+                        count=0, page=1, page_size=search_dto.limit, total_pages=0, data=[]
+                    )
+            else:
+                # If no specific org, we must filter by ALL admin orgs.
+                search_dto.organization_ids = admin_org_ids
+        
+        return await self.workspace_repo.query(search_dto)
+
     async def ensure_default_workspaces(self, user: UserModel, org: OrganizationModel):
         """
         Ensures the user has the required default workspaces for their organization.

@@ -78,9 +78,35 @@ class UserService:
         return await self.user_repo.get_by_id(user_id)
 
     async def find_all_users(
-        self, search_dto: UserSearchDto
+        self, search_dto: UserSearchDto, current_user: Optional[UserModel] = None
     ) -> PaginationResponseDto[UserModel]:
         """Retrieves a paginated list of all users."""
+        
+        # Enforce Org Admin limits if not Super Admin
+        if current_user and not current_user.is_super_admin:
+            # Get user's admin organizations
+            admin_org_ids = [
+                org.id for org in current_user.organizations 
+                if org.role == "admin" # Check OrganizationRoleEnum.ADMIN value
+            ]
+            
+            if not admin_org_ids:
+                # If not admin of any org, return empty or raise forbidden?
+                # For now, return empty list to be safe
+                return PaginationResponseDto(
+                    count=0, page=1, page_size=search_dto.limit, total_pages=0, data=[]
+                )
+
+            # If search_dto has organization_id, ensure it's one of the allowed ones
+            if search_dto.organization_id:
+                if search_dto.organization_id not in admin_org_ids:
+                     return PaginationResponseDto(
+                        count=0, page=1, page_size=search_dto.limit, total_pages=0, data=[]
+                    )
+            else:
+                # If no specific org requested, filter by ALL admin orgs
+                search_dto.organization_ids = admin_org_ids
+
         return await self.user_repo.query(search_dto)
 
     async def update_user_role(

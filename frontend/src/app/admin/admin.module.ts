@@ -51,6 +51,8 @@ import {MediaTemplateFormComponent} from './media-templates-management/media-tem
 import {SourceAssetsManagementComponent} from './source-assets-management/source-assets-management.component';
 import {SourceAssetFormComponent} from './source-assets-management/source-asset-form/source-asset-form.component';
 import {SourceAssetUploadFormComponent} from './source-assets-management/source-asset-upload-form/source-asset-upload-form.component';
+import {OrganizationsManagementComponent} from './organizations-management/organizations-management.component';
+import {WorkspacesManagementComponent} from './workspaces-management/workspaces-management.component';
 import {SharedModule} from '../common/shared.module';
 
 @NgModule({
@@ -63,6 +65,8 @@ import {SharedModule} from '../common/shared.module';
     SourceAssetsManagementComponent,
     SourceAssetFormComponent,
     SourceAssetUploadFormComponent,
+    OrganizationsManagementComponent,
+    WorkspacesManagementComponent,
   ],
   imports: [
     CommonModule,

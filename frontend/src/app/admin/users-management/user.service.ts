@@ -26,13 +26,9 @@ import {catchError, tap} from 'rxjs/operators';
 import {environment} from '../../../environments/environment'; // To get backendURL
 import {UserModel} from '../../common/models/user.model';
 
-export interface PaginatedResponse {
-  count: number;
-  data: UserModel[];
-  page: number;
-  pageSize: number;
-  totalPages: number;
-}
+import {PaginatedResponse} from '../../common/models/pagination.model';
+
+// export interface PaginatedResponse { ... } // Removed local definition
 
 @Injectable({
   providedIn: 'root', // Or provide it specifically in AdminModule if preferred
@@ -56,17 +52,17 @@ export class UserService {
     offset?: number,
     organizationId?: number,
     workspaceId?: number,
-  ): Observable<PaginatedResponse> {
+  ): Observable<PaginatedResponse<UserModel>> {
     let params = new HttpParams()
       .set('limit', limit.toString())
       .set('email', filter);
 
     if (offset !== undefined) params = params.set('offset', offset.toString());
-    if (organizationId !== undefined && organizationId !== null) params = params.set('organization_id', organizationId.toString());
-    if (workspaceId !== undefined && workspaceId !== null) params = params.set('workspace_id', workspaceId.toString());
+    if (organizationId !== undefined && organizationId !== null) params = params.set('organizationId', organizationId.toString());
+    if (workspaceId !== undefined && workspaceId !== null) params = params.set('workspaceId', workspaceId.toString());
 
     return this.http
-      .get<PaginatedResponse>(this.usersApiUrl, {params, ...this.httpOptions})
+      .get<PaginatedResponse<UserModel>>(this.usersApiUrl, {params, ...this.httpOptions})
       .pipe(catchError(this.handleError));
   }
 

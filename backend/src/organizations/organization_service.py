@@ -183,3 +183,42 @@ class OrganizationService:
             )
             return await self.create_organization(new_org, user.id)
 
+            return await self.create_organization(new_org, user.id)
+
+    async def get_organizations_for_admin(
+        self, user: UserModel, search_dto: "OrganizationSearchDto"
+    ) -> "PaginationResponseDto[OrganizationModel]":
+        """
+        Retrieves organizations for admin view.
+        - Super Admin: All organizations.
+        - Org Admin: Only organizations they administer.
+        """
+        from src.common.dto.pagination_response_dto import PaginationResponseDto
+        
+        if user.is_super_admin:
+            # No restriction on IDs unless passed in search_dto
+            pass
+        else:
+            # Restrict to Org Admin's organizations
+            admin_org_ids = [
+                org.id for org in user.organizations 
+                if org.role == "admin" # Check OrganizationRoleEnum.ADMIN
+            ]
+            
+            if not admin_org_ids:
+                 return PaginationResponseDto(
+                    count=0, page=1, page_size=search_dto.limit, total_pages=0, data=[]
+                )
+            
+            # If ids were already passed, intersect them? Or override?
+            # Usually we override or intersect. Let's intersect to be safe.
+            if search_dto.ids:
+                search_dto.ids = list(set(search_dto.ids) & set(admin_org_ids))
+                if not search_dto.ids:
+                     return PaginationResponseDto(
+                        count=0, page=1, page_size=search_dto.limit, total_pages=0, data=[]
+                    )
+            else:
+                search_dto.ids = admin_org_ids
+
+        return await self.repo.query(search_dto)

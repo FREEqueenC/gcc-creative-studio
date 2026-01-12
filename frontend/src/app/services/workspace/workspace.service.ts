@@ -15,11 +15,12 @@
  */
 
 import {Injectable} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
+import {HttpClient, HttpParams} from '@angular/common/http';
 import {Observable} from 'rxjs';
 import {environment} from '../../../environments/environment';
 import {WorkspaceRole} from '../../common/models/workspace-member.model';
 import {Workspace} from '../../common/models/workspace.model';
+import {PaginatedResponse} from '../../common/models/pagination.model';
 
 @Injectable({
   providedIn: 'root',
@@ -48,5 +49,26 @@ export class WorkspaceService {
     return this.http.get<Workspace[]>(`${this.apiUrl}/search`, {
       params: { q: query },
     });
+  }
+
+  listAllWorkspaces(
+    limit: number = 100,
+    offset: number = 0,
+    name?: string,
+    organizationId?: number
+  ): Observable<PaginatedResponse<Workspace>> {
+    let params = new HttpParams()
+      .set('limit', limit.toString())
+      .set('offset', offset.toString());
+
+    if (name) {
+      params = params.set('name', name);
+    }
+    
+    if (organizationId) {
+      params = params.set('organizationId', organizationId.toString());
+    }
+
+    return this.http.get<PaginatedResponse<Workspace>>(`${this.apiUrl}/admin`, { params });
   }
 }

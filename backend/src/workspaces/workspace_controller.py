@@ -18,6 +18,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from src.auth.auth_service import get_current_user
 from src.users.user_model import UserModel
+from src.common.dto.pagination_response_dto import PaginationResponseDto
+from src.workspaces.dto.workspace_search_dto import WorkspaceSearchDto
 from src.workspaces.dto.create_workspace_dto import CreateWorkspaceDto
 from src.workspaces.dto.invite_user_dto import InviteUserDto
 from src.workspaces.schema.workspace_model import WorkspaceModel
@@ -64,6 +66,24 @@ async def list_my_workspaces(
     is a member of.
     """
     return await workspace_service.list_workspaces_for_user(current_user)
+
+
+@router.get(
+    "/admin",
+    response_model=PaginationResponseDto[WorkspaceModel],
+    summary="List All Workspaces (Admin Only)",
+)
+async def list_all_workspaces(
+    search_params: WorkspaceSearchDto = Depends(),
+    workspace_service: WorkspaceService = Depends(),
+    current_user: UserModel = Depends(get_current_user),
+):
+    """
+    Retrieves a paginated list of workspaces for admin view.
+    - Super Admins: Can see all workspaces.
+    - Org Admins: Can see only workspaces in their organizations.
+    """
+    return await workspace_service.get_workspaces_for_admin(current_user, search_params)
 
 
 @router.get(

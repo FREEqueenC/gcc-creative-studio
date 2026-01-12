@@ -41,6 +41,9 @@ from src.media_templates.media_templates_controller import (
     router as media_template_router,
 )
 from src.multimodal.gemini_controller import router as gemini_router
+from src.organizations.organization_controller import (
+    router as organization_router,
+)
 from src.source_assets.source_asset_controller import (
     router as source_asset_router,
 )
@@ -52,6 +55,9 @@ from src.workflows_executor.workflows_executor_controller import (
     router as workflows_executor_router,
 )
 from src.workspaces.workspace_controller import router as workspace_router
+
+# ... (omitted for brevity)
+
 
 # Get a logger instance for use in this file. It will inherit the root setup.
 logger = logging.getLogger(__name__)
@@ -186,6 +192,7 @@ app.include_router(gemini_router)
 app.include_router(user_router)
 app.include_router(generation_options_router)
 app.include_router(media_template_router)
+app.include_router(organization_router)
 app.include_router(source_asset_router)
 app.include_router(workspace_router)
 app.include_router(brand_guideline_router)

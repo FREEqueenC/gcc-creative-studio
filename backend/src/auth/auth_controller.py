@@ -5,6 +5,8 @@ from src.users.user_service import UserService
 from src.auth.session import get_session_user
 from src.auth.dto.permission_check_dto import PermissionCheckDto
 from src.core.fga import check_permission
+from src.organizations.organization_service import OrganizationService
+from src.workspaces.workspace_service import WorkspaceService
 
 router = APIRouter(prefix="/api", tags=["Authentication"])
 
@@ -16,6 +18,8 @@ async def login(request: Request):
 async def callback(
     request: Request,
     user_service: UserService = Depends(),
+    organization_service: OrganizationService = Depends(),
+    workspace_service: WorkspaceService = Depends(),
 ):
     user_info = await auth_callback(request)
     # Store user info in session
@@ -27,7 +31,13 @@ async def callback(
     picture = user_info.get("picture", "")
     
     if email:
-        await user_service.create_user_if_not_exists(email, name, picture)
+        user = await user_service.create_user_if_not_exists(email, name, picture)
+        
+        # Ensure user belongs to an organization (Personal or Enterprise)
+        org = await organization_service.ensure_user_organization(user)
+        
+        # Ensure default workspaces exist (Personal + Public for Enterprise)
+        await workspace_service.ensure_default_workspaces(user, org)
     
     # Redirect to frontend
     # In production, this should be the frontend URL.

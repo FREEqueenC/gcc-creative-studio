@@ -81,16 +81,24 @@ class OrganizationRepository(BaseRepository[Organization, OrganizationModel]):
         if not org:
             return None
 
-        # Check if already member
+        # Check if already member (in-memory check for optimization)
         existing = next((m for m in org.members if m.user_id == user_id), None)
         if not existing:
-            association = UserOrganization(
+            from sqlalchemy.dialects.postgresql import insert as pg_insert
+            
+            # Use Core Insert with ON CONFLICT DO NOTHING to handle race conditions
+            stmt = pg_insert(UserOrganization).values(
                 organization_id=org_id,
                 user_id=user_id,
                 role=role
+            ).on_conflict_do_nothing(
+                index_elements=['user_id', 'organization_id']
             )
-            org.members.append(association)
+            
+            await self.db.execute(stmt)
             await self.db.commit()
+            
+            # Refresh org to load the new (or existing) member
             await self.db.refresh(org)
             
         return self._map_to_schema(org)

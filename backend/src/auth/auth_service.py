@@ -83,14 +83,11 @@ async def auth_callback(request: Request) -> Dict[str, Any]:
 from src.auth.session import get_session_user
 from src.core.fga import check_permission
 
-from src.organizations.organization_service import OrganizationService
-from src.workspaces.workspace_service import WorkspaceService
+
 
 async def get_current_user(
     user_data: Optional[Dict[str, Any]] = Depends(get_session_user),
     user_service: UserService = Depends(),
-    organization_service: OrganizationService = Depends(),
-    workspace_service: WorkspaceService = Depends(),
 ) -> UserModel:
     """
     Dependency that returns the UserModel from the database.
@@ -116,20 +113,11 @@ async def get_current_user(
     user_model = await user_service.create_user_if_not_exists(
         email=email,
         name=user_data.get("name", ""),
-        picture=user_data.get("picture"),
+        picture=user_data.get("picture", ""),
     )
 
-    # Ensure user belongs to an organization (Personal or Enterprise)
-    org = await organization_service.ensure_user_organization(user_model)
-
-    # Ensure default workspaces exist (Personal + Public for Enterprise)
-    # We need to import workspace_service dynamically or pass it as dependency
-    # To avoid circular imports if workspace_service imports auth_service (unlikely but possible)
-    # But here we are in auth_service.
-    # We need to add workspace_service to arguments.
-    # Ensure default workspaces exist (Personal + Public for Enterprise)
-    # We need to add workspace_service to arguments.
-    await workspace_service.ensure_default_workspaces(user_model, org)
+    # NOTE: Organization and Workspace initialization is now handled in the auth_callback
+    # to prevent race conditions from parallel frontend requests.
 
     # Check if user is Super Admin (Platform Level)
     # We must use the DB ID because that's what we write to FGA

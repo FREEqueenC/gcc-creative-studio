@@ -129,6 +129,17 @@ class OrganizationService:
         user_orgs = await self.get_user_organizations(user.id)
         
         # Check if they have an org that looks like a personal org (no domain or specific name)
+        # We check user.organizations first (from UserModel)
+        if user.organizations:
+            personal_org_summary = next((o for o in user.organizations if o.domain is None), None)
+            if personal_org_summary:
+                # We need to return OrganizationModel, but we only have Summary.
+                # We should fetch the full org to be safe and consistent with return type.
+                return await self.repo.get_by_id(personal_org_summary.id)
+
+        user_orgs = await self.get_user_organizations(user.id)
+        
+        # Check if they have an org that looks like a personal org (no domain or specific name)
         if user_orgs:
             personal_org = next((o for o in user_orgs if o.domain is None), None)
             if personal_org:
@@ -148,8 +159,13 @@ class OrganizationService:
         org = await self.repo.get_by_domain(domain)
         
         if org:
-            # Join as MEMBER if not already
-            await self.repo.add_member(org.id, user.id, OrganizationRoleEnum.MEMBER)
+            # OPTIMIZATION: Check if user is already a member using the loaded user object
+            # This avoids an unnecessary DB call and reduces race condition window
+            is_member = any(o.id == org.id for o in user.organizations)
+            
+            if not is_member:
+                # Join as MEMBER if not already
+                await self.repo.add_member(org.id, user.id, OrganizationRoleEnum.MEMBER)
             
             # Write FGA tuple for member
             try:

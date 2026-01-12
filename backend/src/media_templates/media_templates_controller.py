@@ -14,7 +14,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from src.auth.auth_service import get_current_user_model as get_current_user
+from src.auth.auth_service import get_current_user
 from src.common.dto.pagination_response_dto import PaginationResponseDto
 from src.media_templates.dto.media_template_response_dto import (
     MediaTemplateResponse,
@@ -27,7 +27,7 @@ from src.users.user_model import UserModel
 
 from src.core.fga import check_permission
 from src.auth.permissions import require_super_admin
-from src.auth.session import get_current_user
+
 # for convenience
 admin_only = Depends(require_super_admin)
 any_user = Depends(get_current_user)

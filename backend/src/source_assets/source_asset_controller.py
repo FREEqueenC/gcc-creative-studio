@@ -26,7 +26,7 @@ from fastapi import (
     status,
 )
 
-from src.auth.auth_service import get_current_user_model as get_current_user
+from src.auth.auth_service import get_current_user
 from src.common.base_dto import AspectRatioEnum
 from src.common.dto.pagination_response_dto import PaginationResponseDto
 from src.source_assets.dto.source_asset_response_dto import (
@@ -47,7 +47,6 @@ from src.workspaces.workspace_auth_guard import workspace_auth_service
 
 from src.core.fga import check_permission
 from src.auth.permissions import require_super_admin
-from src.auth.session import get_current_user
 
 router = APIRouter(
     prefix="/api/source_assets",

@@ -1,7 +1,7 @@
 from typing import Optional, Dict, Any
 from fastapi import Request
 
-def get_current_user(request: Request) -> Optional[Dict[str, Any]]:
+def get_session_user(request: Request) -> Optional[Dict[str, Any]]:
     """
     Retrieves the current user from the session.
     """

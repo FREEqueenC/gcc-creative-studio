@@ -15,7 +15,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi import status as Status
 
-from src.auth.auth_service import get_current_user_model as get_current_user
+from src.auth.auth_service import get_current_user
 from src.galleries.dto.gallery_response_dto import MediaItemResponse
 from src.users.user_model import UserModel
 from src.videos.dto.concatenate_videos_dto import ConcatenateVideosDto

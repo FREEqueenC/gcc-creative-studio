@@ -16,7 +16,7 @@ from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from src.auth.auth_service import get_current_user_model as get_current_user
+from src.auth.auth_service import get_current_user
 from src.users.user_model import UserModel
 from src.workspaces.dto.create_workspace_dto import CreateWorkspaceDto
 from src.workspaces.dto.invite_user_dto import InviteUserDto

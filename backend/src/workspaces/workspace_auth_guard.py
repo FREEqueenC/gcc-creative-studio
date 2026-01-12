@@ -16,7 +16,7 @@ from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
 
-from src.auth.auth_service import get_current_user_model as get_current_user
+from src.auth.auth_service import get_current_user
 from src.users.user_model import UserModel
 from src.workspaces.repository.workspace_repository import WorkspaceRepository
 from src.workspaces.schema.workspace_model import (

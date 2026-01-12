@@ -80,14 +80,14 @@ async def auth_callback(request: Request) -> Dict[str, Any]:
     
     return user_info
 
-from src.auth.session import get_current_user
+from src.auth.session import get_session_user
 from src.core.fga import check_permission
 
 from src.organizations.organization_service import OrganizationService
 from src.workspaces.workspace_service import WorkspaceService
 
-async def get_current_user_model(
-    user_data: Optional[Dict[str, Any]] = Depends(get_current_user),
+async def get_current_user(
+    user_data: Optional[Dict[str, Any]] = Depends(get_session_user),
     user_service: UserService = Depends(),
     organization_service: OrganizationService = Depends(),
     workspace_service: WorkspaceService = Depends(),

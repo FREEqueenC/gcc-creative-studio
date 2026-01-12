@@ -25,7 +25,7 @@ from fastapi import (
     status,
 )
 
-from src.auth.auth_service import get_current_user_model as get_current_user
+from src.auth.auth_service import get_current_user
 from src.brand_guidelines.brand_guideline_service import BrandGuidelineService
 from src.brand_guidelines.dto.brand_guideline_response_dto import (
     BrandGuidelineResponseDto,

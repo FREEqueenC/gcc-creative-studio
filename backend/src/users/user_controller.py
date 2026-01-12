@@ -17,8 +17,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from typing import Dict, Any
 from src.core.fga import check_permission
 from src.auth.permissions import require_super_admin
-from src.auth.session import get_current_user
-from src.auth.auth_service import get_current_user_model
+from src.auth.auth_service import get_current_user
 from src.users.user_model import UserModel
 from src.common.dto.pagination_response_dto import PaginationResponseDto
 from src.users.dto.user_search_dto import UserSearchDto
@@ -38,7 +37,7 @@ router = APIRouter(
 async def get_my_profile(
     # This is the magic. FastAPI runs get_current_user, which authenticates
     # the user and provides their UserData object here.
-    current_user: UserModel = Depends(get_current_user_model),
+    current_user: UserModel = Depends(get_current_user),
 ):
     """
     Retrieves the profile for the currently authenticated user.

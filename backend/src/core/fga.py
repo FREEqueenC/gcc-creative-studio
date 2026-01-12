@@ -5,7 +5,7 @@ from fastapi import Depends, HTTPException, status
 from openfga_sdk import ClientConfiguration, OpenFgaClient
 from openfga_sdk.credentials import Credentials
 
-from src.auth.session import get_current_user
+from src.auth.session import get_session_user
 from src.users.user_model import UserModel
 
 logger = logging.getLogger(__name__)
@@ -60,7 +60,7 @@ class FgaPermissionChecker:
         obj_id: str, # We might need to extract this from path params. 
                      # But FastAPI dependencies don't easily get path params unless we use Request.
         request: Any = None, # We can get Request if needed
-        user: Optional[Dict[str, Any]] = Depends(get_current_user)
+        user: Optional[Dict[str, Any]] = Depends(get_session_user)
     ):
         # This is a bit tricky as a generic dependency because we need the object ID.
         # Usually we use a closure or a class that takes the ID source.
@@ -122,7 +122,7 @@ async def check_permission(
 def require_permission(object_type: str, relation: str, param_name: str = "id"):
     async def dependency(
         request: Any, # FastAPI Request
-        user: Optional[Dict[str, Any]] = Depends(get_current_user)
+        user: Optional[Dict[str, Any]] = Depends(get_session_user)
     ):
         if not user:
              raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")

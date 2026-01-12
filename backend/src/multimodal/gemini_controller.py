@@ -21,7 +21,7 @@ from src.multimodal.dto.gemini_prompt_enhancer_dto import (
     RewritePromptRequestDto,
     RewrittenOrRandomPromptResponse,
 )
-from src.auth.auth_service import get_current_user_model as get_current_user
+from src.auth.auth_service import get_current_user
 from src.multimodal.gemini_service import GeminiService
 from fastapi import APIRouter, Depends
 

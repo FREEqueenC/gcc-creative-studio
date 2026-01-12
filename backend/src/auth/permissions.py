@@ -1,9 +1,9 @@
 from fastapi import Depends, HTTPException, status
-from src.auth.auth_service import get_current_user_model
+from src.auth.auth_service import get_current_user
 from src.users.user_model import UserModel
 from src.core.fga import check_permission
 
-async def require_super_admin(user: UserModel = Depends(get_current_user_model)) -> bool:
+async def require_super_admin(user: UserModel = Depends(get_current_user)) -> bool:
     """
     Dependency to ensure the current user is a Platform Super Admin.
     Uses the DB ID to check against OpenFGA.

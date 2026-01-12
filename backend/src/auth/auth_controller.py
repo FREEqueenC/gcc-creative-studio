@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request, Depends, HTTPException, status
 from fastapi.responses import RedirectResponse
-from src.auth.auth_service import login_google, auth_callback, get_current_user_model
-from src.auth.session import get_current_user
+from src.auth.auth_service import login_google, auth_callback, get_current_user
+from src.auth.session import get_session_user
 from src.auth.dto.permission_check_dto import PermissionCheckDto
 from src.core.fga import check_permission
 
@@ -33,7 +33,7 @@ async def logout(request: Request):
     return RedirectResponse(url="/")
 
 @router.get("/me")
-async def get_me(user = Depends(get_current_user_model)):
+async def get_me(user = Depends(get_current_user)):
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
     return user
@@ -41,7 +41,7 @@ async def get_me(user = Depends(get_current_user_model)):
 @router.post("/auth/check-permission")
 async def check_user_permission(
     check_dto: PermissionCheckDto,
-    user: dict = Depends(get_current_user)
+    user: dict = Depends(get_session_user)
 ):
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")

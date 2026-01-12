@@ -1,6 +1,6 @@
 import os
 import logging
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Union
 from fastapi import Depends, HTTPException, status
 from openfga_sdk import ClientConfiguration, OpenFgaClient
 from openfga_sdk.credentials import Credentials
@@ -71,7 +71,7 @@ class FgaPermissionChecker:
 # or a function that takes the object ID and user.
 
 async def check_permission(
-    user: Dict[str, Any],
+    user: Union[Dict[str, Any], UserModel],
     object_type: str,
     object_id: str,
     relation: str,
@@ -79,18 +79,22 @@ async def check_permission(
     if not user:
         return False
 
-    user_id = user.get("sub") or user.get("id") # 'sub' is standard OIDC subject
+    if isinstance(user, UserModel):
+        user_id = str(user.id)
+        # User requested to skip groups for now when using UserModel
+        groups = []
+    else:
+        user_id = user.get("sub") or user.get("id") # 'sub' is standard OIDC subject
+        groups = user.get("groups", [])
+
     if not user_id:
         return False
         
     # Construct Contextual Tuples from Groups
     # User groups should be in user dict (from session)
-    groups = user.get("groups", [])
     contextual_tuples = []
     
     # For every group, add { user: "user:<id>", relation: "member", object: "group:<group_email>" }
-    # Wait, the prompt says:
-    # "For every group in the list, add: { user: "user:<id>", relation: "member", object: "group:<group_email>" }"
     # Actually, usually contextual tuples are used to assert membership in the group FOR THIS REQUEST.
     # So we say "User X is member of Group Y" contextually.
     

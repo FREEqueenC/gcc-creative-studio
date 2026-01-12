@@ -250,7 +250,7 @@ class MediaTemplateService:
 
         # --- Convert all source inputs into new, permanent System Assets ---
         new_source_asset_links: List[SourceAssetLink] = []
-        public_workspace = await self.workspace_repo.get_public_workspace()
+        public_workspace = await self.workspace_repo.get_system_public_workspace()
         if not public_workspace:
             # This should not happen if bootstrap script has run
             raise HTTPException(

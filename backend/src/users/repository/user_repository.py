@@ -28,7 +28,7 @@ from src.users.user_model import User, UserModel
 from src.organizations.organization_model import UserOrganization
 from typing import Union, Dict, Any
 from pydantic import BaseModel
-
+        
 class UserRepository(BaseRepository[User, UserModel]):
     """
     Handles all database operations for the User table.
@@ -91,11 +91,7 @@ class UserRepository(BaseRepository[User, UserModel]):
         """
         Performs a paginated query that includes the total document count.
         """
-        # 1. Build the base query
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.info(f"UserRepository.query: search_dto={search_dto}")
-        
+        # 1. Build the base query        
         query = select(self.model).options(
             selectinload(self.model.organizations).selectinload(UserOrganization.organization)
         )
@@ -119,12 +115,37 @@ class UserRepository(BaseRepository[User, UserModel]):
              )
 
         if search_dto.workspace_id:
-            # Join with WorkspaceMemberAssociation to filter by workspace
-            # We need to import WorkspaceMemberAssociation locally to avoid circular imports if any
-            from src.workspaces.schema.workspace_model import WorkspaceMemberAssociation
-            query = query.join(WorkspaceMemberAssociation, self.model.id == WorkspaceMemberAssociation.user_id).where(
-                WorkspaceMemberAssociation.workspace_id == search_dto.workspace_id
-            )
+            # Check if workspace is public
+            from src.workspaces.schema.workspace_model import Workspace, WorkspaceScopeEnum, WorkspaceMemberAssociation
+            
+            # We need to fetch the workspace first to know its scope and organization_id
+            # We can do this with a subquery or a separate query. Separate query is cleaner here.
+            ws_result = await self.db.execute(select(Workspace).where(Workspace.id == search_dto.workspace_id))
+            workspace = ws_result.scalar_one_or_none()
+            
+            if workspace:
+                if workspace.scope == WorkspaceScopeEnum.PUBLIC.value and workspace.organization_id is not None:
+                    # Implicit Membership: Users in the organization OR explicit members
+                    # We use outer joins to find matches in either table
+                    query = query.outerjoin(
+                        UserOrganization, 
+                        (self.model.id == UserOrganization.user_id) & (UserOrganization.organization_id == workspace.organization_id)
+                    ).outerjoin(
+                        WorkspaceMemberAssociation, 
+                        (self.model.id == WorkspaceMemberAssociation.user_id) & (WorkspaceMemberAssociation.workspace_id == search_dto.workspace_id)
+                    ).where(
+                        (UserOrganization.organization_id.is_not(None)) | 
+                        (WorkspaceMemberAssociation.workspace_id.is_not(None))
+                    ).distinct()
+                else:
+                    # Private Workspace: Only explicit members
+                    query = query.join(WorkspaceMemberAssociation, self.model.id == WorkspaceMemberAssociation.user_id).where(
+                        WorkspaceMemberAssociation.workspace_id == search_dto.workspace_id
+                    )
+            else:
+                # Workspace not found, return empty
+                # Or we can just let it return empty by filtering on impossible condition
+                query = query.where(self.model.id == -1)
 
         # 2. Get total count
         count_query = select(func.count()).select_from(query.subquery())

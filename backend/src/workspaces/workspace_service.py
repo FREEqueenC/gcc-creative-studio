@@ -37,6 +37,7 @@ from src.organizations.organization_service import OrganizationService
 from src.organizations.organization_model import OrganizationModel
 
 from src.common.permission_service import PermissionService
+from src.workspaces.schema.workspace_model import WorkspacePermissions
 
 class WorkspaceService:
     """
@@ -69,14 +70,18 @@ class WorkspaceService:
             if user_orgs:
                 org_id = user_orgs[0].id
             else:
-                # Should ideally not happen if ensure_user_organization is called on login
-                # But as a fallback, we can create one or raise error.
-                # Let's try to ensure it again or just raise.
-                # Raising is safer for now to detect issues.
+                # User must belong to an organization to create a workspace
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="User does not belong to any organization. Please login again.",
+                    detail="User does not belong to any organization. Please login again or contact support.",
                 )
+        
+        # Double check: If we still don't have an org_id (should be impossible due to above check), fail.
+        if not org_id:
+             raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Organization ID is required to create a workspace.",
+            )
 
         # 1. Create the owner as the first member of the workspace
         # We use ADMIN role for the creator in the new model
@@ -122,21 +127,21 @@ class WorkspaceService:
             print(f"Failed to write tuple to OpenFGA: {e}")
         
         # Populate permissions for the new workspace (Admin)
-        created_workspace.permissions = {
-            "can_manage_members": True,
-            "can_edit": True,
-            "can_delete": True,
-            "can_view_workflows": True,
-            "can_manage_workflows": True,
-            "can_view_images": True,
-            "can_generate_images": True,
-            "can_view_videos": True,
-            "can_generate_videos": True,
-            "can_view_audio": True,
-            "can_generate_audio": True,
-            "can_view_vto": True,
-            "can_generate_vto": True
-        }
+        created_workspace.permissions = WorkspacePermissions(
+            can_manage_members=True,
+            can_edit=True,
+            can_delete=True,
+            can_view_workflows=True,
+            can_manage_workflows=True,
+            can_view_images=True,
+            can_generate_images=True,
+            can_view_videos=True,
+            can_generate_videos=True,
+            can_view_audio=True,
+            can_generate_audio=True,
+            can_view_vto=True,
+            can_generate_vto=True
+        )
 
         return created_workspace
 

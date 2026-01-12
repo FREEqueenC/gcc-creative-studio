@@ -51,14 +51,15 @@ class WorkspaceRepository(BaseRepository[Workspace, WorkspaceModel]):
             return None
         return self._map_to_schema(workspace)
 
-    async def get_public_workspace(self) -> Optional[WorkspaceModel]:
+    async def get_system_public_workspace(self) -> Optional[WorkspaceModel]:
         """
-        Finds the first workspace that is marked as 'public'.
-        This is typically used for the main homepage gallery.
+        Finds the system-wide public workspace (where organization_id is None).
+        This is used for storing global templates and system assets.
         """
         result = await self.db.execute(
             select(self.model)
             .where(self.model.scope == WorkspaceScopeEnum.PUBLIC.value)
+            .where(self.model.organization_id == None)
             .options(selectinload(self.model.organization))
             .limit(1)
         )
@@ -66,17 +67,6 @@ class WorkspaceRepository(BaseRepository[Workspace, WorkspaceModel]):
         if not workspace:
             return None
         return self._map_to_schema(workspace)
-
-    async def get_all_public_workspaces(self) -> List[WorkspaceModel]:
-        """Finds all global public workspaces (not belonging to any specific organization)."""
-        result = await self.db.execute(
-            select(self.model)
-            .where(self.model.scope == WorkspaceScopeEnum.PUBLIC.value)
-            .where(self.model.organization_id == None)
-            .options(selectinload(self.model.organization))
-        )
-        workspaces = result.scalars().all()
-        return [self._map_to_schema(w) for w in workspaces]
 
     async def get_all_workspaces(self) -> List[WorkspaceModel]:
         """Finds all workspaces in the system (for Super Admins)."""

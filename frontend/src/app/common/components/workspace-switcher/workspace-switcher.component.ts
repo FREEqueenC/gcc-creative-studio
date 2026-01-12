@@ -119,6 +119,10 @@ export class WorkspaceSwitcherComponent implements OnInit {
         this.initializeActiveWorkspace();
       },
       error: error => {
+        if (error.status === 401) {
+          // Benign error if not logged in yet
+          return;
+        }
         handleErrorSnackbar(this.snackBar, error, 'Could not load workspaces');
       },
     });

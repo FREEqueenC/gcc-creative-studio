@@ -22,7 +22,9 @@ from src.users.user_model import UserModel
 
 
 
+
 from fastapi import Depends
+from sqlalchemy.exc import IntegrityError
 
 class UserService:
     """
@@ -61,7 +63,15 @@ class UserService:
         user_data = new_user_dto.model_dump()
 
         # 3. Call the repository's create() method
-        return await self.user_repo.create(user_data)
+        try:
+            return await self.user_repo.create(user_data)
+        except IntegrityError:
+            # Handle race condition: User might have been created by another request
+            # between our check and the insert.
+            existing_user = await self.user_repo.get_by_email(email)
+            if existing_user:
+                return existing_user
+            raise
 
     async def get_user_by_id(self, user_id: int) -> Optional[UserModel]:
         """Finds a single user by their ID."""

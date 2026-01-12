@@ -39,6 +39,18 @@ class WorkspaceRepository(BaseRepository[Workspace, WorkspaceModel]):
         """Initializes the repository."""
         super().__init__(model=Workspace, schema=WorkspaceModel, db=db)
 
+    async def get_by_id(self, item_id: int) -> Optional[WorkspaceModel]:
+        """Retrieves a single workspace by its ID, ensuring organization is loaded."""
+        result = await self.db.execute(
+            select(self.model)
+            .where(self.model.id == item_id)
+            .options(selectinload(self.model.organization))
+        )
+        workspace = result.scalar_one_or_none()
+        if not workspace:
+            return None
+        return self._map_to_schema(workspace)
+
     async def get_public_workspace(self) -> Optional[WorkspaceModel]:
         """
         Finds the first workspace that is marked as 'public'.
@@ -47,6 +59,7 @@ class WorkspaceRepository(BaseRepository[Workspace, WorkspaceModel]):
         result = await self.db.execute(
             select(self.model)
             .where(self.model.scope == WorkspaceScopeEnum.PUBLIC.value)
+            .options(selectinload(self.model.organization))
             .limit(1)
         )
         workspace = result.scalar_one_or_none()
@@ -100,9 +113,9 @@ class WorkspaceRepository(BaseRepository[Workspace, WorkspaceModel]):
 
         self.db.add(db_item)
         await self.db.commit()
-        await self.db.refresh(db_item)
         
-        return self._map_to_schema(db_item)
+        # Re-fetch to ensure relationships (organization) are loaded
+        return await self.get_by_id(db_item.id) # type: ignore
 
     async def add_member_to_workspace(
         self, workspace_id: int, member: WorkspaceMember, user_id: int
@@ -112,7 +125,9 @@ class WorkspaceRepository(BaseRepository[Workspace, WorkspaceModel]):
         """
         # Fetch the workspace
         result = await self.db.execute(
-            select(self.model).where(self.model.id == workspace_id)
+            select(self.model)
+            .where(self.model.id == workspace_id)
+            .options(selectinload(self.model.organization))
         )
         workspace = result.scalar_one_or_none()
         if not workspace:

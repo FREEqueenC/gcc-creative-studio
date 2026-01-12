@@ -26,7 +26,8 @@ from src.database import get_db
 from src.users.dto.user_search_dto import UserSearchDto
 from src.users.user_model import User, UserModel
 from src.organizations.organization_model import UserOrganization
-
+from typing import Union, Dict, Any
+from pydantic import BaseModel
 
 class UserRepository(BaseRepository[User, UserModel]):
     """
@@ -49,6 +50,40 @@ class UserRepository(BaseRepository[User, UserModel]):
         if not user:
             return None
         return self.schema.model_validate(user)
+
+    async def get_by_id(self, item_id: int) -> Optional[UserModel]:
+        """Retrieves a single user by their ID, ensuring organizations are loaded."""
+        result = await self.db.execute(
+            select(self.model)
+            .where(self.model.id == item_id)
+            .options(selectinload(self.model.organizations).selectinload(UserOrganization.organization))
+        )
+        item = result.scalar_one_or_none()
+        if not item:
+            return None
+        return self.schema.model_validate(item)
+
+    async def create(self, schema: Union[BaseModel, Dict[str, Any]]) -> UserModel:
+        """
+        Creates a new user and ensures the returned model has organizations loaded.
+        """
+        # Convert Pydantic schema to SQLAlchemy model
+        if isinstance(schema, BaseModel):
+            data = schema.model_dump(exclude_unset=True)
+        else:
+            data = schema.copy()
+
+        # We exclude 'id' if it's None so the DB can auto-increment it
+        if data.get("id") is None:
+            data.pop("id", None)
+
+        db_item = self.model(**data)
+        self.db.add(db_item)
+        await self.db.commit()
+        
+        # Instead of just refresh, we re-fetch to ensure relationships (organizations) are loaded
+        # This prevents MissingGreenlet error when Pydantic tries to access them
+        return await self.get_by_id(db_item.id) # type: ignore
 
     async def query(
         self, search_dto: UserSearchDto

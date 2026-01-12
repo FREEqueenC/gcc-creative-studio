@@ -25,3 +25,5 @@ class UserSearchDto(BaseSearchDto):
 
     email: Optional[str] = None
     role: Optional[str] = None
+    organization_id: Optional[int] = None
+    workspace_id: Optional[int] = None

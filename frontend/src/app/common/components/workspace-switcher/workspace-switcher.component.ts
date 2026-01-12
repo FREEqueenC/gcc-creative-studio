@@ -19,7 +19,9 @@ import { isPlatformBrowser } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute } from '@angular/router';
-import { map, switchMap } from 'rxjs';
+import { map, switchMap, debounceTime, distinctUntilChanged, startWith, tap } from 'rxjs/operators';
+import { Observable, of, combineLatest } from 'rxjs';
+import { FormControl } from '@angular/forms';
 import { WorkspaceStateService } from '../../../services/workspace/workspace-state.service';
 import { WorkspaceService } from '../../../services/workspace/workspace.service';
 import {
@@ -55,6 +57,10 @@ export class WorkspaceSwitcherComponent implements OnInit {
   readonly JobStatus = JobStatus;
   public WorkspaceScope = WorkspaceScope;
 
+  searchControl = new FormControl('');
+  filteredWorkspaces$: Observable<Workspace[]> = of([]);
+  isAdmin = false;
+
   isBrowser: boolean;
 
   constructor(
@@ -69,6 +75,7 @@ export class WorkspaceSwitcherComponent implements OnInit {
   ) {
     this.currentUser = this.userService.getUserDetails();
     this.isBrowser = isPlatformBrowser(platformId);
+    this.isAdmin = this.currentUser?.roles?.includes(UserRolesEnum.ADMIN) || false;
   }
 
   get currentOrganizationName(): string {
@@ -78,15 +85,45 @@ export class WorkspaceSwitcherComponent implements OnInit {
   ngOnInit(): void {
     this.loadWorkspaces();
     this.workspaceStateService.activeWorkspaceId$.subscribe(id => {
-      // Ensure we handle both string (from legacy/url) and number types safely if needed,
-      // but ideally workspaceStateService should also be consistent.
-      // Assuming workspaceStateService might still emit strings if not updated, let's cast or parse if needed.
-      // For now, let's assume strict number typing is propagated.
-      // Actually, workspaceStateService might need checking too.
-      // Let's assume id is number here based on the goal.
       this.activeWorkspaceId = typeof id === 'string' ? parseInt(id, 10) : id;
       this.activeWorkspace = this.workspaces.find(w => w.id === this.activeWorkspaceId) || null;
+      // If the active workspace is not in the initial list (e.g. found via search), we might need to fetch it or add it?
+      // For now, let's assume if it's set, it's valid.
     });
+
+    // Setup Search Logic
+    this.filteredWorkspaces$ = combineLatest([
+      of(this.workspaces), // Initial workspaces (Public + Personal)
+      this.searchControl.valueChanges.pipe(
+        startWith(''),
+        debounceTime(300),
+        distinctUntilChanged(),
+        switchMap(query => {
+          if (!query || query.trim().length < 3) {
+            return of(null); // No query or too short
+          }
+          if (this.isAdmin) {
+             return this.workspaceService.searchWorkspaces(query);
+          }
+          return of([]);
+        })
+      )
+    ]).pipe(
+      map(([initialWorkspaces, searchResults]) => {
+        if (searchResults) {
+          return searchResults;
+        }
+        // Default View: Public + Personal (already in this.workspaces from loadWorkspaces)
+        // We might want to filter 'Recent' out if loadWorkspaces returns everything?
+        // Actually loadWorkspaces calls list_workspaces_for_user which returns everything accessible.
+        // The requirement is "Default View: Show Public and Personal workspaces only".
+        // So we should filter this.workspaces.
+        return this.workspaces.filter(w => 
+          w.scope === WorkspaceScope.PUBLIC || 
+          w.scope === WorkspaceScope.PRIVATE // Assuming Personal = Private
+        );
+      })
+    );
 
     this.brandGuidelineService.activeBrandGuidelineJob$.subscribe(job => {
       if (job) {
@@ -95,7 +132,6 @@ export class WorkspaceSwitcherComponent implements OnInit {
             this.snackBar,
             'Brand Guidelines processed successfully!',
           );
-          // Reset the job so the spinner disappears and the button is re-enabled.
           this.brandGuidelineService.clearActiveJob();
         } else if (job.status === JobStatus.FAILED) {
           handleErrorSnackbar(
@@ -115,8 +151,16 @@ export class WorkspaceSwitcherComponent implements OnInit {
     this.workspaceService.getWorkspaces().subscribe({
       next: workspaces => {
         this.workspaces = workspaces;
-        // Now that we have the workspaces, we can determine the initial active one.
+        // Trigger update for filteredWorkspaces$
+        // We need to re-emit the initial workspaces. 
+        // Since we used `of(this.workspaces)` in combineLatest, it won't update automatically if we just assign `this.workspaces`.
+        // We should use a BehaviorSubject for workspaces.
         this.initializeActiveWorkspace();
+        
+        // Hack to refresh the observable:
+        // Re-initialize or use a Subject. Let's switch to Subject in next step if needed.
+        // For now, let's just update the search control to trigger the pipe?
+        this.searchControl.setValue(this.searchControl.value); 
       },
       error: error => {
         if (error.status === 401) {

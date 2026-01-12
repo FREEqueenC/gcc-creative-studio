@@ -32,10 +32,19 @@
 <mat-icon class="text-white/70 ml-1">unfold_more</mat-icon>
     </div>
 
-    <mat-menu #workspaceMenu="matMenu" xPosition="after">
+    <mat-menu #workspaceMenu="matMenu" xPosition="after" class="workspace-menu-panel">
+      <!-- Search Bar (Only for Admins) -->
+      <div *ngIf="isAdmin" class="px-4 py-2" (click)="$event.stopPropagation()">
+        <mat-form-field appearance="outline" class="w-full text-sm dense-form-field">
+          <mat-icon matPrefix>search</mat-icon>
+          <input matInput [formControl]="searchControl" placeholder="Search workspaces...">
+        </mat-form-field>
+      </div>
+      <mat-divider *ngIf="isAdmin"></mat-divider>
+
       <button
         mat-menu-item
-        *ngFor="let workspace of workspaces"
+        *ngFor="let workspace of filteredWorkspaces$ | async"
         (click)="setActiveWorkspace(workspace.id)"
         class="!h-auto !py-2"
       >

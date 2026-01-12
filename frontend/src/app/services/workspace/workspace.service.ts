@@ -37,14 +37,16 @@ export class WorkspaceService {
     return this.http.post<Workspace>(this.apiUrl, {name});
   }
 
-  inviteUser(
-    workspaceId: number,
-    email: string,
-    role: WorkspaceRole,
-  ): Observable<void> {
-    return this.http.post<void>(`${this.apiUrl}/${workspaceId}/invites`, {
+  inviteUser(workspaceId: number, email: string, role: string): Observable<Workspace> {
+    return this.http.post<Workspace>(`${this.apiUrl}/${workspaceId}/invites`, {
       email,
       role,
+    });
+  }
+
+  searchWorkspaces(query: string): Observable<Workspace[]> {
+    return this.http.get<Workspace[]>(`${this.apiUrl}/search`, {
+      params: { q: query },
     });
   }
 }

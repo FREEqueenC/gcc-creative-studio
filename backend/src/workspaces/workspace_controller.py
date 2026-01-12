@@ -66,6 +66,23 @@ async def list_my_workspaces(
     return await workspace_service.list_workspaces_for_user(current_user)
 
 
+@router.get(
+    "/search",
+    response_model=List[WorkspaceModel],
+    summary="Search Workspaces",
+)
+async def search_workspaces(
+    q: str,
+    current_user: UserModel = Depends(get_current_user),
+    workspace_service: WorkspaceService = Depends(),
+):
+    """
+    Searches for workspaces by name (prefix match).
+    Restricted to Super Admins and Organization Admins.
+    """
+    return await workspace_service.search_workspaces(current_user, q)
+
+
 @router.post(
     "/{workspace_id}/invites",
     response_model=WorkspaceModel,

@@ -54,12 +54,16 @@ export class UserService {
     limit: number,
     filter: string,
     offset?: number,
+    organizationId?: number,
+    workspaceId?: number,
   ): Observable<PaginatedResponse> {
     let params = new HttpParams()
       .set('limit', limit.toString())
       .set('email', filter);
 
     if (offset !== undefined) params = params.set('offset', offset.toString());
+    if (organizationId !== undefined && organizationId !== null) params = params.set('organization_id', organizationId.toString());
+    if (workspaceId !== undefined && workspaceId !== null) params = params.set('workspace_id', workspaceId.toString());
 
     return this.http
       .get<PaginatedResponse>(this.usersApiUrl, {params, ...this.httpOptions})

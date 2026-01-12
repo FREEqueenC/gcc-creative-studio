@@ -30,6 +30,10 @@ import {UserFormComponent} from './user-form.component';
 import {MatSnackBar} from '@angular/material/snack-bar';
 import {UserModel, UserRolesEnum} from '../../common/models/user.model';
 import { handleErrorSnackbar, handleSuccessSnackbar } from '../../utils/handleMessageSnackbar';
+import { OrganizationService } from '../../services/organization/organization.service';
+import { WorkspaceService } from '../../services/workspace/workspace.service';
+import { Organization } from '../../common/models/organization.model';
+import { Workspace } from '../../common/models/workspace.model';
 
 @Component({
   selector: 'app-users-management',
@@ -61,6 +65,13 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
   private filterSubject = new Subject<string>();
   private destroy$ = new Subject<void>();
   currentFilter = '';
+  
+  // Filters
+  selectedOrganizationId: number | null = null;
+  selectedWorkspaceId: number | null = null;
+  
+  organizations: Organization[] = [];
+  workspaces: Workspace[] = [];
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
@@ -69,10 +80,14 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
     private userService: UserService,
     public dialog: MatDialog,
     private _snackBar: MatSnackBar,
+    private organizationService: OrganizationService,
+    private workspaceService: WorkspaceService
   ) {}
 
   ngOnInit(): void {
     this.fetchPage(0);
+    this.loadOrganizations();
+    this.loadWorkspaces();
 
     // Debounce filter input to avoid excessive Firestore reads
     this.filterSubject
@@ -81,6 +96,32 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
         this.currentFilter = filterValue;
         this.resetPaginationAndFetch();
       });
+  }
+
+  loadOrganizations() {
+    // Assuming we have an endpoint to get all organizations for admin
+    // Or at least the ones the user has access to.
+    // For now, let's use listOrganizations if available or similar.
+    // If not, we might need to add it.
+    // Let's assume listOrganizations exists in OrganizationService
+    this.organizationService.listOrganizations().subscribe(orgs => {
+        this.organizations = orgs;
+    });
+  }
+
+  loadWorkspaces() {
+    // Similarly for workspaces
+    this.workspaceService.getWorkspaces().subscribe(workspaces => {
+        this.workspaces = workspaces;
+    });
+  }
+
+  onOrganizationChange() {
+    this.resetPaginationAndFetch();
+  }
+
+  onWorkspaceChange() {
+    this.resetPaginationAndFetch();
   }
 
   ngOnDestroy(): void {
@@ -108,6 +149,8 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
           this.limit,
           this.currentFilter,
           offset,
+          this.selectedOrganizationId || undefined,
+          this.selectedWorkspaceId || undefined
         ),
       );
 

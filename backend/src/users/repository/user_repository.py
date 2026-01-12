@@ -103,6 +103,20 @@ class UserRepository(BaseRepository[User, UserModel]):
             # Postgres ARRAY contains check
             query = query.where(self.model.roles.contains([search_dto.role.value]))
 
+        if search_dto.organization_id:
+            # Join with UserOrganization to filter by org
+            query = query.join(self.model.organizations).where(
+                UserOrganization.organization_id == search_dto.organization_id
+            )
+
+        if search_dto.workspace_id:
+            # Join with WorkspaceMemberAssociation to filter by workspace
+            # We need to import WorkspaceMemberAssociation locally to avoid circular imports if any
+            from src.workspaces.schema.workspace_model import WorkspaceMemberAssociation
+            query = query.join(WorkspaceMemberAssociation, self.model.id == WorkspaceMemberAssociation.user_id).where(
+                WorkspaceMemberAssociation.workspace_id == search_dto.workspace_id
+            )
+
         # 2. Get total count
         count_query = select(func.count()).select_from(query.subquery())
         count_result = await self.db.execute(count_query)

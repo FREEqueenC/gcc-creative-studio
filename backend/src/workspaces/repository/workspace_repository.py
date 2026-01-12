@@ -87,6 +87,24 @@ class WorkspaceRepository(BaseRepository[Workspace, WorkspaceModel]):
         workspaces = result.scalars().all()
         return [self._map_to_schema(w) for w in workspaces]
 
+    async def search(
+        self, query: str, limit: int = 10, organization_ids: Optional[List[int]] = None
+    ) -> List[WorkspaceModel]:
+        """
+        Searches for workspaces by name (prefix match).
+        Optionally filters by organization IDs.
+        """
+        stmt = select(self.model).where(self.model.name.ilike(f"{query}%"))
+        
+        if organization_ids:
+            stmt = stmt.where(self.model.organization_id.in_(organization_ids))
+            
+        stmt = stmt.options(selectinload(self.model.organization)).limit(limit)
+        
+        result = await self.db.execute(stmt)
+        workspaces = result.scalars().all()
+        return [self._map_to_schema(w) for w in workspaces]
+
     async def create(
         self, schema: WorkspaceModel, initial_members: List[WorkspaceMember] = []
     ) -> WorkspaceModel:

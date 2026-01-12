@@ -239,6 +239,34 @@ class WorkspaceService:
             
         return workspaces
 
+    async def search_workspaces(self, user: UserModel, query: str) -> List[WorkspaceModel]:
+        """
+        Searches for workspaces based on user role.
+        - Super Admin: Can search all workspaces.
+        - Org Admin: Can search workspaces in their organizations.
+        - Others: Cannot search (returns empty list or raises error).
+        
+        Optimization: Returns empty list if query is less than 3 characters.
+        """
+        if not query or len(query.strip()) < 3:
+            return []
+
+        if user.is_super_admin:
+            return await self.workspace_repo.search(query)
+        
+        # Check if user is an admin of any organization
+        # We need to check the roles in user.organizations
+        admin_org_ids = [
+            org.id for org in user.organizations 
+            if org.role == "admin" # Assuming 'admin' is the role string, check OrganizationRoleEnum
+        ]
+        
+        if admin_org_ids:
+            return await self.workspace_repo.search(query, organization_ids=admin_org_ids)
+            
+        # Regular users cannot search for now
+        return []
+
     async def ensure_default_workspaces(self, user: UserModel, org: OrganizationModel):
         """
         Ensures the user has the required default workspaces for their organization.

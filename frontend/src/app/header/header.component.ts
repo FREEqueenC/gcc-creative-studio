@@ -98,7 +98,7 @@ export class HeaderComponent implements OnDestroy {
       switchMap(user => {
         if (!user) return of(false);
         // Use the flag returned by the backend
-        return of(!!user.isSuperAdmin);
+        return of(!!user.canAccessAdminPanel);
       }),
       shareReplay(1)
     );

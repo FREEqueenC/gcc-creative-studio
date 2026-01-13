@@ -81,7 +81,7 @@ async def auth_callback(request: Request) -> Dict[str, Any]:
     return user_info
 
 from src.auth.session import get_session_user
-from src.core.fga import check_permission
+from src.core.fga import check_permission, fga_client
 
 
 
@@ -125,6 +125,32 @@ async def get_current_user(
     check_user = {"id": str(user_model.id)}
     is_super_admin = await check_permission(check_user, "platform", "creative-studio", "super_admin")
     user_model.is_super_admin = is_super_admin
+
+    # Check if user can access admin panel
+    # Logic: Super Admin OR Admin of ANY Organization
+    if is_super_admin:
+        user_model.can_access_admin_panel = True
+    else:
+        # Query FGA for all organizations where user is 'admin'
+        from openfga_sdk.client.models import ClientListObjectsRequest
+        
+        try:
+            # We list objects of type 'organization' where user has relation 'can_access_admin_panel'
+            req = ClientListObjectsRequest(
+                user=f"user:{user_model.id}",
+                relation="can_access_admin_panel",
+                type="organization"
+            )
+            resp = await fga_client.list_objects(req)
+            # If the list is not empty, they are an admin of at least one org
+            user_model.can_access_admin_panel = len(resp.objects) > 0
+            print(f"DEBUG: FGA Check for {user_model.email} (ID: {user_model.id}) -> Objects: {resp.objects} -> Access: {user_model.can_access_admin_panel}")
+        except Exception as e:
+            # If FGA fails, default to False for safety
+            print(f"ERROR: Failed to check admin panel access via FGA: {e}")
+            import traceback
+            traceback.print_exc()
+            user_model.can_access_admin_panel = False
 
     return user_model
 

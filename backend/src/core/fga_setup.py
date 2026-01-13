@@ -72,13 +72,15 @@ async def setup_fga(client: OpenFgaClient):
             "relations": {
                 "platform": {"this": {}},
                 "admin": {"union": {"child": [{"this": {}}, {"tupleToUserset": {"computedUserset": {"object": "", "relation": "super_admin"}, "tupleset": {"object": "", "relation": "platform"}}}]}},
-                "member": {"union": {"child": [{"this": {}}, {"computedUserset": {"object": "", "relation": "admin"}}]}}
+                "member": {"union": {"child": [{"this": {}}, {"computedUserset": {"object": "", "relation": "admin"}}]}},
+                "can_access_admin_panel": {"computedUserset": {"object": "", "relation": "admin"}}
             },
             "metadata": {
                 "relations": {
                     "platform": {"directly_related_user_types": [{"type": "platform"}]},
                     "admin": {"directly_related_user_types": [{"type": "user"}]},
-                    "member": {"directly_related_user_types": [{"type": "user"}]}
+                    "member": {"directly_related_user_types": [{"type": "user"}]},
+                    "can_access_admin_panel": {"directly_related_user_types": []}
                 }
             }
         },

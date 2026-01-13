@@ -108,7 +108,7 @@ export class AuthService {
 
   isUserAdmin(): boolean {
     const user = this.currentUserSubject.value;
-    return user?.isSuperAdmin || user?.roles?.includes(UserRolesEnum.ADMIN) || false;
+    return !!user?.canAccessAdminPanel;
   }
   
   // Helper to get current value synchronously if needed

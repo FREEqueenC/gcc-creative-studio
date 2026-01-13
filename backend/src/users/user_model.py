@@ -81,6 +81,7 @@ class UserModel(BaseDocument):
     name: str
     picture: str = ""
     is_super_admin: bool = False
+    can_access_admin_panel: bool = False
     organizations: List[UserOrganizationSummary] = Field(default_factory=list)
 
     @field_validator("roles", mode="after")

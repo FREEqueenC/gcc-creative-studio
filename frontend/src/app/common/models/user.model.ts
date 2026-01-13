@@ -44,4 +44,5 @@ export interface UserModel {
   organizations?: UserOrganizationSummary[];
   workspaces?: UserWorkspaceSummary[];
   isSuperAdmin?: boolean;
+  canAccessAdminPanel?: boolean;
 }

@@ -30,7 +30,7 @@ async def require_admin_access(user: UserModel = Depends(get_current_user)) -> U
         return user
 
     # 2. Check if they manage ANY organization
-    if user.admin_org_ids and len(user.admin_org_ids) > 0:
+    if user.can_access_admin_panel:
         return user
 
     raise HTTPException(

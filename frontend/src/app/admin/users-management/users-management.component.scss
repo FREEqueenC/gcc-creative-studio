@@ -13,3 +13,44 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+// Styles for the sticky search input in mat-select
+::ng-deep .workspace-select-panel {
+  // Ensure the sticky header has a solid background
+  // The 'sticky' class in HTML handles position, but we double check here if needed
+  // .sticky { ... } 
+}
+
+.dense-form-field {
+
+  // Compact form field styles to fit nicely in the dropdown
+  ::ng-deep .mat-mdc-form-field-flex {
+    min-height: 40px !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    align-items: center !important;
+  }
+
+  ::ng-deep .mat-mdc-text-field-wrapper {
+    padding-bottom: 0 !important;
+  }
+
+  ::ng-deep .mat-mdc-form-field-infix {
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+    min-height: 40px !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  ::ng-deep .mat-mdc-form-field-icon-prefix {
+    padding: 0 8px 0 0 !important;
+    align-self: center !important;
+  }
+
+  ::ng-deep .mat-mdc-input-element {
+    margin-top: 0 !important;
+    position: relative;
+    top: -2px; // Slight adjustment for vertical alignment
+  }
+}

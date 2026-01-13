@@ -23,6 +23,9 @@ import {
   debounceTime,
   distinctUntilChanged,
   takeUntil,
+  startWith,
+  switchMap,
+  map,
 } from 'rxjs/operators';
 import {UserService} from './user.service';
 import {PaginatedResponse} from '../../common/models/pagination.model';
@@ -35,6 +38,8 @@ import { OrganizationService } from '../../services/organization/organization.se
 import { WorkspaceService } from '../../services/workspace/workspace.service';
 import { Organization } from '../../common/models/organization.model';
 import { Workspace } from '../../common/models/workspace.model';
+import { FormControl } from '@angular/forms';
+import { Observable, of } from 'rxjs';
 
 @Component({
   selector: 'app-users-management',
@@ -73,6 +78,10 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
   
   organizations: Organization[] = [];
   workspaces: Workspace[] = [];
+  
+  // Workspace Search
+  workspaceSearchControl = new FormControl('');
+  filteredWorkspaces$: Observable<Workspace[]> = of([]);
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
@@ -100,20 +109,33 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
   }
 
   loadOrganizations() {
-    // Assuming we have an endpoint to get all organizations for admin
-    // Or at least the ones the user has access to.
-    // For now, let's use listOrganizations if available or similar.
-    // If not, we might need to add it.
-    // Let's assume listOrganizations exists in OrganizationService
     this.organizationService.listOrganizations().subscribe(response => {
         this.organizations = response.data;
     });
   }
 
   loadWorkspaces() {
-    // Similarly for workspaces
+    // Initial load: Get all workspaces (or top N)
+    // We'll use the existing getWorkspaces for initial population
     this.workspaceService.getWorkspaces().subscribe(workspaces => {
         this.workspaces = workspaces;
+        // Initialize filteredWorkspaces with first 5
+        this.filteredWorkspaces$ = this.workspaceSearchControl.valueChanges.pipe(
+          startWith(''),
+          debounceTime(300),
+          distinctUntilChanged(),
+          switchMap(query => {
+            if (!query || typeof query !== 'string' || query.trim() === '') {
+              // Return first 5 of loaded workspaces
+              return of(this.workspaces.slice(0, 5));
+            }
+            if (query.trim().length < 3) {
+               return of(this.workspaces.slice(0, 5));
+            }
+            // Perform server-side search
+            return this.workspaceService.searchWorkspaces(query);
+          })
+        );
     });
   }
 

@@ -102,7 +102,8 @@ export class WorkspaceSwitcherComponent implements OnInit {
           if (!query || query.trim().length < 3) {
             return of(null); // No query or too short
           }
-          if (this.isAdmin) {
+          // Enable search for Super Admins and Org Admins (who have access to admin panel)
+          if (this.isAdmin || this.currentUser?.canAccessAdminPanel) {
              return this.workspaceService.searchWorkspaces(query);
           }
           return of([]);

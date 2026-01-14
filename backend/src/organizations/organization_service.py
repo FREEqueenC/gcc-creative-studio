@@ -18,7 +18,7 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database import get_db
-from src.organizations.organization_model import OrganizationModel, OrganizationRoleEnum
+from src.organizations.organization_model import OrganizationModel, OrganizationRoleEnum, OrganizationPermissions
 from src.organizations.repository.organization_repository import OrganizationRepository
 from src.organizations.organization_seeder import OrganizationSeeder
 from src.users.user_model import UserModel
@@ -61,7 +61,7 @@ class OrganizationService:
         # TODO: Optimize with a batch call if possible, but for now loop is fine (usually few orgs per user)
         for org in orgs:
             perms = await self.permission_service.get_permissions_for_organization(user_id, org.id)
-            org.permissions = perms
+            org.permissions = OrganizationPermissions(**perms)
             
         return orgs
 
@@ -249,6 +249,8 @@ class OrganizationService:
         - Updates OpenFGA.
         """
         from fastapi import HTTPException, status
+        from openfga_sdk.client.models import ClientWriteRequest, ClientTuple
+        from openfga_sdk.models import ReadRequestTupleKey
         
         # 1. Verify Permissions
         if not current_user.is_super_admin:
@@ -262,7 +264,47 @@ class OrganizationService:
                     detail="Insufficient permissions to update member role."
                 )
 
-        # 2. Update DB
+        # 2. Get Current State (for potential revert and FGA cleanup)
+        # Fetch current DB role
+        user_orgs = await self.repo.get_user_organizations(user_id)
+        current_org_membership = next((o for o in user_orgs if o.id == org_id), None)
+        
+        if not current_org_membership:
+             raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User is not a member of this organization."
+            )
+        
+        old_role_str = current_org_membership.role
+        old_role_enum = OrganizationRoleEnum(old_role_str)
+
+        # Fetch current FGA relations to avoid "tuple does not exist" error
+        tuples_to_delete = []
+        try:
+            # Read all tuples for this user and object
+            response = await fga_client.read(
+                ReadRequestTupleKey(
+                    user=f"user:{user_id}",
+                    object=f"organization:{org_id}",
+                )
+            )
+            if response.tuples:
+                for t in response.tuples:
+                    tuples_to_delete.append(
+                        ClientTuple(
+                            user=t.key.user,
+                            relation=t.key.relation,
+                            object=t.key.object,
+                        )
+                    )
+        except Exception as e:
+            print(f"Failed to read FGA tuples: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to synchronize with authorization system."
+            )
+
+        # 3. Update DB
         updated_org = await self.repo.update_member_role(org_id, user_id, role)
         if not updated_org:
             raise HTTPException(
@@ -270,37 +312,18 @@ class OrganizationService:
                 detail="Organization or user not found."
             )
 
-        # 3. Update OpenFGA
-        # We need to remove the old role and add the new one.
-        # Since we don't know the old role for sure without querying, we can try to remove both 'member' and 'admin'.
-        # Or we could have queried before updating.
-        # Let's try to remove both to be safe and clean.
+        # 4. Update OpenFGA
         try:
-            # Remove existing roles
-            await fga_client.write(
-                ClientWriteRequest(
-                    deletes=[
-                        ClientTuple(
-                            user=f"user:{user_id}",
-                            relation="member",
-                            object=f"organization:{org_id}",
-                        ),
-                        ClientTuple(
-                            user=f"user:{user_id}",
-                            relation="admin",
-                            object=f"organization:{org_id}",
-                        )
-                    ]
+            # Delete ALL existing tuples for this user/org
+            if tuples_to_delete:
+                await fga_client.write(
+                    ClientWriteRequest(
+                        deletes=tuples_to_delete
+                    )
                 )
-            )
             
-            # Add new role
-            # Note: 'admin' implies 'member' usually, but in FGA we might want explicit relations depending on model.
-            # Assuming 'admin' relation exists and 'member' relation exists.
-            # If role is ADMIN, we might want to give 'admin' relation.
-            # If role is MEMBER, we give 'member' relation.
+            # Write NEW tuple
             relation = "admin" if role == OrganizationRoleEnum.ADMIN else "member"
-            
             await fga_client.write(
                 ClientWriteRequest(
                     writes=[
@@ -314,6 +337,14 @@ class OrganizationService:
             )
         except Exception as e:
             print(f"Failed to update OpenFGA tuples: {e}")
-            # We don't rollback DB here, but we should log it.
+            
+            # COMPENSATING TRANSACTION: Revert DB
+            print(f"Reverting DB role change for user {user_id} in org {org_id} to {old_role_enum}")
+            await self.repo.update_member_role(org_id, user_id, old_role_enum)
+            
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to update permissions. Changes reverted."
+            )
             
         return updated_org

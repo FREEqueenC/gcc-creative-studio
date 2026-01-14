@@ -234,8 +234,17 @@ class WorkspaceService:
             user_orgs = await self.organization_service.get_user_organizations(user.id)
             org_ids = [org.id for org in user_orgs]
             
+            # Identify organizations where user is Admin
+            # We use FGA permissions populated in get_user_organizations
+            admin_org_ids = [
+                org.id for org in user_orgs 
+                if org.permissions and org.permissions.is_admin
+            ]
+            
             # Fetch accessible workspaces
-            workspaces = await self.workspace_repo.find_accessible_by_user_and_orgs(user.id, org_ids)
+            workspaces = await self.workspace_repo.find_accessible_by_user_and_orgs(
+                user.id, org_ids, admin_org_ids
+            )
         
         # Populate permissions for each workspace
         for ws in workspaces:

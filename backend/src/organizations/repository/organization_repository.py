@@ -125,14 +125,21 @@ class OrganizationRepository(BaseRepository[Organization, OrganizationModel]):
         return await self.get_by_id(org_id)
 
     async def get_user_organizations(self, user_id: int) -> List[OrganizationModel]:
-        """Finds all organizations a user belongs to."""
+        """Finds all organizations a user belongs to, including their role."""
         result = await self.db.execute(
-            select(self.model)
+            select(self.model, UserOrganization.role)
             .join(UserOrganization)
             .where(UserOrganization.user_id == user_id)
         )
-        orgs = result.scalars().all()
-        return [self._map_to_schema(o) for o in orgs]
+        rows = result.all()
+        
+        models = []
+        for org, role in rows:
+            model = self._map_to_schema(org)
+            if role:
+                model.role = OrganizationRoleEnum(role)
+            models.append(model)
+        return models
 
     def _map_to_schema(self, org: Organization) -> OrganizationModel:
         """Helper to map SQLAlchemy Organization to Pydantic OrganizationModel."""

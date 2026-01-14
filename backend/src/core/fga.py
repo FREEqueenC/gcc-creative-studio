@@ -55,6 +55,13 @@ class FGAClientWrapper:
             return ListObjectsResponse(objects=[])
         return await self._client.list_objects(body)
 
+    async def read(self, body):
+        if not self._client:
+            logger.warning("FGA Client not initialized, returning empty response")
+            from openfga_sdk.models.read_response import ReadResponse
+            return ReadResponse(tuples=[])
+        return await self._client.read(body)
+
 fga_client = FGAClientWrapper()
 
 class FgaPermissionChecker:

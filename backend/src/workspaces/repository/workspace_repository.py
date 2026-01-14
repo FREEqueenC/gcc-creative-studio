@@ -273,21 +273,33 @@ class WorkspaceRepository(BaseRepository[Workspace, WorkspaceModel]):
             return None
         return self._map_to_schema(workspace)
 
-    async def find_accessible_by_user_and_orgs(self, user_id: int, org_ids: List[int]) -> List[WorkspaceModel]:
+    async def find_accessible_by_user_and_orgs(
+        self, user_id: int, org_ids: List[int], admin_org_ids: Optional[List[int]] = None
+    ) -> List[WorkspaceModel]:
         """
         Finds workspaces that are either:
         1. Explicitly joined by the user (member).
         2. Public workspaces belonging to one of the user's organizations.
+        3. Any workspace belonging to an organization where the user is an Admin.
         """
         # Condition 1: User is a member
         member_condition = self.model.members.any(WorkspaceMemberAssociation.user_id == user_id)
         
+        conditions = [member_condition]
+
         # Condition 2: Public and in user's orgs
         if org_ids:
             org_public_condition = (self.model.organization_id.in_(org_ids)) & (self.model.scope == WorkspaceScopeEnum.PUBLIC.value)
-            combined_condition = member_condition | org_public_condition
-        else:
-            combined_condition = member_condition
+            conditions.append(org_public_condition)
+            
+        # Condition 3: Any workspace in admin orgs
+        if admin_org_ids:
+            admin_org_condition = self.model.organization_id.in_(admin_org_ids)
+            conditions.append(admin_org_condition)
+
+        # Combine with OR
+        from sqlalchemy import or_
+        combined_condition = or_(*conditions)
 
         result = await self.db.execute(
             select(self.model)

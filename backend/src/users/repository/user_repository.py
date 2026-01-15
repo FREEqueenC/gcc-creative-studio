@@ -127,14 +127,21 @@ class UserRepository(BaseRepository[User, UserModel]):
                 if workspace.scope == WorkspaceScopeEnum.PUBLIC.value and workspace.organization_id is not None:
                     # Implicit Membership: Users in the organization OR explicit members
                     # We use outer joins to find matches in either table
+                    # Use aliased to avoid DuplicateAliasError if UserOrganization is already joined above
+                    from sqlalchemy.orm import aliased
+                    WorkspaceUserOrg = aliased(UserOrganization)
+                    
+                    
+                    # UserOrganization is being joined twice: once for filtering by organization_ids and 
+                    # again for checking public workspace membership.
                     query = query.outerjoin(
-                        UserOrganization, 
-                        (self.model.id == UserOrganization.user_id) & (UserOrganization.organization_id == workspace.organization_id)
+                        WorkspaceUserOrg, 
+                        (self.model.id == WorkspaceUserOrg.user_id) & (WorkspaceUserOrg.organization_id == workspace.organization_id)
                     ).outerjoin(
                         WorkspaceMemberAssociation, 
                         (self.model.id == WorkspaceMemberAssociation.user_id) & (WorkspaceMemberAssociation.workspace_id == search_dto.workspace_id)
                     ).where(
-                        (UserOrganization.organization_id.is_not(None)) | 
+                        (WorkspaceUserOrg.organization_id.is_not(None)) | 
                         (WorkspaceMemberAssociation.workspace_id.is_not(None))
                     ).distinct()
                 else:

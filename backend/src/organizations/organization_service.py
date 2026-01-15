@@ -253,6 +253,12 @@ class OrganizationService:
         from openfga_sdk.models import ReadRequestTupleKey
         
         # 1. Verify Permissions
+        if current_user.id == user_id:
+             raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You cannot change your own role."
+            )
+
         if not current_user.is_super_admin:
             # Check if Org Admin
             is_org_admin = await self.permission_service.has_permission(

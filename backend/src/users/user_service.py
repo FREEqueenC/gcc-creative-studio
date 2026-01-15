@@ -120,7 +120,15 @@ class UserService:
         # The update method in the repository would handle updating the 'role' field
         return await self.user_repo.update(user_id, {"roles": roles_as_strings})
 
-    async def delete_user_by_id(self, user_id: int) -> bool:
+    async def delete_user_by_id(self, user_id: int, current_user: Optional[UserModel] = None) -> bool:
         """Deletes a user from the system."""
+        from fastapi import HTTPException, status
+        
+        if current_user and current_user.id == user_id:
+             raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You cannot delete your own account."
+            )
+            
         return await self.user_repo.delete(user_id)
 

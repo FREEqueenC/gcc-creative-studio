@@ -99,11 +99,15 @@ async def get_user_by_id(user_id: int, user_service: UserService = Depends()):
     summary="Delete a User (Admin Only)",
     dependencies=[Depends(require_super_admin)],
 )
-async def delete_user(user_id: int, user_service: UserService = Depends()):
+async def delete_user(
+    user_id: int, 
+    user_service: UserService = Depends(),
+    current_user: UserModel = Depends(get_current_user)
+):
     """
     Permanently deletes a user from the database.
     This functionality is restricted to administrators.
     """
-    if not await user_service.delete_user_by_id(user_id):
+    if not await user_service.delete_user_by_id(user_id, current_user):
         raise HTTPException(status_code=404, detail="User not found")
     return

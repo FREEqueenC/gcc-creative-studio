@@ -111,7 +111,8 @@
           <!-- Context Selected: Show Dropdown -->
           <div *ngIf="isContextSelected" (click)="$event.stopPropagation()">
             <mat-form-field appearance="outline" class="w-32">
-              <mat-select [value]="getContextRole(user)" (selectionChange)="changeRole(user, $event.value)">
+              <mat-select [value]="getContextRole(user)" (selectionChange)="changeRole(user, $event.value)"
+                [disabled]="currentUser?.id === user.id">
                 <mat-option *ngFor="let role of availableRoles" [value]="role">
                   {{ role | titlecase }}
                 </mat-option>
@@ -159,6 +160,7 @@
             color="warn"
             (click)="deleteUser(user.id!)"
             matTooltip="Delete User"
+            *ngIf="currentUser?.id !== user.id"
           >
             <mat-icon>delete</mat-icon>
           </button>

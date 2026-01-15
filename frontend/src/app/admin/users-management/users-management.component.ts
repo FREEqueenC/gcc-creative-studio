@@ -40,6 +40,7 @@ import { Organization } from '../../common/models/organization.model';
 import { Workspace } from '../../common/models/workspace.model';
 import { FormControl } from '@angular/forms';
 import { Observable, of } from 'rxjs';
+import { AuthService } from '../../common/services/auth.service';
 
 @Component({
   selector: 'app-users-management',
@@ -86,13 +87,20 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
 
+  currentUser: UserModel | null = null;
+
   constructor(
     private userService: UserService,
     public dialog: MatDialog,
     private _snackBar: MatSnackBar,
     private organizationService: OrganizationService,
-    private workspaceService: WorkspaceService
-  ) {}
+    private workspaceService: WorkspaceService,
+    private authService: AuthService
+  ) {
+    this.authService.currentUser$.subscribe(user => {
+      this.currentUser = user;
+    });
+  }
 
   ngOnInit(): void {
     this.fetchPage(0);
@@ -240,6 +248,11 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
   }
 
   async deleteUser(userId: string): Promise<void> {
+    if (this.currentUser && this.currentUser.id === userId) {
+      handleErrorSnackbar(this._snackBar, 'You cannot delete your own account.', 'Delete User');
+      return;
+    }
+
     // Simple confirmation, consider using a MatDialog for a better UX
     if (confirm(`Are you sure you want to delete user with ID: ${userId}?`)) {
       this.isLoading = true;
@@ -310,6 +323,16 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
 
 
   async changeRole(user: UserModel, newRole: string) {
+    if (this.currentUser && this.currentUser.id === user.id) {
+        handleErrorSnackbar(this._snackBar, 'You cannot change your own role.', 'Change Role');
+        // Reset selection if possible, or just return. 
+        // Since it's a select change, the UI might already show the new value. 
+        // Ideally we should revert it, but for now just preventing the API call is key.
+        // To revert, we'd need to reload or manually reset.
+        this.fetchPage(this.currentPageIndex); // Reload to revert UI
+        return;
+    }
+
     console.log('changeRole called:', user.id, newRole, 'Org:', this.selectedOrganizationId, 'WS:', this.selectedWorkspaceId);
     if (!this.isContextSelected) {
       console.warn('changeRole: No context selected');

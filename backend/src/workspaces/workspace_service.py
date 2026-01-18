@@ -39,6 +39,8 @@ from src.organizations.organization_model import OrganizationModel
 from src.common.permission_service import PermissionService
 from src.workspaces.schema.workspace_model import WorkspacePermissions
 
+from src.common.consistency_service import ConsistencyService
+
 class WorkspaceService:
     """
     Handles the business logic for workspace management.
@@ -50,12 +52,14 @@ class WorkspaceService:
         user_repo: UserRepository = Depends(),
         email_service: EmailService = Depends(),
         organization_service: OrganizationService = Depends(),
+        consistency_service: ConsistencyService = Depends(),
     ):
         self.workspace_repo = workspace_repo
         self.user_repo = user_repo
         self.email_service = email_service
         self.organization_service = organization_service
         self.permission_service = PermissionService()
+        self.consistency_service = consistency_service
 
     async def create_workspace(
         self, user: UserModel, create_dto: CreateWorkspaceDto
@@ -273,17 +277,36 @@ class WorkspaceService:
                 detail="Insufficient permissions to update member role."
             )
 
-        # 2. Update DB
-        updated_workspace = await self.repo.update_member_role(workspace_id, user_id, role)
-        if not updated_workspace:
-            raise HTTPException(
+        # 2. Get Current State (for potential revert)
+        workspace = await self.workspace_repo.get_by_id(workspace_id)
+        if not workspace:
+             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Workspace or user not found."
+                detail="Workspace not found."
             )
+            
+        current_member = next((m for m in workspace.members if m.user_id == user_id), None)
+        if not current_member:
+             raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User is not a member of this workspace."
+            )
+            
+        old_role = current_member.role
 
-        # 3. Update OpenFGA
-        # Remove old roles (viewer, editor, admin)
-        try:
+        # 3. Define DB Operation
+        async def db_op() -> WorkspaceModel:
+            updated_workspace = await self.repo.update_member_role(workspace_id, user_id, role)
+            if not updated_workspace:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Workspace or user not found."
+                )
+            return updated_workspace
+
+        # 4. Define FGA Operation
+        async def fga_op():
+            # Remove old roles (viewer, editor, admin)
             await fga_client.write(
                 ClientWriteRequest(
                     deletes=[
@@ -321,10 +344,19 @@ class WorkspaceService:
                     ]
                 )
             )
-        except Exception as e:
-            print(f"Failed to update OpenFGA tuples: {e}")
-            
-        return updated_workspace
+
+        # 5. Define Rollback Operation
+        async def rollback_op():
+            print(f"Reverting DB role change for user {user_id} in workspace {workspace_id} to {old_role}")
+            await self.repo.update_member_role(workspace_id, user_id, old_role)
+
+        # 6. Execute via ConsistencyService
+        return await self.consistency_service.perform_dual_write(
+            db_op=db_op,
+            fga_op=fga_op,
+            rollback_op=rollback_op,
+            error_message="Failed to update permissions."
+        )
 
     async def search_workspaces(self, user: UserModel, query: str) -> List[WorkspaceModel]:
         """

@@ -26,13 +26,20 @@ from src.users.user_model import UserModel
 from fastapi import Depends
 from sqlalchemy.exc import IntegrityError
 
+from src.common.consistency_service import ConsistencyService
+
 class UserService:
     """
     Handles the business logic for user management.
     """
 
-    def __init__(self, user_repo: UserRepository = Depends()):
+    def __init__(
+        self, 
+        user_repo: UserRepository = Depends(),
+        consistency_service: ConsistencyService = Depends()
+    ):
         self.user_repo = user_repo
+        self.consistency_service = consistency_service
 
     async def create_user_if_not_exists(
         self, email: str, name: str, picture: Optional[str]
@@ -135,21 +142,21 @@ class UserService:
     async def update_super_admin_status(self, user_id: int, is_super_admin: bool) -> UserModel:
         """
         Updates the super admin status of a user.
-        Syncs the change to both the Database and OpenFGA.
+        Syncs the change to both the Database and OpenFGA using ConsistencyService.
         """
-        # 1. Update DB
-        # We use update method which returns the updated model
-        updated_user = await self.user_repo.update(user_id, {"is_super_admin": is_super_admin})
-        
-        if not updated_user:
-            raise ValueError("User not found")
-            
-        # 2. Update FGA
         # Import inside method to avoid potential circular imports
         from src.core.fga import fga_client
         from openfga_sdk.client.models import ClientWriteRequest, ClientTuple
         
-        try:
+        # 1. Define DB Operation
+        async def db_op() -> UserModel:
+            updated_user = await self.user_repo.update(user_id, {"is_super_admin": is_super_admin})
+            if not updated_user:
+                raise ValueError("User not found")
+            return updated_user
+
+        # 2. Define FGA Operation
+        async def fga_op():
             if is_super_admin:
                 # Write super_admin tuple
                 await fga_client.write(ClientWriteRequest(
@@ -168,17 +175,16 @@ class UserService:
                         object="platform:creative-studio"
                     )]
                 ))
-        except Exception as e:
-            # Log error but don't fail the request? 
-            # Or fail to ensure consistency?
-            # Ideally we want consistency. If FGA fails, we might want to revert DB or retry.
-            # For now, we'll log and raise.
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.error(f"Failed to sync Super Admin status to FGA for user {user_id}: {e}")
-            # We should probably revert the DB change here if strict consistency is needed.
-            # But for now, let's just raise.
-            raise
-            
-        return updated_user
 
+        # 3. Define Rollback Operation
+        async def rollback_op():
+            # Revert to previous state (negate is_super_admin)
+            await self.user_repo.update(user_id, {"is_super_admin": not is_super_admin})
+
+        # 4. Execute via ConsistencyService
+        return await self.consistency_service.perform_dual_write(
+            db_op=db_op,
+            fga_op=fga_op,
+            rollback_op=rollback_op,
+            error_message="Failed to sync Super Admin status to FGA."
+        )

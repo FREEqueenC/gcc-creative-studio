@@ -83,6 +83,12 @@ async def upload_source_asset(
         workspace_repo=workspace_repo,
     )
 
+    if scope == AssetScopeEnum.SYSTEM and not current_user.is_super_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only Super Admins can upload system-wide assets.",
+        )
+
     return await service.upload_asset(
         user=current_user,
         file=file,
@@ -200,6 +206,13 @@ async def delete_source_asset(
 
     # 2. Check Permissions
     is_super_admin = current_user.is_super_admin
+
+    if asset.scope == AssetScopeEnum.SYSTEM and not is_super_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only Super Admins can delete system-wide assets.",
+        )
+
     is_owner = asset.user_id == current_user.id
     
     if is_super_admin or is_owner:

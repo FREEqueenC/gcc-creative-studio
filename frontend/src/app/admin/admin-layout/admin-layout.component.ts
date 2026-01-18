@@ -15,10 +15,20 @@
  */
 
 import {Component} from '@angular/core';
+import {AuthService} from '../../common/services/auth.service';
+import {map} from 'rxjs/operators';
 
 @Component({
   selector: 'app-admin-layout',
   templateUrl: './admin-layout.component.html',
   styleUrl: './admin-layout.component.scss',
 })
-export class AdminLayoutComponent {}
+export class AdminLayoutComponent {
+  isSuperAdmin$;
+
+  constructor(private authService: AuthService) {
+    this.isSuperAdmin$ = this.authService.currentUser$.pipe(
+      map((user) => !!user?.isSuperAdmin),
+    );
+  }
+}

@@ -232,9 +232,8 @@ class GalleryService:
         Performs a paginated and filtered search for media items.
         Authorization is handled by a dependency in the controller.
         """
-        is_admin = current_user.is_super_admin
         # If the user is not an admin, force the search to only show completed items
-        if not is_admin:
+        if not current_user.is_super_admin:
             search_dto.status = JobStatusEnum.COMPLETED
 
         # Run the database query directly (it is async)

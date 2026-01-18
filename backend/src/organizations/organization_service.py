@@ -102,7 +102,7 @@ class OrganizationService:
             "can_assign_org_roles": True,
             "can_edit": True,
             "can_delete": True,
-            "is_admin": True
+            "can_view_all_org_workspaces": True
         }
 
         return created_org

@@ -103,7 +103,7 @@ export class WorkspaceSwitcherComponent implements OnInit {
             return of(null); // No query or too short
           }
           // Enable search for Super Admins and Org Admins (who have access to admin panel)
-          if (this.isAdmin || this.currentUser?.canAccessAdminPanel) {
+          if (this.currentUser?.canViewAllOrgWorkspaces) {
              return this.workspaceService.searchWorkspaces(query);
           }
           return of([]);
@@ -251,6 +251,7 @@ export class WorkspaceSwitcherComponent implements OnInit {
     });
   }
 
+  // TODO: Modify this logic to use the new permission canInviteOrgMembers and canInviteWsMembers
   get canInvite(): boolean {
     if (!this.activeWorkspace) return false;
     
@@ -267,8 +268,7 @@ export class WorkspaceSwitcherComponent implements OnInit {
       return false;
     }
     const isOwner = this.currentUser.id === this.activeWorkspace.ownerId;
-    const isAdmin = !!this.currentUser.roles?.includes(UserRolesEnum.ADMIN);
-    return isOwner || isAdmin;
+    return isOwner;
   }
 
   get canAccessBrandGuidelines(): boolean {

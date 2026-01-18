@@ -28,7 +28,7 @@ export interface OrganizationPermissions {
   canViewOrgBrandGuidelines: boolean;
 
   // --- Custom Dynamic Permission ---
-  is_admin: boolean;
+  canViewAllOrgWorkspaces: boolean;
 }
 
 export interface Organization {

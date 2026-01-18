@@ -231,11 +231,11 @@ class WorkspaceService:
             user_orgs = await self.organization_service.get_user_organizations(user.id)
             org_ids = [org.id for org in user_orgs]
             
-            # Identify organizations where user is Admin
+            # Identify organizations where user has permission to view all workspaces
             # We use FGA permissions populated in get_user_organizations
             admin_org_ids = [
                 org.id for org in user_orgs 
-                if org.permissions and org.permissions.is_admin
+                if org.permissions and org.permissions.can_view_all_org_workspaces
             ]
             
             # Fetch accessible workspaces
@@ -263,11 +263,11 @@ class WorkspaceService:
         
         # 1. Verify Permissions
         # Check if user is Workspace Admin or Owner
-        is_admin = await self.permission_service.has_permission(
+        is_ws_admin = await self.permission_service.has_permission(
             current_user, "workspace", str(workspace_id), "admin"
         )
         
-        if not is_admin:
+        if not is_ws_admin:
              raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Insufficient permissions to update member role."

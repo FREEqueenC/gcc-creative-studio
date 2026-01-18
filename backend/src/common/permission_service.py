@@ -66,6 +66,7 @@ class PermissionService:
             "can_remove_org_members": "admin",
             "can_assign_org_roles": "admin",
             "can_access_admin_panel": "can_access_admin_panel",
+            "can_view_all_org_workspaces": "can_view_all_org_workspaces",
 
             # --- Org Assets (Granular) ---
             "can_view_org_brand_guidelines": "can_view_org_brand_guidelines",

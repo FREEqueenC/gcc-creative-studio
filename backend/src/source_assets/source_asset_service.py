@@ -374,11 +374,10 @@ class SourceAssetService:
         else:
             mime_type = MimeTypeEnum.IMAGE_PNG
 
-        is_admin = user.is_super_admin
         final_scope = AssetScopeEnum.PRIVATE
         final_asset_type = asset_type or AssetTypeEnum.GENERIC_IMAGE
 
-        if is_admin:
+        if user.is_super_admin:
             # Admins can set scope and type freely.
             final_scope = scope or AssetScopeEnum.PRIVATE
         else:

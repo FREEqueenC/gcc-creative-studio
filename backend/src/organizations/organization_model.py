@@ -87,13 +87,11 @@ class OrganizationPermissions(BaseModel):
     can_add_org_members: bool = False
     can_edit_org_members: bool = False
     can_remove_org_members: bool = False
+    can_view_all_org_workspaces: bool = False
     
     # --- Organization Brand Guidelines Management ---
     can_edit_org_brand_guidelines: bool = False
     can_view_org_brand_guidelines: bool = False
-    
-    # --- Custom Dynamic Permission ---
-    is_admin: bool = False
 
 
 class OrganizationModel(BaseDocument):

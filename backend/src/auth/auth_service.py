@@ -33,6 +33,9 @@ oauth.register(
     },
 )
 
+import logging
+logger = logging.getLogger(__name__)
+
 class UserProfile(BaseModel):
     id: str
     email: str
@@ -144,10 +147,9 @@ async def get_current_user(
             resp = await fga_client.list_objects(req)
             # If the list is not empty, they are an admin of at least one org
             user_model.can_access_admin_panel = len(resp.objects) > 0
-            print(f"DEBUG: FGA Check for {user_model.email} (ID: {user_model.id}) -> Objects: {resp.objects} -> Access: {user_model.can_access_admin_panel}")
         except Exception as e:
             # If FGA fails, default to False for safety
-            print(f"ERROR: Failed to check admin panel access via FGA: {e}")
+            logger.error(f"ERROR: Failed to check admin panel access via FGA: {e}")
             import traceback
             traceback.print_exc()
             user_model.can_access_admin_panel = False

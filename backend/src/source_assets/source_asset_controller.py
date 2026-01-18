@@ -130,9 +130,7 @@ async def list_source_assets(
     """
     target_user_id: Optional[int] = None
 
-    is_admin = current_user.is_super_admin
-
-    if not is_admin:
+    if not current_user.is_super_admin:
         # For regular users, force the search to their own ID.
         target_user_id = current_user.id
         # Clear any admin-only filters that might have been sent

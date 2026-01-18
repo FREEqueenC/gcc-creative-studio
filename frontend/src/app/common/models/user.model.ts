@@ -45,4 +45,5 @@ export interface UserModel {
   workspaces?: UserWorkspaceSummary[];
   isSuperAdmin?: boolean;
   canAccessAdminPanel?: boolean;
+  canViewAllOrgWorkspaces?: boolean;
 }

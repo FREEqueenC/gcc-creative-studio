@@ -100,7 +100,8 @@ async def setup_fga(client: OpenFgaClient):
                 # View: All Members (Everyone in the org needs to see the logo/fonts)
                 "can_view_org_brand_guidelines": {"computedUserset": {"object": "", "relation": "member"}},
                 
-                "can_access_admin_panel": {"computedUserset": {"object": "", "relation": "admin"}}
+                "can_access_admin_panel": {"computedUserset": {"object": "", "relation": "admin"}},
+                "can_view_all_org_workspaces": {"computedUserset": {"object": "", "relation": "admin"}}
             },
             "metadata": {
                 "relations": {
@@ -116,7 +117,8 @@ async def setup_fga(client: OpenFgaClient):
                     "can_edit_org_brand_guidelines": {"directly_related_user_types": []},
                     "can_view_org_brand_guidelines": {"directly_related_user_types": []},
                                         
-                    "can_access_admin_panel": {"directly_related_user_types": []}
+                    "can_access_admin_panel": {"directly_related_user_types": []},
+                    "can_view_all_org_workspaces": {"directly_related_user_types": []}
                 }
             }
         },

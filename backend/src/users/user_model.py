@@ -23,7 +23,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.common.base_repository import BaseDocument
 from src.database import Base
-
+from sqlalchemy import Boolean
 
 
 class User(Base):
@@ -34,7 +34,11 @@ class User(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     email: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
-    # TODO: Deprecated. Will be removed in future release. Use OpenFGA.
+    
+    # The "Break Glass" flag. It must be kept in sync with OpenFGA's "platform:super_admin" tuple.
+    is_super_admin: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    
+    # TODO: The roles field is deprecated. Will be removed in future release. Use OpenFGA.
     roles: Mapped[List[str]] = mapped_column(ARRAY(String), default=[])
     name: Mapped[str] = mapped_column(String, default="")
     picture: Mapped[str] = mapped_column(String, default="")

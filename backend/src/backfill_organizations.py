@@ -194,7 +194,15 @@ async def backfill_organizations():
             # 6.1 Platform Super Admins
             for user in users:
                 roles = user.roles or []
-                if "admin" in [r.lower() for r in roles]:
+                is_super = "admin" in [r.lower() for r in roles] or getattr(user, 'is_super_admin', False)
+                
+                if is_super:
+                    # Ensure DB flag is set if it was only via role
+                    if not getattr(user, 'is_super_admin', False):
+                        logger.info(f"Setting is_super_admin=True for user {user.email} (legacy admin role)")
+                        user.is_super_admin = True
+                        db.add(user)
+                    
                     writes.append(ClientTuple(
                         user=f"user:{user.id}",
                         relation="super_admin",

@@ -119,6 +119,15 @@ export class UserService {
       .pipe(catchError(this.handleError));
   }
 
+  // PUT: Update Super Admin Status
+  updateSuperAdminStatus(userId: number, isSuperAdmin: boolean): Observable<any> {
+    const url = `${this.usersApiUrl}/${userId}/super-admin`;
+    const payload = { is_super_admin: isSuperAdmin };
+    return this.http
+      .put(url, payload, this.httpOptions)
+      .pipe(catchError(this.handleError));
+  }
+
   // Basic error handling
   private handleError(error: HttpErrorResponse) {
     let errorMessage = 'An unknown error occurred!';

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Body
 
 from typing import Dict, Any
 from src.core.fga import check_permission
@@ -111,3 +111,26 @@ async def delete_user(
     if not await user_service.delete_user_by_id(user_id, current_user):
         raise HTTPException(status_code=404, detail="User not found")
     return
+
+
+@router.put(
+    "/{user_id}/super-admin",
+    response_model=UserModel,
+    summary="Update Super Admin Status (Super Admin Only)",
+    dependencies=[Depends(require_super_admin)],
+)
+async def update_super_admin_status(
+    user_id: int,
+    is_super_admin: bool = Body(..., embed=True),
+    user_service: UserService = Depends(),
+):
+    """
+    Updates the Super Admin status of a user.
+    This functionality is restricted to Super Admins.
+    """
+    try:
+        return await user_service.update_super_admin_status(user_id, is_super_admin)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

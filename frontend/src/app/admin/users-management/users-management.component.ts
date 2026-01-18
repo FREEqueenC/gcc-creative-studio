@@ -53,6 +53,7 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
     'name',
     'email',
     'roles',
+    'isSuperAdmin',
     'createdAt',
     'updatedAt',
     'actions',
@@ -356,6 +357,29 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
     } catch (err) {
       console.error(`Error updating role for user ${user.id}:`, err);
       handleErrorSnackbar(this._snackBar, err, 'Update Role');
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+  async toggleSuperAdmin(user: UserModel, isChecked: boolean) {
+    if (this.currentUser && this.currentUser.id === user.id) {
+        handleErrorSnackbar(this._snackBar, 'You cannot change your own super admin status.', 'Update Super Admin');
+        // Revert checkbox
+        this.fetchPage(this.currentPageIndex);
+        return;
+    }
+
+    this.isLoading = true;
+    try {
+      await firstValueFrom(this.userService.updateSuperAdminStatus(Number(user.id), isChecked));
+      handleSuccessSnackbar(this._snackBar, `User ${user.email} is now ${isChecked ? 'a Super Admin' : 'not a Super Admin'}`);
+      this.fetchPage(this.currentPageIndex);
+    } catch (err) {
+      console.error(`Error updating super admin status for user ${user.id}:`, err);
+      handleErrorSnackbar(this._snackBar, err, 'Update Super Admin');
+      // Revert on error
+      this.fetchPage(this.currentPageIndex);
     } finally {
       this.isLoading = false;
     }

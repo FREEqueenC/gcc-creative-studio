@@ -63,6 +63,44 @@ class UserRepository(BaseRepository[User, UserModel]):
             return None
         return self.schema.model_validate(item)
 
+    async def update(self, item_id: int, update_data: Union[BaseModel, Dict[str, Any]]) -> Optional[UserModel]:
+        """
+        Updates a user and ensures organizations are loaded to prevent MissingGreenlet error.
+        """
+        # 1. Fetch DB item with relationships
+        result = await self.db.execute(
+            select(self.model)
+            .where(self.model.id == item_id)
+            .options(selectinload(self.model.organizations).selectinload(UserOrganization.organization))
+        )
+        db_item = result.scalar_one_or_none()
+        if not db_item:
+            return None
+
+        # 2. Prepare update data
+        if isinstance(update_data, BaseModel):
+            data = update_data.model_dump(exclude_unset=True)
+        else:
+            data = update_data
+
+        # 3. Update fields
+        for key, value in data.items():
+            if hasattr(db_item, key):
+                setattr(db_item, key, value)
+
+        # 4. Update timestamp
+        if hasattr(db_item, "updated_at"):
+            import datetime
+            db_item.updated_at = datetime.datetime.now(datetime.timezone.utc)
+
+        # 5. Commit
+        await self.db.commit()
+        
+        # 6. Re-fetch to ensure clean state and loaded relationships
+        # We could use refresh(db_item) but that might unload relationships depending on session state.
+        # Calling get_by_id is safest.
+        return await self.get_by_id(item_id)
+
     async def create(self, schema: Union[BaseModel, Dict[str, Any]]) -> UserModel:
         """
         Creates a new user and ensures the returned model has organizations loaded.

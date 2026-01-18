@@ -94,6 +94,10 @@ async def check_permission(
         return False
 
     if isinstance(user, UserModel):
+        # BREAK GLASS: Super Admin bypass
+        if user.is_super_admin:
+            return True
+            
         user_id = str(user.id)
         # User requested to skip groups for now when using UserModel
         groups = []

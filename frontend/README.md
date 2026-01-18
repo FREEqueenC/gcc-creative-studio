@@ -92,7 +92,7 @@ Every major resource (Workspace, Organization) returned from the API includes a 
   "id": 123,
   "name": "Marketing Campaign",
   "permissions": {
-    "can_manage_members": true,
+    "can_assign_ws_roles": true,
     "can_edit": true,
     "can_delete": false
   }
@@ -105,7 +105,7 @@ Use these flags directly in your Angular templates to show/hide UI elements.
 
 ```html
 <!-- ✅ CORRECT: Check Permission -->
-<button *ngIf="workspace.permissions.can_manage_members" (click)="openInviteModal()">
+<button *ngIf="workspace.permissions.canAssignWsRoles" (click)="openInviteModal()">
   Invite Member
 </button>
 

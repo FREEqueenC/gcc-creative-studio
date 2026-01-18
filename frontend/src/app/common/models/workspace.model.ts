@@ -22,19 +22,31 @@ export enum WorkspaceScope {
 }
 
 export interface WorkspacePermissions {
-  can_manage_members: boolean;
-  can_edit: boolean;
-  can_delete: boolean;
-  can_view_workflows: boolean;
-  can_manage_workflows: boolean;
-  can_view_images: boolean;
-  can_generate_images: boolean;
-  can_view_videos: boolean;
-  can_generate_videos: boolean;
-  can_view_audio: boolean;
-  can_generate_audio: boolean;
-  can_view_vto: boolean;
-  can_generate_vto: boolean;
+  // --- Workspace Member Management ---
+  canAssignWsRoles: boolean;
+  canInviteWsMembers: boolean;
+  canAddWsMembers: boolean;
+  canEditWsMembers: boolean;
+  canRemoveWsMembers: boolean;
+
+  // --- Workflows Module (Granular) ---
+  canViewWsWorkflows: boolean;
+  canExecuteWsWorkflows: boolean;
+  canEditWsWorkflows: boolean;
+
+  // --- Brand Guidelines Module (Granular) ---
+  canViewWsBrandGuidelines: boolean;
+  canEditWsBrandGuidelines: boolean;
+
+  // --- GenAI Features (Standard) ---
+  canViewImages: boolean;
+  canGenerateImages: boolean;
+  canViewVideos: boolean;
+  canGenerateVideos: boolean;
+  canViewAudio: boolean;
+  canGenerateAudio: boolean;
+  canViewVto: boolean;
+  canGenerateVto: boolean;
 }
 
 export interface Workspace {

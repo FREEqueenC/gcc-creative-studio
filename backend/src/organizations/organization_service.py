@@ -97,8 +97,9 @@ class OrganizationService:
              print(f"Failed to seed organization {created_org.id}: {e}")
 
         # Populate permissions for the new org (Admin)
+        # TODO: This should be done by FGA, we should use OrganizationPermissions to have it typed safely
         created_org.permissions = {
-            "can_manage_members": True,
+            "can_assign_org_roles": True,
             "can_edit": True,
             "can_delete": True,
             "is_admin": True

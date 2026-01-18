@@ -59,8 +59,9 @@ class OrganizationSeeder:
             return
 
         # 2. Seed System Assets (VTO, Templates)
-        await self.seed_vto_assets(public_ws, admin_user)
-        await self.seed_media_templates(public_ws, admin_user)
+        # TODO: For now use system wide assets and templates
+        # await self.seed_vto_assets(public_ws, admin_user)
+        # await self.seed_media_templates(public_ws, admin_user)
 
     async def ensure_public_workspace(self, org_id: int, admin_user: UserModel) -> Optional[WorkspaceModel]:
         # Check if public workspace exists for this org
@@ -68,7 +69,7 @@ class OrganizationSeeder:
         if existing:
             return existing
             
-        # Create it if missing
+        # TODO: Create it if missing
         # We need the Org name to name the workspace nicely?
         # For now, let's use a generic name or fetch Org.
         # To fetch Org, we'd need OrgRepo. Let's assume generic name "Public Workspace"

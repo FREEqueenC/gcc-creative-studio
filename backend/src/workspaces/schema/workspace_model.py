@@ -122,11 +122,23 @@ class WorkspacePermissions(BaseModel):
     """
     Computed permissions for the current user on this workspace.
     """
-    can_manage_members: bool = False
-    can_edit: bool = False
-    can_delete: bool = False
-    can_view_workflows: bool = False
-    can_manage_workflows: bool = False
+    # --- Workspace Member Management ---
+    can_assign_ws_roles: bool = False
+    can_invite_ws_members: bool = False
+    can_add_ws_members: bool = False
+    can_edit_ws_members: bool = False
+    can_remove_ws_members: bool = False
+    
+    # --- Workflows Module (Granular) ---
+    can_view_ws_workflows: bool = False
+    can_execute_ws_workflows: bool = False
+    can_edit_ws_workflows: bool = False
+    
+    # --- Workspace Brand Guidelines Module (Granular) ---
+    can_view_ws_brand_guidelines: bool = False
+    can_edit_ws_brand_guidelines: bool = False
+    
+    # --- GenAI Features (Standard) ---
     can_view_images: bool = False
     can_generate_images: bool = False
     can_view_videos: bool = False

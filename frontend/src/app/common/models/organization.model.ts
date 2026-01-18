@@ -15,9 +15,19 @@
  */
 
 export interface OrganizationPermissions {
-  can_manage_members: boolean;
-  can_edit: boolean;
-  can_delete: boolean;
+  // --- Organization Member Management ---
+  canAccessAdminPanel: boolean;
+  canAssignOrgRoles: boolean;
+  canInviteOrgMembers: boolean;
+  canAddOrgMembers: boolean;
+  canEditOrgMembers: boolean;
+  canRemoveOrgMembers: boolean;
+
+  // --- Organization Brand Guidelines Management ---
+  canEditOrgBrandGuidelines: boolean;
+  canViewOrgBrandGuidelines: boolean;
+
+  // --- Custom Dynamic Permission ---
   is_admin: boolean;
 }
 

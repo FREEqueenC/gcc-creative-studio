@@ -80,9 +80,19 @@ class OrganizationPermissions(BaseModel):
     """
     Computed permissions for the current user on this organization.
     """
-    can_manage_members: bool = False
-    can_edit: bool = False
-    can_delete: bool = False
+    # --- Organization Member Management ---
+    can_access_admin_panel: bool = False
+    can_assign_org_roles: bool = False
+    can_invite_org_members: bool = False
+    can_add_org_members: bool = False
+    can_edit_org_members: bool = False
+    can_remove_org_members: bool = False
+    
+    # --- Organization Brand Guidelines Management ---
+    can_edit_org_brand_guidelines: bool = False
+    can_view_org_brand_guidelines: bool = False
+    
+    # --- Custom Dynamic Permission ---
     is_admin: bool = False
 
 

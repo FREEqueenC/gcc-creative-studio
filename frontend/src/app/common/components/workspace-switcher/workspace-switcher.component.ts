@@ -256,7 +256,7 @@ export class WorkspaceSwitcherComponent implements OnInit {
     
     // Use explicit permissions if available
     if (this.activeWorkspace.permissions) {
-      return this.activeWorkspace.permissions.can_manage_members;
+      return this.activeWorkspace.permissions.canAssignWsRoles;
     }
 
     // Fallback for legacy/migration
@@ -284,7 +284,7 @@ export class WorkspaceSwitcherComponent implements OnInit {
         // But since we don't have a specific 'can_view_brand_guidelines', let's check if they are at least a viewer.
         // If they have ANY permission, they are likely a member.
         // But wait, 'can_view_images' is a good proxy for content access.
-        return this.activeWorkspace.permissions.can_view_images || this.activeWorkspace.permissions.can_edit;
+        return this.activeWorkspace.permissions.canViewImages || this.activeWorkspace.permissions.canViewWsBrandGuidelines;
     }
 
     // For private workspaces, only admins or owners can access.
@@ -300,7 +300,7 @@ export class WorkspaceSwitcherComponent implements OnInit {
     
     // Use explicit permissions if available
     if (this.activeWorkspace.permissions) {
-        return this.activeWorkspace.permissions.can_edit;
+        return this.activeWorkspace.permissions.canEditWsBrandGuidelines;
     }
 
     const isAdmin = !!this.currentUser.roles?.includes(UserRolesEnum.ADMIN);

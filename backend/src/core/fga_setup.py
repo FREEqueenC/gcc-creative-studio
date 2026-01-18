@@ -71,8 +71,35 @@ async def setup_fga(client: OpenFgaClient):
             "type": "organization",
             "relations": {
                 "platform": {"this": {}},
-                "admin": {"union": {"child": [{"this": {}}, {"tupleToUserset": {"computedUserset": {"object": "", "relation": "super_admin"}, "tupleset": {"object": "", "relation": "platform"}}}]}},
-                "member": {"union": {"child": [{"this": {}}, {"computedUserset": {"object": "", "relation": "admin"}}]}},
+                "admin": {
+                    "union": {
+                        "child": [
+                            {"this": {}},
+                            {"tupleToUserset": {"computedUserset": {"object": "", "relation": "super_admin"}, "tupleset": {"object": "", "relation": "platform"}}}
+                        ]
+                    }
+                },
+                "member": {
+                    "union": {
+                        "child": [
+                            {"this": {}},
+                            {"computedUserset": {"object": "", "relation": "admin"}}
+                        ]
+                    }
+                },
+                
+                # --- MEMBER MANAGEMENT (Granular) ---
+                "can_invite_org_members": {"computedUserset": {"object": "", "relation": "admin"}},
+                "can_add_org_members": {"computedUserset": {"object": "", "relation": "admin"}},
+                "can_remove_org_members": {"computedUserset": {"object": "", "relation": "admin"}},
+                "can_assign_org_roles": {"computedUserset": {"object": "", "relation": "admin"}},
+                                
+                # --- ORG GUIDELINES (Split) ---
+                # Edit: Strictly Admins
+                "can_edit_org_brand_guidelines": {"computedUserset": {"object": "", "relation": "admin"}},
+                # View: All Members (Everyone in the org needs to see the logo/fonts)
+                "can_view_org_brand_guidelines": {"computedUserset": {"object": "", "relation": "member"}},
+                
                 "can_access_admin_panel": {"computedUserset": {"object": "", "relation": "admin"}}
             },
             "metadata": {
@@ -80,6 +107,15 @@ async def setup_fga(client: OpenFgaClient):
                     "platform": {"directly_related_user_types": [{"type": "platform"}]},
                     "admin": {"directly_related_user_types": [{"type": "user"}]},
                     "member": {"directly_related_user_types": [{"type": "user"}]},
+                    
+                    "can_invite_org_members": {"directly_related_user_types": []},
+                    "can_add_org_members": {"directly_related_user_types": []},
+                    "can_remove_org_members": {"directly_related_user_types": []},
+                    "can_assign_org_roles": {"directly_related_user_types": []},
+                    
+                    "can_edit_org_brand_guidelines": {"directly_related_user_types": []},
+                    "can_view_org_brand_guidelines": {"directly_related_user_types": []},
+                                        
                     "can_access_admin_panel": {"directly_related_user_types": []}
                 }
             }
@@ -88,34 +124,142 @@ async def setup_fga(client: OpenFgaClient):
             "type": "workspace",
             "relations": {
                 "parent": {"this": {}},
+                
+                # --- Base Roles (Synced from DB) ---
                 "admin": {"union": {"child": [{"this": {}}, {"tupleToUserset": {"computedUserset": {"object": "", "relation": "admin"}, "tupleset": {"object": "", "relation": "parent"}}}]}},
                 "editor": {"union": {"child": [{"this": {}}, {"computedUserset": {"object": "", "relation": "admin"}}]}},
                 "viewer": {"union": {"child": [{"this": {}}, {"computedUserset": {"object": "", "relation": "editor"}}]}},
                 
-                # Feature permissions
-                "can_manage_workflows": {"computedUserset": {"object": "", "relation": "editor"}},
-                "can_view_workflows": {"union": {"child": [{"computedUserset": {"object": "", "relation": "viewer"}}, {"computedUserset": {"object": "", "relation": "can_manage_workflows"}}]}},
+                # --- WORKSPACE MEMBER MANAGEMENT (Explicit) ---
+                "can_invite_ws_members": {"computedUserset": {"object": "", "relation": "admin"}},
+                "can_add_ws_members": {"computedUserset": {"object": "", "relation": "admin"}},
+                "can_remove_ws_members": {"computedUserset": {"object": "", "relation": "admin"}},
+                "can_assign_ws_roles": {"computedUserset": {"object": "", "relation": "admin"}},
                 
+                # --- Feature Add-Ons (Keys) ---
+                "workflow_add_on": {"this": {}},
+                "brand_guidelines_add_on": {"this": {}},
+
+                # --- A. Workflows Module (Granular + Gated) ---
+                # VIEW: Admin OR (Viewer + AddOn)
+                "can_view_ws_workflows": {
+                    "union": {
+                        "child": [
+                            {"computedUserset": {"object": "", "relation": "admin"}},
+                            {"intersection": {
+                                "child": [
+                                    {"computedUserset": {"object": "", "relation": "viewer"}},
+                                    {"computedUserset": {"object": "", "relation": "workflow_add_on"}}
+                                ]
+                            }}
+                        ]
+                    }
+                },
+                
+                # EXECUTE: Admin OR (Editor + AddOn)
+                "can_execute_ws_workflows": {
+                    "union": {
+                        "child": [
+                            {"computedUserset": {"object": "", "relation": "admin"}},
+                            {"intersection": {
+                                "child": [
+                                    {"computedUserset": {"object": "", "relation": "editor"}},
+                                    {"computedUserset": {"object": "", "relation": "workflow_add_on"}}
+                                ]
+                            }}
+                        ]
+                    }
+                },
+                
+                # EDIT: Admin OR (Editor + AddOn)
+                "can_edit_ws_workflows": {
+                    "union": {
+                        "child": [
+                            {"computedUserset": {"object": "", "relation": "admin"}},
+                            {"intersection": {
+                                "child": [
+                                    {"computedUserset": {"object": "", "relation": "editor"}},
+                                    {"computedUserset": {"object": "", "relation": "workflow_add_on"}}
+                                ]
+                            }}
+                        ]
+                    }
+                },
+
+
+                # --- B. Brand Guidelines Module (Granular + Gated) ---
+                
+                # VIEW: Admin OR (Viewer + Add-On)
+                # Logic: If you buy the "Brand Kit" module, your viewers can see it.
+                "can_view_ws_brand_guidelines": {
+                    "union": {
+                        "child": [
+                            {"computedUserset": {"object": "", "relation": "admin"}},
+                            {"intersection": {
+                                "child": [
+                                    {"computedUserset": {"object": "", "relation": "viewer"}},
+                                    {"computedUserset": {"object": "", "relation": "brand_guidelines_add_on"}}
+                                ]
+                            }}
+                        ]
+                    }
+                },
+
+                # EDIT: Admin OR (Editor + Add-On)
+                # Logic: Only Editors with the add-on can upload new logos/colors.
+                "can_edit_ws_brand_guidelines": {
+                    "union": {
+                        "child": [
+                            {"computedUserset": {"object": "", "relation": "admin"}},
+                            {"intersection": {
+                                "child": [
+                                    {"computedUserset": {"object": "", "relation": "editor"}},
+                                    {"computedUserset": {"object": "", "relation": "brand_guidelines_add_on"}}
+                                ]
+                            }}
+                        ]
+                    }
+                },
+
+                # --- C. Standard Features (GenAI) ---
                 "can_generate_images": {"computedUserset": {"object": "", "relation": "editor"}},
-                "can_view_images": {"union": {"child": [{"computedUserset": {"object": "", "relation": "viewer"}}, {"computedUserset": {"object": "", "relation": "can_generate_images"}}]}},
-                
+                "can_view_images": {"computedUserset": {"object": "", "relation": "viewer"}},
                 "can_generate_videos": {"computedUserset": {"object": "", "relation": "editor"}},
-                "can_view_videos": {"union": {"child": [{"computedUserset": {"object": "", "relation": "viewer"}}, {"computedUserset": {"object": "", "relation": "can_generate_videos"}}]}},
-
+                "can_view_videos": {"computedUserset": {"object": "", "relation": "viewer"}},
                 "can_generate_audio": {"computedUserset": {"object": "", "relation": "editor"}},
-                "can_view_audio": {"union": {"child": [{"computedUserset": {"object": "", "relation": "viewer"}}, {"computedUserset": {"object": "", "relation": "can_generate_audio"}}]}},
-
+                "can_view_audio": {"computedUserset": {"object": "", "relation": "viewer"}},
                 "can_generate_vto": {"computedUserset": {"object": "", "relation": "editor"}},
-                "can_view_vto": {"union": {"child": [{"computedUserset": {"object": "", "relation": "viewer"}}, {"computedUserset": {"object": "", "relation": "can_generate_vto"}}]}}
+                "can_view_vto": {"computedUserset": {"object": "", "relation": "viewer"}}
             },
             "metadata": {
                 "relations": {
                     "parent": {"directly_related_user_types": [{"type": "organization"}]},
+                    
+                    # Roles
                     "admin": {"directly_related_user_types": [{"type": "user"}]},
                     "editor": {"directly_related_user_types": [{"type": "user"}]},
                     "viewer": {"directly_related_user_types": [{"type": "user"}, {"type": "user", "wildcard": {}}]},
-                    "can_manage_workflows": {"directly_related_user_types": []},
-                    "can_view_workflows": {"directly_related_user_types": []},
+                    
+                    # Workspace Member Management
+                    "can_invite_ws_members": {"directly_related_user_types": []},
+                    "can_add_ws_members": {"directly_related_user_types": []},
+                    "can_remove_ws_members": {"directly_related_user_types": []},
+                    "can_assign_ws_roles": {"directly_related_user_types": []},
+                    
+                    # Add-Ons
+                    "workflow_add_on": {"directly_related_user_types": [{"type": "user"}]},
+                    "brand_guidelines_add_on": {"directly_related_user_types": [{"type": "user"}]},
+                    
+                    # Workflow Permissions
+                    "can_view_ws_workflows": {"directly_related_user_types": []},
+                    "can_execute_ws_workflows": {"directly_related_user_types": []},
+                    "can_edit_ws_workflows": {"directly_related_user_types": []},
+                    
+                    # Brand Guidelines Permissions
+                    "can_view_ws_brand_guidelines": {"directly_related_user_types": []},
+                    "can_edit_ws_brand_guidelines": {"directly_related_user_types": []},
+                    
+                    # GenAI Permissions
                     "can_generate_images": {"directly_related_user_types": []},
                     "can_view_images": {"directly_related_user_types": []},
                     "can_generate_videos": {"directly_related_user_types": []},
@@ -124,21 +268,6 @@ async def setup_fga(client: OpenFgaClient):
                     "can_view_audio": {"directly_related_user_types": []},
                     "can_generate_vto": {"directly_related_user_types": []},
                     "can_view_vto": {"directly_related_user_types": []}
-                }
-            }
-        },
-        {
-            "type": "asset",
-            "relations": {
-                "parent": {"this": {}},
-                "can_view": {"tupleToUserset": {"computedUserset": {"object": "", "relation": "viewer"}, "tupleset": {"object": "", "relation": "parent"}}},
-                "can_edit": {"tupleToUserset": {"computedUserset": {"object": "", "relation": "editor"}, "tupleset": {"object": "", "relation": "parent"}}}
-            },
-            "metadata": {
-                "relations": {
-                    "parent": {"directly_related_user_types": [{"type": "workspace"}]},
-                    "can_view": {"directly_related_user_types": []},
-                    "can_edit": {"directly_related_user_types": []}
                 }
             }
         }

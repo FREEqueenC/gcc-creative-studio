@@ -120,15 +120,12 @@ class WorkspaceService:
                 ClientWriteRequest(writes=writes)
             )
         except Exception as e:
-            # Log error but don't fail creation? Or fail?
-            # If FGA fails, we might have inconsistency.
-            # Ideally we should rollback or retry.
-            # For now, we log.
+            # TODO: We should rollback or retry. For now, we log.
             print(f"Failed to write tuple to OpenFGA: {e}")
         
         # Populate permissions for the new workspace (Admin)
         created_workspace.permissions = WorkspacePermissions(
-            can_manage_members=True,
+            can_assign_ws_roles=True,
             can_edit=True,
             can_delete=True,
             can_view_workflows=True,

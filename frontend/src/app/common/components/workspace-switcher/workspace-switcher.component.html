@@ -90,8 +90,8 @@
       </button>
       <button
         mat-menu-item
+        *ngIf="canAccessBrandGuidelines"
         [disabled]="
-          !canAccessBrandGuidelines ||
           (brandGuidelineService.activeBrandGuidelineJob$ | async)?.status ===
             JobStatus.PROCESSING
         "

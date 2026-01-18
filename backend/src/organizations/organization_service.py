@@ -68,7 +68,7 @@ class OrganizationService:
         # TODO: Optimize with a batch call if possible, but for now loop is fine (usually few orgs per user)
         for org in orgs:
             perms = await self.permission_service.get_permissions_for_organization(user_id, org.id)
-            org.permissions = OrganizationPermissions(**perms)
+            org.permissions = perms
             
         return orgs
 
@@ -105,12 +105,23 @@ class OrganizationService:
 
         # Populate permissions for the new org (Admin)
         # TODO: This should be done by FGA, we should use OrganizationPermissions to have it typed safely
-        created_org.permissions = {
-            "can_assign_org_roles": True,
-            "can_edit": True,
-            "can_delete": True,
-            "can_view_all_org_workspaces": True
-        }
+        created_org.permissions: OrganizationPermissions = OrganizationPermissions(
+            can_assign_org_roles=True,
+            can_edit_org_brand_guidelines=True,
+            can_view_org_brand_guidelines=True,
+            can_view_all_org_workspaces=True,
+            can_assign_ws_roles=True,
+            can_edit_ws_brand_guidelines=True,
+            can_view_ws_brand_guidelines=True,
+            can_view_images=True,
+            can_generate_images=True,
+            can_view_videos=True,
+            can_generate_videos=True,
+            can_view_audio=True,
+            can_generate_audio=True,
+            can_view_vto=True,
+            can_generate_vto=True,
+        )
 
         return created_org
 

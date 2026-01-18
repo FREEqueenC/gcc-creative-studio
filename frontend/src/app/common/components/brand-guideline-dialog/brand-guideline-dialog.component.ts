@@ -33,9 +33,9 @@ export interface BrandGuidelineDialogData {
   styleUrls: ['./brand-guideline-dialog.component.scss'],
 })
 export class BrandGuidelineDialogComponent {
+  showUploadForm = false;
   form: FormGroup;
   isUploading = false;
-  isEditing = false;
   fileName: string | null = null;
   isToneOfVoiceExpanded = false;
   isVisualStyleExpanded = false;
@@ -46,7 +46,7 @@ export class BrandGuidelineDialogComponent {
     private fb: FormBuilder,
     private snackBar: MatSnackBar,
   ) {
-    this.isEditing = !!this.data.guideline;
+    this.showUploadForm = !this.data.guideline && this.data.canEdit;
     this.form = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(3)]],
       file: [null, Validators.required],
@@ -86,7 +86,7 @@ export class BrandGuidelineDialogComponent {
   }
 
   replaceGuideline(): void {
-    this.isEditing = false;
+    this.showUploadForm = true;
   }
 
   toggleToneOfVoiceExpansion(): void {

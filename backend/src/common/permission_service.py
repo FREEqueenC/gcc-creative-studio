@@ -10,6 +10,9 @@ logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
 
+from src.workspaces.schema.workspace_model import WorkspacePermissions
+from src.organizations.organization_model import OrganizationPermissions
+
 class PermissionService:
     """
     Service to efficiently calculate permissions for resources using OpenFGA.
@@ -21,7 +24,7 @@ class PermissionService:
     def __init__(self, client: OpenFgaClient = None):
         self.client = client or fga_client
 
-    async def get_permissions_for_workspace(self, user_id: int, workspace_id: int) -> Dict[str, bool]:
+    async def get_permissions_for_workspace(self, user_id: int, workspace_id: int) -> WorkspacePermissions:
         """
         Calculates all relevant UI permissions for a single workspace.
         This dictates which buttons/tabs are shown to the user.
@@ -54,19 +57,20 @@ class PermissionService:
         }
         
         results = await self._batch_check(user_id, "workspace", str(workspace_id), checks)
-        return results
+        return WorkspacePermissions(**results)
 
-    async def get_permissions_for_organization(self, user_id: int, org_id: int) -> Dict[str, bool]:
+    async def get_permissions_for_organization(self, user_id: int, org_id: int) -> OrganizationPermissions:
         """
         Calculates permissions for a single organization.
         """
         checks = {
             # --- Org Management ---
-            "can_add_org_members": "admin",
-            "can_remove_org_members": "admin",
-            "can_assign_org_roles": "admin",
+            "can_add_org_members": "can_add_org_members",
+            "can_remove_org_members": "can_remove_org_members",
+            "can_assign_org_roles": "can_assign_org_roles",
             "can_access_admin_panel": "can_access_admin_panel",
             "can_view_all_org_workspaces": "can_view_all_org_workspaces",
+            "can_invite_org_members": "can_invite_org_members",
 
             # --- Org Assets (Granular) ---
             "can_view_org_brand_guidelines": "can_view_org_brand_guidelines",
@@ -74,7 +78,7 @@ class PermissionService:
         }
         
         results = await self._batch_check(user_id, "organization", str(org_id), checks)
-        return results
+        return OrganizationPermissions(**results)
 
     async def _batch_check(self, user_id: int, object_type: str, object_id: str, checks: Dict[str, str]) -> Dict[str, bool]:
         """

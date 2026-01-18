@@ -274,20 +274,11 @@ export class WorkspaceSwitcherComponent implements OnInit {
   get canAccessBrandGuidelines(): boolean {
     if (!this.currentUser || !this.activeWorkspace) return false;
 
-    // Anyone can access guidelines on a public workspace.
-    if (this.activeWorkspace.scope === WorkspaceScope.PUBLIC) return true;
-
     // Use explicit permissions if available
     if (this.activeWorkspace.permissions) {
-        // Assuming 'can_view_images' or similar implies access, or just basic viewer access?
-        // Actually, for now let's stick to the existing logic or map it to a generic 'can_view' if we had one.
-        // But since we don't have a specific 'can_view_brand_guidelines', let's check if they are at least a viewer.
-        // If they have ANY permission, they are likely a member.
-        // But wait, 'can_view_images' is a good proxy for content access.
-        return this.activeWorkspace.permissions.canViewImages || this.activeWorkspace.permissions.canViewWsBrandGuidelines;
+        return this.activeWorkspace.permissions.canViewWsBrandGuidelines;
     }
-
-    // For private workspaces, only admins or owners can access.
+    
     const isAdmin = !!this.currentUser.roles?.includes(UserRolesEnum.ADMIN);
     const isOwnerOfPrivateWorkspace =
       this.activeWorkspace.scope === WorkspaceScope.PRIVATE &&
@@ -302,10 +293,7 @@ export class WorkspaceSwitcherComponent implements OnInit {
     if (this.activeWorkspace.permissions) {
         return this.activeWorkspace.permissions.canEditWsBrandGuidelines;
     }
-
-    const isAdmin = !!this.currentUser.roles?.includes(UserRolesEnum.ADMIN);
-    const isOwner = this.currentUser.id === this.activeWorkspace.ownerId;
-    return isAdmin || isOwner;
+    return false;
   }
 
   openInviteDialog(event: MouseEvent): void {

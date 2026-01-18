@@ -119,7 +119,7 @@ async def finalize_upload_and_process(
 
 @router.get(
     "/workspace/{workspace_id}",
-    response_model=BrandGuidelineResponseDto,
+    response_model=Optional[BrandGuidelineResponseDto],
     summary="Get the Brand Guideline for a Workspace",
 )
 async def get_workspace_brand_guideline(
@@ -130,16 +130,11 @@ async def get_workspace_brand_guideline(
     """
     Retrieves the unique brand guideline associated with a specific workspace.
 
-    Returns a 404 error if no guideline has been created for the workspace yet.
+    Returns None if no guideline has been created for the workspace yet.
     """
     guideline = await service.get_guideline_by_workspace_id(
         workspace_id, current_user
     )
-    if not guideline:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="No brand guideline found for this workspace.",
-        )
     return guideline
 
 

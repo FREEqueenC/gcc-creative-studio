@@ -148,6 +148,11 @@ class WorkspacePermissions(BaseModel):
     can_view_vto: bool = False
     can_generate_vto: bool = False
 
+    model_config = ConfigDict(
+        populate_by_name=True,
+        alias_generator=to_camel,
+    )
+
 
 class WorkspaceModel(BaseDocument):
     """

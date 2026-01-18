@@ -17,6 +17,7 @@ from enum import Enum
 from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
+from pydantic.alias_generators import to_camel
 from sqlalchemy import String, func, DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -85,13 +86,17 @@ class OrganizationPermissions(BaseModel):
     can_assign_org_roles: bool = False
     can_invite_org_members: bool = False
     can_add_org_members: bool = False
-    can_edit_org_members: bool = False
     can_remove_org_members: bool = False
     can_view_all_org_workspaces: bool = False
     
     # --- Organization Brand Guidelines Management ---
     can_edit_org_brand_guidelines: bool = False
     can_view_org_brand_guidelines: bool = False
+    
+    model_config = ConfigDict(
+        populate_by_name=True,
+        alias_generator=to_camel,
+    )
 
 
 class OrganizationModel(BaseDocument):

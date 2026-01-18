@@ -191,21 +191,9 @@ async def setup_fga(client: OpenFgaClient):
 
                 # --- B. Brand Guidelines Module (Granular + Gated) ---
                 
-                # VIEW: Admin OR (Viewer + Add-On)
-                # Logic: If you buy the "Brand Kit" module, your viewers can see it.
-                "can_view_ws_brand_guidelines": {
-                    "union": {
-                        "child": [
-                            {"computedUserset": {"object": "", "relation": "admin"}},
-                            {"intersection": {
-                                "child": [
-                                    {"computedUserset": {"object": "", "relation": "viewer"}},
-                                    {"computedUserset": {"object": "", "relation": "brand_guidelines_add_on"}}
-                                ]
-                            }}
-                        ]
-                    }
-                },
+                # VIEW: All Workspace Members (Admin, Editor, Viewer)
+                # Logic: Everyone in the workspace should be able to see the brand guidelines
+                "can_view_ws_brand_guidelines": {"computedUserset": {"object": "", "relation": "viewer"}},
 
                 # EDIT: Admin OR (Editor + Add-On)
                 # Logic: Only Editors with the add-on can upload new logos/colors.

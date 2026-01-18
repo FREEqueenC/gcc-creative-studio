@@ -286,48 +286,79 @@ class WorkspaceService:
             )
             
         current_member = next((m for m in workspace.members if m.user_id == user_id), None)
-        if not current_member:
-             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User is not a member of this workspace."
-            )
-            
-        old_role = current_member.role
+        
+        # If user is not a member, we assume they are being added (e.g. Public Workspace)
+        # Default old_role to VIEWER if they weren't a member, or None if we want to distinguish
+        old_role = current_member.role if current_member else WorkspaceRoleEnum.VIEWER
 
         # 3. Define DB Operation
-        async def db_op() -> WorkspaceModel:
-            updated_workspace = await self.repo.update_member_role(workspace_id, user_id, role)
+        async def db_op() -> WorkspaceModel:           
+            # Try to update first
+            updated_workspace = await self.workspace_repo.update_member_role(workspace_id, user_id, role)
+            
+            # If update failed (user not member), add them
             if not updated_workspace:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Workspace or user not found."
+                # We need to fetch the user to get email if we are adding them
+                user = await self.user_repo.get_by_id(user_id)
+                if not user:
+                     raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="User not found."
+                    )
+                
+                new_member = WorkspaceMember(
+                    user_id=user.id,
+                    email=user.email,
+                    role=role
                 )
+                updated_workspace = await self.workspace_repo.add_member_to_workspace(
+                    workspace_id, new_member, user_id
+                )
+                
+            if not updated_workspace:
+                 raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Failed to update or add member to workspace."
+                )
+                
             return updated_workspace
 
         # 4. Define FGA Operation
         async def fga_op():
-            # Remove old roles (viewer, editor, admin)
-            await fga_client.write(
-                ClientWriteRequest(
-                    deletes=[
-                        ClientTuple(
-                            user=f"user:{user_id}",
-                            relation="viewer",
-                            object=f"workspace:{workspace_id}",
-                        ),
-                        ClientTuple(
-                            user=f"user:{user_id}",
-                            relation="editor",
-                            object=f"workspace:{workspace_id}",
-                        ),
-                        ClientTuple(
-                            user=f"user:{user_id}",
-                            relation="admin",
-                            object=f"workspace:{workspace_id}",
-                        )
-                    ]
+            from openfga_sdk.client.models import ClientWriteRequest, ClientTuple
+            from openfga_sdk.models import ReadRequestTupleKey
+            
+            # Fetch current FGA relations to avoid "tuple does not exist" error
+            tuples_to_delete = []
+            try:
+                # Read all tuples for this user and object
+                response = await fga_client.read(
+                    ReadRequestTupleKey(
+                        user=f"user:{user_id}",
+                        object=f"workspace:{workspace_id}",
+                    )
                 )
-            )
+                if response.tuples:
+                    for t in response.tuples:
+                        tuples_to_delete.append(
+                            ClientTuple(
+                                user=t.key.user,
+                                relation=t.key.relation,
+                                object=t.key.object,
+                            )
+                        )
+            except Exception as e:
+                print(f"Failed to read FGA tuples: {e}")
+                # TODO: Proceeding might be risky if we can't clean up, but let's try to write at least.
+                # If we fail to read, we might fail to delete, but we should try to write the new one.
+
+            # Delete ALL existing tuples for this user/workspace
+            if tuples_to_delete:
+                await fga_client.write(
+                    ClientWriteRequest(
+                        deletes=tuples_to_delete
+                    )
+                )
             
             # Add new role
             # Map Enum to FGA relation
@@ -348,7 +379,11 @@ class WorkspaceService:
         # 5. Define Rollback Operation
         async def rollback_op():
             print(f"Reverting DB role change for user {user_id} in workspace {workspace_id} to {old_role}")
-            await self.repo.update_member_role(workspace_id, user_id, old_role)
+            if current_member:
+                await self.workspace_repo.update_member_role(workspace_id, user_id, old_role)
+            else:
+                # If they weren't a member, we just set to VIEWER
+                await self.workspace_repo.update_member_role(workspace_id, user_id, WorkspaceRoleEnum.VIEWER)
 
         # 6. Execute via ConsistencyService
         return await self.consistency_service.perform_dual_write(
@@ -469,7 +504,7 @@ class WorkspaceService:
                 )
                 public_ws = created_public_ws
             
-            # Ensure user is a member of this public workspace (so it shows up in their list)
+            # TODO: Ensure user is a member of this public workspace (so it shows up in their list)
             # Even if it's public, our list_workspaces_for_user logic might rely on membership for now?
             # Actually list_workspaces_for_user fetches ALL public workspaces globally.
             # We should probably refine that to only fetch Global Public + Org Public.

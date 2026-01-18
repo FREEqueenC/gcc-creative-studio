@@ -26,9 +26,10 @@ from src.database import get_db
 from src.users.dto.user_search_dto import UserSearchDto
 from src.users.user_model import User, UserModel
 from src.organizations.organization_model import UserOrganization
+from src.workspaces.schema.workspace_model import WorkspaceMemberAssociation
 from typing import Union, Dict, Any
 from pydantic import BaseModel
-        
+
 class UserRepository(BaseRepository[User, UserModel]):
     """
     Handles all database operations for the User table.
@@ -44,7 +45,10 @@ class UserRepository(BaseRepository[User, UserModel]):
         result = await self.db.execute(
             select(self.model)
             .where(self.model.email == email)
-            .options(selectinload(self.model.organizations).selectinload(UserOrganization.organization))
+            .options(
+                selectinload(self.model.organizations).selectinload(UserOrganization.organization),
+                selectinload(self.model.workspaces).selectinload(WorkspaceMemberAssociation.workspace)
+            )
         )
         user = result.scalar_one_or_none()
         if not user:
@@ -56,7 +60,10 @@ class UserRepository(BaseRepository[User, UserModel]):
         result = await self.db.execute(
             select(self.model)
             .where(self.model.id == item_id)
-            .options(selectinload(self.model.organizations).selectinload(UserOrganization.organization))
+            .options(
+                selectinload(self.model.organizations).selectinload(UserOrganization.organization),
+                selectinload(self.model.workspaces).selectinload(WorkspaceMemberAssociation.workspace)
+            )
         )
         item = result.scalar_one_or_none()
         if not item:
@@ -71,7 +78,10 @@ class UserRepository(BaseRepository[User, UserModel]):
         result = await self.db.execute(
             select(self.model)
             .where(self.model.id == item_id)
-            .options(selectinload(self.model.organizations).selectinload(UserOrganization.organization))
+            .options(
+                selectinload(self.model.organizations).selectinload(UserOrganization.organization),
+                selectinload(self.model.workspaces).selectinload(WorkspaceMemberAssociation.workspace)
+            )
         )
         db_item = result.scalar_one_or_none()
         if not db_item:
@@ -131,7 +141,8 @@ class UserRepository(BaseRepository[User, UserModel]):
         """
         # 1. Build the base query        
         query = select(self.model).options(
-            selectinload(self.model.organizations).selectinload(UserOrganization.organization)
+            selectinload(self.model.organizations).selectinload(UserOrganization.organization),
+            selectinload(self.model.workspaces).selectinload(WorkspaceMemberAssociation.workspace)
         )
         
         if search_dto.email:
@@ -154,7 +165,7 @@ class UserRepository(BaseRepository[User, UserModel]):
 
         if search_dto.workspace_id:
             # Check if workspace is public
-            from src.workspaces.schema.workspace_model import Workspace, WorkspaceScopeEnum, WorkspaceMemberAssociation
+            from src.workspaces.schema.workspace_model import Workspace, WorkspaceScopeEnum
             
             # We need to fetch the workspace first to know its scope and organization_id
             # We can do this with a subquery or a separate query. Separate query is cleaner here.

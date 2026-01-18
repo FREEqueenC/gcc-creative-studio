@@ -60,6 +60,11 @@ class User(Base):
         back_populates="user",
         cascade="all, delete-orphan",
     )
+    
+    workspaces: Mapped[List["WorkspaceMemberAssociation"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
 
 
 class UserOrganizationSummary(BaseModel):
@@ -69,6 +74,15 @@ class UserOrganizationSummary(BaseModel):
     id: int
     name: str
     domain: Optional[str] = None
+    role: str
+
+
+class UserWorkspaceSummary(BaseModel):
+    """
+    Summary of a workspace a user belongs to, including their role.
+    """
+    id: int
+    name: str
     role: str
 
 
@@ -87,6 +101,7 @@ class UserModel(BaseDocument):
     is_super_admin: bool = False
     can_access_admin_panel: bool = False
     organizations: List[UserOrganizationSummary] = Field(default_factory=list)
+    workspaces: List[UserWorkspaceSummary] = Field(default_factory=list)
 
     @field_validator("roles", mode="after")
     @classmethod
@@ -124,5 +139,30 @@ class UserModel(BaseDocument):
                     name=uo.organization.name,
                     domain=uo.organization.domain,
                     role=uo.role
+                ))
+        return summaries
+
+    @field_validator("workspaces", mode="before")
+    @classmethod
+    def map_workspaces(cls, v: Any) -> List[UserWorkspaceSummary]:
+        """
+        Maps SQLAlchemy User.workspaces (list of WorkspaceMemberAssociation) to UserWorkspaceSummary list.
+        """
+        if not v:
+            return []
+            
+        # If it's already a list of dicts or objects, return as is
+        if isinstance(v, list) and len(v) > 0 and isinstance(v[0], (dict, UserWorkspaceSummary)):
+            return v
+            
+        # Assuming v is a list of WorkspaceMemberAssociation SQLAlchemy objects
+        summaries = []
+        for wm in v:
+            # Check if workspace is loaded
+            if hasattr(wm, "workspace") and wm.workspace:
+                summaries.append(UserWorkspaceSummary(
+                    id=wm.workspace.id,
+                    name=wm.workspace.name,
+                    role=wm.role
                 ))
         return summaries

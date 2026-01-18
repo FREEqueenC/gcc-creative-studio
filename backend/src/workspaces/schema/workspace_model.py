@@ -110,7 +110,7 @@ class WorkspaceMemberAssociation(Base):
 
     # Relationships
     workspace: Mapped["Workspace"] = relationship(back_populates="members")
-    user: Mapped["User"] = relationship(lazy="joined")
+    user: Mapped["User"] = relationship(back_populates="workspaces", lazy="joined")
 
     @property
     def email(self) -> str:
@@ -173,4 +173,9 @@ class WorkspaceModel(BaseDocument):
     permissions: Optional[WorkspacePermissions] = Field(
         default=None,
         description="Computed permissions for the current user."
+    )
+    
+    members: List[WorkspaceMember] = Field(
+        default=[],
+        description="List of members in this workspace."
     )

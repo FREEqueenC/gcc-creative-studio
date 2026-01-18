@@ -325,5 +325,16 @@ class WorkspaceRepository(BaseRepository[Workspace, WorkspaceModel]):
         # Map organization name if available
         if workspace.organization:
             workspace_dict["organization_name"] = workspace.organization.name
+            
+        # Map members
+        if workspace.members:
+            workspace_dict["members"] = [
+                {
+                    "user_id": m.user_id,
+                    "email": m.email, # Uses the property on Association
+                    "role": m.role
+                }
+                for m in workspace.members
+            ]
         
         return self.schema.model_validate(workspace_dict)

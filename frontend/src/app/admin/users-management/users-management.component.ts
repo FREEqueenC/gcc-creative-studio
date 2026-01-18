@@ -53,7 +53,6 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
     'name',
     'email',
     'roles',
-    'isSuperAdmin',
     'createdAt',
     'updatedAt',
     'actions',
@@ -100,7 +99,26 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
   ) {
     this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
+      this.updateDisplayedColumns();
     });
+  }
+
+  updateDisplayedColumns() {
+    const baseColumns = [
+      'picture',
+      'name',
+      'email',
+      'roles',
+      'createdAt',
+      'updatedAt',
+      'actions',
+    ];
+
+    if (this.currentUser?.isSuperAdmin) {
+      baseColumns.splice(4, 0, 'isSuperAdmin');
+    }
+
+    this.displayedColumns = baseColumns;
   }
 
   ngOnInit(): void {
@@ -286,6 +304,8 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
         return '!bg-gray-500/20 !text-gray-300';
       case UserRolesEnum.CREATOR.toLowerCase():
         return '!bg-purple-500/20 !text-purple-300';
+      case 'super admin':
+        return '!bg-amber-500/20 !text-amber-300';
       default:
         // It's good practice to have a default style
         return '!bg-gray-500/20 !text-gray-300';
@@ -318,7 +338,11 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
       const ws = user.workspaces?.find(w => w.id === this.selectedWorkspaceId);
       return ws?.role || 'viewer';
     }
-    return user.roles?.[0] || 'user';
+    return '';
+  }
+
+  getSystemRole(user: UserModel): string {
+    return user.isSuperAdmin ? 'Super Admin' : 'User';
   }
 
 

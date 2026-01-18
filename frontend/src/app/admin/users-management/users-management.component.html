@@ -120,13 +120,10 @@
             </mat-form-field>
           </div>
           
-          <!-- No Context: Show Chips -->
+          <!-- No Context: Show System Role -->
           <div *ngIf="!isContextSelected" class="flex flex-wrap gap-1">
-            <mat-chip
-              *ngFor="let role of user.roles"
-              [class]="getRoleChipClass(role)"
-            >
-              {{ role | titlecase }}
+            <mat-chip [class]="getRoleChipClass(getSystemRole(user))">
+              {{ getSystemRole(user) }}
             </mat-chip>
           </div>
         </td>

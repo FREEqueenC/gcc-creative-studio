@@ -46,7 +46,7 @@ from src.workspaces.repository.workspace_repository import WorkspaceRepository
 from src.workspaces.workspace_auth_guard import workspace_auth_service
 
 from src.core.fga import check_permission
-from src.auth.permissions import require_super_admin
+from src.auth.permission_guards import require_super_admin
 
 router = APIRouter(
     prefix="/api/source_assets",

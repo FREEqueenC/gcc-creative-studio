@@ -16,7 +16,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Body
 
 from typing import Dict, Any
 from src.core.fga import check_permission
-from src.auth.permissions import require_super_admin, require_admin_access
+from src.auth.permission_guards import require_super_admin, require_admin_access
 from src.auth.auth_service import get_current_user
 from src.users.user_model import UserModel
 from src.common.dto.pagination_response_dto import PaginationResponseDto

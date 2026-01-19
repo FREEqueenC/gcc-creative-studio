@@ -26,7 +26,7 @@ from src.media_templates.schema.media_template_model import MediaTemplateModel
 from src.users.user_model import UserModel
 
 from src.core.fga import check_permission
-from src.auth.permissions import require_super_admin
+from src.auth.permission_guards import require_super_admin
 
 # for convenience
 admin_only = Depends(require_super_admin)

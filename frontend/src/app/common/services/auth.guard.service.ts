@@ -25,6 +25,7 @@ import {
 import {AuthService} from './auth.service';
 import {isPlatformBrowser} from '@angular/common';
 import {Observable, of} from 'rxjs';
+import {map, catchError} from 'rxjs/operators';
 
 const LOGIN_ROUTE = '/login';
 @Injectable({
@@ -57,11 +58,22 @@ export class AuthGuardService implements CanActivate {
     }
 
     // --- BROWSER SIDE ---
-    if (!this.authService.isLoggedIn()) {
-      void this.router.navigate([LOGIN_ROUTE]);
-      return false;
+    if (this.authService.isLoggedIn()) {
+      return true;
     }
 
-    return true;
+    return this.authService.getUser().pipe(
+      map(user => {
+        if (user) {
+          return true;
+        }
+        void this.router.navigate([LOGIN_ROUTE]);
+        return false;
+      }),
+      catchError(() => {
+        void this.router.navigate([LOGIN_ROUTE]);
+        return of(false);
+      })
+    );
   }
 }

@@ -78,16 +78,16 @@
         <mat-icon>add</mat-icon>
         <span>Create New Private Workspace</span>
       </button>
-      <button
+      <!-- <button
         mat-menu-item
         (click)="openInviteDialog($event)"
-        [disabled]="!canInvite"
+        *ngIf="canInvite"
         matTooltipPosition="right"
-        matTooltip="You can invite users in your Private Workspaces!"
+        matTooltip="Invite users to this workspace"
       >
         <mat-icon>person_add</mat-icon>
         <span>Invite Users</span>
-      </button>
+      </button> -->
       <button
         mat-menu-item
         *ngIf="canAccessBrandGuidelines"

@@ -166,19 +166,26 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
     });
   }
 
-  onOrganizationChange(newVal: number | null) {
-    console.log('onOrganizationChange:', newVal, typeof newVal);
-    this.selectedOrganizationId = newVal;
+  selectedOrganization: Organization | null = null;
+  selectedWorkspace: Workspace | null = null;
+
+  onOrganizationChange(newVal: Organization | null) {
+    this.selectedOrganization = newVal;
+    this.selectedOrganizationId = newVal?.id ?? null;
+    
     if (this.selectedOrganizationId != null) {
+      this.selectedWorkspace = null;
       this.selectedWorkspaceId = null; // Clear workspace filter
     }
     this.resetPaginationAndFetch();
   }
 
-  onWorkspaceChange(newVal: number | null) {
-    console.log('onWorkspaceChange:', newVal, typeof newVal);
-    this.selectedWorkspaceId = newVal;
+  onWorkspaceChange(newVal: Workspace | null) {
+    this.selectedWorkspace = newVal;
+    this.selectedWorkspaceId = newVal?.id ?? null;
+    
     if (this.selectedWorkspaceId != null) {
+      this.selectedOrganization = null;
       this.selectedOrganizationId = null; // Clear organization filter
     }
     this.resetPaginationAndFetch();
@@ -318,7 +325,6 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
 
   get isContextSelected(): boolean {
     const selected = this.selectedOrganizationId != null || this.selectedWorkspaceId != null;
-    // console.log('isContextSelected:', selected, 'Org:', this.selectedOrganizationId, 'WS:', this.selectedWorkspaceId);
     return selected;
   }
 
@@ -334,7 +340,6 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
   getContextRole(user: UserModel): string {
     if (this.selectedOrganizationId != null) {
       const org = user.organizations?.find(o => o.id === this.selectedOrganizationId);
-      // console.log('getContextRole (Org):', user.name, this.selectedOrganizationId, org);
       return org?.role || 'member'; 
     } else if (this.selectedWorkspaceId != null) {
       const ws = user.workspaces?.find(w => w.id === this.selectedWorkspaceId);
@@ -349,18 +354,31 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
 
 
 
+  get canAssignRoles(): boolean {
+    if (this.currentUser?.isSuperAdmin) return true;
+
+    if (this.selectedOrganization) {
+      return this.selectedOrganization.permissions?.canAssignOrgRoles ?? false;
+    }
+    if (this.selectedWorkspace) {
+      return this.selectedWorkspace.permissions?.canAssignWsRoles ?? false;
+    }
+    return false;
+  }
+
   async changeRole(user: UserModel, newRole: string) {
     if (this.currentUser && this.currentUser.id === user.id && !this.currentUser.isSuperAdmin) {
         handleErrorSnackbar(this._snackBar, 'You cannot change your own role.', 'Change Role');
-        // Reset selection if possible, or just return. 
-        // Since it's a select change, the UI might already show the new value. 
-        // Ideally we should revert it, but for now just preventing the API call is key.
-        // To revert, we'd need to reload or manually reset.
         this.fetchPage(this.currentPageIndex); // Reload to revert UI
         return;
     }
 
-    console.log('changeRole called:', user.id, newRole, 'Org:', this.selectedOrganizationId, 'WS:', this.selectedWorkspaceId);
+    if (!this.canAssignRoles) {
+        handleErrorSnackbar(this._snackBar, 'You do not have permission to assign roles.', 'Change Role');
+        this.fetchPage(this.currentPageIndex);
+        return;
+    }
+
     if (!this.isContextSelected) {
       console.warn('changeRole: No context selected');
       return;
@@ -369,10 +387,8 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     try {
       if (this.selectedOrganizationId != null) {
-        console.log('Updating Org Role...');
         await firstValueFrom(this.userService.updateOrganizationRole(this.selectedOrganizationId, Number(user.id), newRole));
       } else if (this.selectedWorkspaceId != null) {
-        console.log('Updating Workspace Role...');
         await firstValueFrom(this.userService.updateWorkspaceRole(this.selectedWorkspaceId, Number(user.id), newRole));
       }
       

@@ -31,9 +31,9 @@
     <!-- Organization Filter -->
     <mat-form-field appearance="outline" class="w-full md:w-1/3">
       <mat-label>Organization</mat-label>
-      <mat-select [value]="selectedOrganizationId" (selectionChange)="onOrganizationChange($event.value)">
+      <mat-select [value]="selectedOrganization" (selectionChange)="onOrganizationChange($event.value)">
         <mat-option [value]="null">All Organizations</mat-option>
-        <mat-option *ngFor="let org of organizations" [value]="org.id">
+        <mat-option *ngFor="let org of organizations" [value]="org">
           {{ org.name }}
         </mat-option>
       </mat-select>
@@ -42,7 +42,7 @@
     <!-- Workspace Filter -->
     <mat-form-field appearance="outline" class="w-full md:w-1/3">
       <mat-label>Workspace</mat-label>
-      <mat-select [value]="selectedWorkspaceId" (selectionChange)="onWorkspaceChange($event.value)" panelClass="workspace-select-panel">
+      <mat-select [value]="selectedWorkspace" (selectionChange)="onWorkspaceChange($event.value)" panelClass="workspace-select-panel">
         <div class="px-4 py-2 sticky top-0 bg-dark z-10" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
           <mat-form-field appearance="outline" class="w-full text-sm dense-form-field">
             <mat-icon matPrefix>search</mat-icon>
@@ -50,7 +50,7 @@
           </mat-form-field>
         </div>
         <mat-option [value]="null">All Workspaces</mat-option>
-        <mat-option *ngFor="let ws of filteredWorkspaces$ | async" [value]="ws.id">
+        <mat-option *ngFor="let ws of filteredWorkspaces$ | async" [value]="ws">
           {{ ws.name }}
         </mat-option>
       </mat-select>
@@ -112,7 +112,7 @@
           <div *ngIf="isContextSelected" (click)="$event.stopPropagation()">
             <mat-form-field appearance="outline" class="w-32">
               <mat-select [value]="getContextRole(user)" (selectionChange)="changeRole(user, $event.value)"
-                [disabled]="currentUser?.id === user.id && !currentUser?.isSuperAdmin">
+                [disabled]="(currentUser?.id === user.id && !currentUser?.isSuperAdmin) || !canAssignRoles">
                 <mat-option *ngFor="let role of availableRoles" [value]="role">
                   {{ role | titlecase }}
                 </mat-option>

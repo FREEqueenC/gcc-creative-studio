@@ -177,12 +177,12 @@ class WorkspaceService:
             )
 
         is_system_admin = current_user.is_super_admin
-        is_workspace_owner = current_user.id == workspace.owner_id
+        # is_workspace_owner = current_user.id == workspace.owner_id # Deprecated: Only Super Admins can invite now
 
-        if not (is_system_admin or is_workspace_owner):
+        if not is_system_admin:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Only the workspace owner or a system admin can invite users.",
+                detail="Only system admins can invite users.",
             )
 
         # 2. Find the user to be invited by their email

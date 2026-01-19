@@ -252,24 +252,10 @@ export class WorkspaceSwitcherComponent implements OnInit {
   }
 
   // TODO: Modify this logic to use the new permission canInviteOrgMembers and canInviteWsMembers
-  get canInvite(): boolean {
-    if (!this.activeWorkspace) return false;
-    
-    // Use explicit permissions if available
-    if (this.activeWorkspace.permissions) {
-      return this.activeWorkspace.permissions.canAssignWsRoles;
-    }
-
-    // Fallback for legacy/migration
-    if (
-      !this.currentUser ||
-      this.activeWorkspace.scope === WorkspaceScope.PUBLIC
-    ) {
-      return false;
-    }
-    const isOwner = this.currentUser.id === this.activeWorkspace.ownerId;
-    return isOwner;
-  }
+  // get canInvite(): boolean {
+  //   if (!this.currentUser) return false;
+  //   return !!this.currentUser.isSuperAdmin;
+  // }
 
   get canAccessBrandGuidelines(): boolean {
     if (!this.currentUser || !this.activeWorkspace) return false;

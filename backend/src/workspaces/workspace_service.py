@@ -288,6 +288,12 @@ class WorkspaceService:
                 detail="Insufficient permissions to update member role."
             )
 
+        if current_user.id == user_id and not current_user.is_super_admin:
+             raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You cannot change your own role."
+            )
+
         # 2. Get Current State (for potential revert)
         workspace = await self.workspace_repo.get_by_id(workspace_id)
         if not workspace:
@@ -483,7 +489,7 @@ class WorkspaceService:
         # We need to check the roles in user.organizations
         admin_org_ids = [
             org.id for org in user.organizations 
-            if org.role == "admin" # Assuming 'admin' is the role string, check OrganizationRoleEnum
+            if org.role in ["admin", "owner"] # Check OrganizationRoleEnum values
         ]
         
         if admin_org_ids:
@@ -509,7 +515,7 @@ class WorkspaceService:
             # Restrict to Org Admin's organizations
             admin_org_ids = [
                 org.id for org in user.organizations 
-                if org.role == "admin" # Check OrganizationRoleEnum.ADMIN
+                if org.role in ["admin", "owner"] # Check OrganizationRoleEnum values
             ]
             
             if not admin_org_ids:

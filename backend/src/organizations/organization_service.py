@@ -257,7 +257,7 @@ class OrganizationService:
             # Restrict to Org Admin's organizations
             admin_org_ids = [
                 org.id for org in user.organizations 
-                if org.role == "admin" # Check OrganizationRoleEnum.ADMIN
+                if org.role in ["admin", "owner"] # Check OrganizationRoleEnum values
             ]
             
             if not admin_org_ids:
@@ -292,7 +292,7 @@ class OrganizationService:
         from openfga_sdk.models import ReadRequestTupleKey
         
         # 1. Verify Permissions
-        if current_user.id == user_id:
+        if current_user.id == user_id and not current_user.is_super_admin:
              raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You cannot change your own role."

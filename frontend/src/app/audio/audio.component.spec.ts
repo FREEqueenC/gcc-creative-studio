@@ -55,7 +55,7 @@ describe('AudioComponent', () => {
     id: 123,
     status: JobStatus.COMPLETED,
     originalPrompt: 'test prompt',
-    presignedUrls: ['http://example.com/audio.mp3'],
+    presignedUrls: ['data:audio/mp3;base64,AAAA'],
     presignedThumbnailUrls: [],
     gcsUris: [],
     prompt: '',

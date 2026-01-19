@@ -57,7 +57,7 @@ describe('LoginComponent', () => {
     id: '123',
     name: 'Test User',
     email: 'test@example.com',
-    picture: 'http://example.com/avatar.png',
+    picture: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
   };
 
   beforeEach(async () => {

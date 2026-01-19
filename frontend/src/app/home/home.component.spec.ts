@@ -165,7 +165,7 @@ describe('HomeComponent', () => {
         aspectRatio: '16:9',
         negativePrompt: 'blurry',
         sourceAssetIds: [123],
-        previewUrls: ['http://example.com/image.png']
+        previewUrls: ['data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=']
       };
       mockRouter.getCurrentNavigation.and.returnValue({ extras: { state: { remixState } } } as any);
       component.applyRemixState(remixState);

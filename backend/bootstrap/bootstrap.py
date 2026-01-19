@@ -27,7 +27,6 @@ from src.database import AsyncSessionLocal, cleanup_connector
 from src.users.dto.user_create_dto import UserCreateDto
 from src.users.repository.user_repository import UserRepository
 from src.users.user_model import UserModel
-from src.organizations.organization_seeder import OrganizationSeeder
 from src.organizations.organization_service import OrganizationService
 from src.organizations.repository.organization_repository import OrganizationRepository
 from src.backfill_organizations import backfill_organizations

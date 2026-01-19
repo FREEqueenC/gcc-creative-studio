@@ -20,7 +20,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.database import get_db
 from src.organizations.organization_model import OrganizationModel, OrganizationRoleEnum, OrganizationPermissions
 from src.organizations.repository.organization_repository import OrganizationRepository
-from src.organizations.organization_seeder import OrganizationSeeder
 from src.users.user_model import UserModel
 from src.users.repository.user_repository import UserRepository
 
@@ -55,7 +54,6 @@ class OrganizationService:
     ):
         self.repo = repo
         self.db = db
-        self.seeder = OrganizationSeeder(db)
         self.user_repo = UserRepository(db)
         self.permission_service = PermissionService()
         self.consistency_service = consistency_service

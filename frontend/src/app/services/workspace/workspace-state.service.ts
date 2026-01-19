@@ -16,6 +16,7 @@
 
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { Workspace } from '../../common/models/workspace.model';
 
 @Injectable({
   providedIn: 'root',
@@ -27,11 +28,30 @@ export class WorkspaceStateService {
   public readonly activeWorkspaceId$: Observable<number | null> =
     this.activeWorkspaceIdSubject.asObservable();
 
+  private readonly activeWorkspaceSubject = new BehaviorSubject<
+    Workspace | null
+  >(null);
+  public readonly activeWorkspace$: Observable<Workspace | null> =
+    this.activeWorkspaceSubject.asObservable();
+
   setActiveWorkspaceId(workspaceId: number | null) {
     this.activeWorkspaceIdSubject.next(workspaceId);
   }
 
+  setActiveWorkspace(workspace: Workspace | null) {
+    this.activeWorkspaceSubject.next(workspace);
+    if (workspace) {
+      this.setActiveWorkspaceId(workspace.id);
+    } else {
+      this.setActiveWorkspaceId(null);
+    }
+  }
+
   getActiveWorkspaceId(): number | null {
     return this.activeWorkspaceIdSubject.getValue();
+  }
+
+  getActiveWorkspace(): Workspace | null {
+    return this.activeWorkspaceSubject.getValue();
   }
 }

@@ -20,6 +20,10 @@ import {trigger, transition, style, query, animate} from '@angular/animations';
 import {LoadingService} from './common/services/loading.service';
 import {AuthService} from './common/services/auth.service';
 
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { WorkspaceStateService } from './services/workspace/workspace-state.service';
+import { handleErrorSnackbar } from './utils/handleMessageSnackbar';
+
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -59,6 +63,8 @@ export class AppComponent {
     private router: Router,
     public loadingService: LoadingService,
     private authService: AuthService,
+    private workspaceStateService: WorkspaceStateService,
+    private snackBar: MatSnackBar
   ) {
     // Fetch user on init
     this.authService.getUser().subscribe();
@@ -76,6 +82,26 @@ export class AppComponent {
           this.showHeader = false;
         } else {
           this.showHeader = true;
+        }
+      }
+    });
+
+    // Check permissions on workspace switch
+    this.workspaceStateService.activeWorkspace$.subscribe(workspace => {
+      if (!workspace) return;
+      
+      // If we are on the workflows page and don't have permission, redirect
+      if (this.router.url.includes('/workflows')) {
+        if (!workspace.permissions?.canViewWsWorkflows) {
+           // Use setTimeout to ensure navigation happens after any current change detection or pending navigations
+           setTimeout(() => {
+             this.router.navigate(['/']);
+           });
+           handleErrorSnackbar(
+             this.snackBar,
+             { message: 'You do not have permission to view workflows in this workspace.' },
+             'Access Denied'
+           );
         }
       }
     });

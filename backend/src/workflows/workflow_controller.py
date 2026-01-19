@@ -16,6 +16,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status, Header
 
 from src.auth.auth_service import get_current_user
 from src.common.dto.pagination_response_dto import PaginationResponseDto
+from src.common.permissions import WorkspacePermissionEnum
 from src.users.user_model import UserModel
 from src.workflows.dto.workflow_search_dto import WorkflowSearchDto
 from src.workflows.schema.workflow_model import WorkflowCreateDto, WorkflowModel, WorkflowExecuteDto
@@ -29,7 +30,6 @@ router = APIRouter(
     prefix="/api/workflows",
     tags=["Workflows"],
     responses={404: {"description": "Not found"}},
-    dependencies=[Depends(require_super_admin)],
 )
 
 
@@ -138,11 +138,32 @@ async def execute_workflow(
     workflow_id: str,
     workflow_execute_dto: WorkflowExecuteDto,
     authorization: str | None = Header(default=None),
+    current_user: UserModel = Depends(get_current_user),
     workflow_service: WorkflowService = Depends(),
 ):
     """
     This function is the controller that calls the service to generate the workflow.
     """
+    workspace_id = workflow_execute_dto.args.get("workspace_id")
+    if not workspace_id:
+         raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Workspace ID is required in arguments.",
+        )
+
+    # Check if user has permission to execute workflows in this workspace
+    allowed = await check_permission(
+        "workspace",
+        str(workspace_id),
+        WorkspacePermissionEnum.CAN_EXECUTE_WS_WORKFLOWS,
+        current_user.id,
+    )
+    if not allowed:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to execute workflows in this workspace.",
+        )
+
     workflow_execute_dto.args["user_auth_header"] = authorization
 
     response = workflow_service.execute_workflow(

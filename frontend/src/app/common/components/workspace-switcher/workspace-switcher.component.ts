@@ -210,11 +210,9 @@ export class WorkspaceSwitcherComponent implements OnInit {
   }
 
   setActiveWorkspace(workspaceId: number | null): void {
-    // We might need to cast to any if workspaceStateService expects string,
-    // but we should check that service too. For now, let's assume we pass number.
-    this.workspaceStateService.setActiveWorkspaceId(workspaceId);
-    this.activeWorkspace =
-      this.workspaces.find(w => w.id === workspaceId) || null;
+    const workspace = this.workspaces.find(w => w.id === workspaceId) || null;
+    this.workspaceStateService.setActiveWorkspace(workspace);
+    this.activeWorkspace = workspace;
     this.brandGuidelineService.clearCache();
     
     if (this.isBrowser) {

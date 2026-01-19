@@ -25,8 +25,10 @@ import {UserModel} from '../common/models/user.model';
 import {animate, style, transition, trigger} from '@angular/animations';
 import {BreakpointObserver, Breakpoints} from '@angular/cdk/layout';
 import {Subject, Observable, of} from 'rxjs';
-import {takeUntil, switchMap, shareReplay} from 'rxjs/operators';
+import {takeUntil, switchMap, shareReplay, map} from 'rxjs/operators';
 import {isPlatformBrowser} from '@angular/common';
+
+import {WorkspaceStateService} from '../services/workspace/workspace-state.service';
 
 @Component({
   selector: 'app-header',
@@ -55,6 +57,7 @@ export class HeaderComponent implements OnDestroy {
   menuFixed = false;
   menuIsHovered = false;
   isAdmin$: Observable<boolean>;
+  canViewWorkflows$: Observable<boolean>;
 
   isDesktop = false;
   private readonly destroy$ = new Subject<void>();
@@ -69,6 +72,7 @@ export class HeaderComponent implements OnDestroy {
     public userService: UserService,
     public authService: AuthService,
     private breakpointObserver: BreakpointObserver,
+    private workspaceStateService: WorkspaceStateService,
     @Inject(PLATFORM_ID) platformId: Object
   ) {
     this.isBrowser = isPlatformBrowser(platformId);
@@ -109,6 +113,14 @@ export class HeaderComponent implements OnDestroy {
       .subscribe(result => {
         this.isDesktop = result.matches;
       });
+      
+    this.canViewWorkflows$ = this.workspaceStateService.activeWorkspace$.pipe(
+      map(workspace => {
+        if (!workspace) return false;
+
+        return workspace.permissions?.canViewWsWorkflows ?? false;
+      })
+    );
   }
 
   ngOnDestroy(): void {

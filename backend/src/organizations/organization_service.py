@@ -322,9 +322,26 @@ class OrganizationService:
         
         old_role_str = current_org_membership.role
         old_role_enum = OrganizationRoleEnum(old_role_str)
+        
+        # Check if we are transferring ownership
+        is_transferring_ownership = role == OrganizationRoleEnum.OWNER
+        previous_owner_id = None
+        
+        if is_transferring_ownership:
+            # We need to find the current owner
+            org = await self.repo.get_by_id(org_id)
+            if not org:
+                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found.")
+            previous_owner_id = org.owner_id
 
         # 3. Define DB Operation
         async def db_op() -> OrganizationModel:
+            if is_transferring_ownership and previous_owner_id and previous_owner_id != user_id:
+                # Demote previous owner to ADMIN
+                await self.repo.update_member_role(org_id, previous_owner_id, OrganizationRoleEnum.ADMIN)
+                # Update Organization owner_id
+                await self.repo.update_owner(org_id, user_id)
+            
             updated_org = await self.repo.update_member_role(org_id, user_id, role)
             if not updated_org:
                 raise HTTPException(
@@ -335,6 +352,50 @@ class OrganizationService:
 
         # 4. Define FGA Operation
         async def fga_op():
+            # If transferring ownership, we need to update the previous owner's FGA tuple too
+            if is_transferring_ownership and previous_owner_id and previous_owner_id != user_id:
+                # Demote previous owner to ADMIN in FGA
+                # We use the same read-delete-write pattern to avoid "tuple already exists" or "tuple not found" errors
+                prev_owner_tuples_to_delete = []
+                try:
+                    response = await fga_client.read(
+                        ReadRequestTupleKey(
+                            user=f"user:{previous_owner_id}",
+                            object=f"organization:{org_id}",
+                        )
+                    )
+                    if response.tuples:
+                        for t in response.tuples:
+                            prev_owner_tuples_to_delete.append(
+                                ClientTuple(
+                                    user=t.key.user,
+                                    relation=t.key.relation,
+                                    object=t.key.object,
+                                )
+                            )
+                except Exception as e:
+                    print(f"Failed to read FGA tuples for previous owner: {e}")
+                
+                if prev_owner_tuples_to_delete:
+                    await fga_client.write(
+                        ClientWriteRequest(
+                            deletes=prev_owner_tuples_to_delete
+                        )
+                    )
+
+                await fga_client.write(
+                    ClientWriteRequest(
+                        writes=[
+                            ClientTuple(
+                                user=f"user:{previous_owner_id}",
+                                relation="admin",
+                                object=f"organization:{org_id}",
+                            )
+                        ]
+                    )
+                )
+
+            # Update target user's FGA tuple
             # Fetch current FGA relations to avoid "tuple does not exist" error
             tuples_to_delete = []
             try:
@@ -368,6 +429,9 @@ class OrganizationService:
             
             # Write NEW tuple
             relation = "admin" if role == OrganizationRoleEnum.ADMIN else "member"
+            if role == OrganizationRoleEnum.OWNER:
+                relation = "owner"
+                
             await fga_client.write(
                 ClientWriteRequest(
                     writes=[
@@ -384,6 +448,12 @@ class OrganizationService:
         async def rollback_op():
             print(f"Reverting DB role change for user {user_id} in org {org_id} to {old_role_enum}")
             await self.repo.update_member_role(org_id, user_id, old_role_enum)
+            
+            if is_transferring_ownership and previous_owner_id:
+                # Revert previous owner to OWNER
+                await self.repo.update_member_role(org_id, previous_owner_id, OrganizationRoleEnum.OWNER)
+                # Revert Org owner_id
+                await self.repo.update_owner(org_id, previous_owner_id)
 
         # 6. Execute via ConsistencyService
         return await self.consistency_service.perform_dual_write(

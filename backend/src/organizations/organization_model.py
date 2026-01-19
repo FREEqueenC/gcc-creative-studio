@@ -108,6 +108,7 @@ class OrganizationModel(BaseDocument):
     """
     id: int
     name: str
+    owner_id: int
     domain: Optional[str] = None
     role: Optional[OrganizationRoleEnum] = Field(
         default=None, 

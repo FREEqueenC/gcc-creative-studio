@@ -124,6 +124,24 @@ class OrganizationRepository(BaseRepository[Organization, OrganizationModel]):
         # Return the updated organization
         return await self.get_by_id(org_id)
 
+    async def update_owner(self, org_id: int, new_owner_id: int) -> Optional[OrganizationModel]:
+        """Updates the owner of an organization."""
+        from sqlalchemy import update
+        
+        stmt = (
+            update(self.model)
+            .where(self.model.id == org_id)
+            .values(owner_id=new_owner_id)
+        )
+        
+        result = await self.db.execute(stmt)
+        await self.db.commit()
+        
+        if result.rowcount == 0:
+            return None
+            
+        return await self.get_by_id(org_id)
+
     async def get_user_organizations(self, user_id: int) -> List[OrganizationModel]:
         """Finds all organizations a user belongs to, including their role."""
         result = await self.db.execute(
@@ -146,6 +164,7 @@ class OrganizationRepository(BaseRepository[Organization, OrganizationModel]):
         org_dict = {
             "id": org.id,
             "name": org.name,
+            "owner_id": org.owner_id,
             "domain": org.domain,
         }
         return self.schema.model_validate(org_dict)

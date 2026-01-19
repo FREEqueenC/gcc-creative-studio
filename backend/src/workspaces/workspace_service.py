@@ -301,9 +301,19 @@ class WorkspaceService:
         # If user is not a member, we assume they are being added (e.g. Public Workspace)
         # Default old_role to VIEWER if they weren't a member, or None if we want to distinguish
         old_role = current_member.role if current_member else WorkspaceRoleEnum.VIEWER
+        
+        # Check if we are transferring ownership
+        is_transferring_ownership = role == WorkspaceRoleEnum.OWNER
+        previous_owner_id = workspace.owner_id
 
         # 3. Define DB Operation
-        async def db_op() -> WorkspaceModel:           
+        async def db_op() -> WorkspaceModel:
+            if is_transferring_ownership and previous_owner_id and previous_owner_id != user_id:
+                # Demote previous owner to ADMIN
+                await self.workspace_repo.update_member_role(workspace_id, previous_owner_id, WorkspaceRoleEnum.ADMIN)
+                # Update Workspace owner_id
+                await self.workspace_repo.update_owner(workspace_id, user_id)
+            
             # Try to update first
             updated_workspace = await self.workspace_repo.update_member_role(workspace_id, user_id, role)
             
@@ -339,6 +349,50 @@ class WorkspaceService:
             from openfga_sdk.client.models import ClientWriteRequest, ClientTuple
             from openfga_sdk.models import ReadRequestTupleKey
             
+            # If transferring ownership, update previous owner
+            if is_transferring_ownership and previous_owner_id and previous_owner_id != user_id:
+                # Demote previous owner to ADMIN in FGA
+                # We use the same read-delete-write pattern to avoid "tuple already exists" or "tuple not found" errors
+                prev_owner_tuples_to_delete = []
+                try:
+                    response = await fga_client.read(
+                        ReadRequestTupleKey(
+                            user=f"user:{previous_owner_id}",
+                            object=f"workspace:{workspace_id}",
+                        )
+                    )
+                    if response.tuples:
+                        for t in response.tuples:
+                            prev_owner_tuples_to_delete.append(
+                                ClientTuple(
+                                    user=t.key.user,
+                                    relation=t.key.relation,
+                                    object=t.key.object,
+                                )
+                            )
+                except Exception as e:
+                    print(f"Failed to read FGA tuples for previous owner: {e}")
+                    # We continue, hoping writes might work or it was empty
+                
+                if prev_owner_tuples_to_delete:
+                    await fga_client.write(
+                        ClientWriteRequest(
+                            deletes=prev_owner_tuples_to_delete
+                        )
+                    )
+
+                await fga_client.write(
+                    ClientWriteRequest(
+                        writes=[
+                            ClientTuple(
+                                user=f"user:{previous_owner_id}",
+                                relation="admin",
+                                object=f"workspace:{workspace_id}",
+                            )
+                        ]
+                    )
+                )
+
             # Fetch current FGA relations to avoid "tuple does not exist" error
             tuples_to_delete = []
             try:
@@ -373,7 +427,7 @@ class WorkspaceService:
             
             # Add new role
             # Map Enum to FGA relation
-            relation = role.value # viewer, editor, admin
+            relation = role.value # viewer, editor, admin, owner
             
             await fga_client.write(
                 ClientWriteRequest(
@@ -395,6 +449,12 @@ class WorkspaceService:
             else:
                 # If they weren't a member, we just set to VIEWER
                 await self.workspace_repo.update_member_role(workspace_id, user_id, WorkspaceRoleEnum.VIEWER)
+            
+            if is_transferring_ownership and previous_owner_id:
+                # Revert previous owner to OWNER
+                await self.workspace_repo.update_member_role(workspace_id, previous_owner_id, WorkspaceRoleEnum.OWNER)
+                # Revert Workspace owner_id
+                await self.workspace_repo.update_owner(workspace_id, previous_owner_id)
 
         # 6. Execute via ConsistencyService
         return await self.consistency_service.perform_dual_write(

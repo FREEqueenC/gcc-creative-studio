@@ -350,7 +350,7 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
 
 
   async changeRole(user: UserModel, newRole: string) {
-    if (this.currentUser && this.currentUser.id === user.id) {
+    if (this.currentUser && this.currentUser.id === user.id && !this.currentUser.isSuperAdmin) {
         handleErrorSnackbar(this._snackBar, 'You cannot change your own role.', 'Change Role');
         // Reset selection if possible, or just return. 
         // Since it's a select change, the UI might already show the new value. 

@@ -232,6 +232,24 @@ class WorkspaceRepository(BaseRepository[Workspace, WorkspaceModel]):
         # Return the updated workspace
         return await self.get_by_id(workspace_id)
 
+    async def update_owner(self, workspace_id: int, new_owner_id: int) -> Optional[WorkspaceModel]:
+        """Updates the owner of a workspace."""
+        from sqlalchemy import update
+        
+        stmt = (
+            update(self.model)
+            .where(self.model.id == workspace_id)
+            .values(owner_id=new_owner_id)
+        )
+        
+        result = await self.db.execute(stmt)
+        await self.db.commit()
+        
+        if result.rowcount == 0:
+            return None
+            
+        return await self.get_by_id(workspace_id)
+
     async def find_by_member_id(self, user_id: int) -> List[WorkspaceModel]:
         """Finds all workspaces where the user is a member."""
         result = await self.db.execute(

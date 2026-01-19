@@ -112,7 +112,7 @@
           <div *ngIf="isContextSelected" (click)="$event.stopPropagation()">
             <mat-form-field appearance="outline" class="w-32">
               <mat-select [value]="getContextRole(user)" (selectionChange)="changeRole(user, $event.value)"
-                [disabled]="currentUser?.id === user.id">
+                [disabled]="currentUser?.id === user.id && !currentUser?.isSuperAdmin">
                 <mat-option *ngFor="let role of availableRoles" [value]="role">
                   {{ role | titlecase }}
                 </mat-option>

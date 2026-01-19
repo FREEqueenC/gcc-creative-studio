@@ -10,6 +10,7 @@ from src.organizations.organization_service import OrganizationService, GENERIC_
 from src.users.repository.user_repository import UserRepository
 from src.workspaces.repository.workspace_repository import WorkspaceRepository
 from src.organizations.organization_model import UserOrganization
+from src.organizations.organization_model import OrganizationRoleEnum
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -208,6 +209,88 @@ async def backfill_organizations():
                         relation="super_admin",
                         object="platform:creative-studio"
                     ))
+
+            # 6.2 Organization Owners (Backfill)
+            # We need to ensure every organization has an owner in FGA.
+            # Since we made owner_id non-nullable, they should have one in DB now (via migration default).
+            
+            # Find the first super admin to use as default owner if needed
+            super_admin_user = next((u for u in users if getattr(u, 'is_super_admin', False)), users[0] if users else None)
+            
+            # Fetch all organizations and workspaces
+            result = await db.execute(select(Organization))
+            all_orgs = result.scalars().all()
+            
+            result = await db.execute(select(Workspace))
+            all_workspaces = result.scalars().all()
+            
+            for org in all_orgs:
+                # If owner_id is somehow missing (shouldn't be due to migration), fix it
+                if not org.owner_id and super_admin_user:
+                    org.owner_id = super_admin_user.id
+                    db.add(org)
+                
+                if org.owner_id:
+                    logger.info(f"Assigning Owner for Org '{org.name}': user:{org.owner_id}")
+                    writes.append(ClientTuple(
+                        user=f"user:{org.owner_id}",
+                        relation="owner",
+                        object=f"organization:{org.id}"
+                    ))
+                    
+                    # Also update the UserOrganization role to OWNER
+                    # Check if member exists
+                    stmt = select(UserOrganization).where(
+                        UserOrganization.user_id == org.owner_id,
+                        UserOrganization.organization_id == org.id
+                    )
+                    result = await db.execute(stmt)
+                    member_assoc = result.scalars().first()
+                    
+                    if member_assoc:
+                        if member_assoc.role != OrganizationRoleEnum.OWNER:
+                            member_assoc.role = OrganizationRoleEnum.OWNER
+                            db.add(member_assoc)
+                    else:
+                        # Add as owner if not member
+                        new_assoc = UserOrganization(
+                            user_id=org.owner_id,
+                            organization_id=org.id,
+                            role=OrganizationRoleEnum.OWNER
+                        )
+                        db.add(new_assoc)
+
+            # 6.3 Workspace Owners
+            for ws in all_workspaces:
+                if ws.owner_id:
+                    logger.info(f"Assigning Owner for Workspace '{ws.name}': user:{ws.owner_id}")
+                    writes.append(ClientTuple(
+                        user=f"user:{ws.owner_id}",
+                        relation="owner",
+                        object=f"workspace:{ws.id}"
+                    ))
+                    
+                    # Also update the WorkspaceMemberAssociation role to OWNER
+                    stmt = select(WorkspaceMemberAssociation).where(
+                        WorkspaceMemberAssociation.user_id == ws.owner_id,
+                        WorkspaceMemberAssociation.workspace_id == ws.id
+                    )
+                    result = await db.execute(stmt)
+                    ws_member_assoc = result.scalars().first()
+                    
+                    if ws_member_assoc:
+                        if ws_member_assoc.role != WorkspaceRoleEnum.OWNER:
+                            ws_member_assoc.role = WorkspaceRoleEnum.OWNER
+                            db.add(ws_member_assoc)
+                    else:
+                        # Add as owner if not member
+                        new_ws_assoc = WorkspaceMemberAssociation(
+                            user_id=ws.owner_id,
+                            workspace_id=ws.id,
+                            role=WorkspaceRoleEnum.OWNER
+                        )
+                        db.add(new_ws_assoc)
+
 
             # 6.2 Organization Memberships
             # Re-fetch all UserOrganization links

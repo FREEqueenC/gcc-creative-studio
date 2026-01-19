@@ -88,25 +88,26 @@ class WorkspaceService:
             )
 
         # 1. Create the owner as the first member of the workspace
-        # We use ADMIN role for the creator in the new model
+        # We use ADMIN role for the creator in the new model, but FGA will have OWNER
         owner_as_member = WorkspaceMember(
             user_id=user.id, email=user.email, role=WorkspaceRoleEnum.ADMIN
         )
 
-        # 2. Create the new Workspace model instance
-        new_workspace = WorkspaceModel(
-            name=create_dto.name,
-            owner_id=user.id,
-            organization_id=org_id, # Might be None if we didn't resolve it yet
-        )
-        created_workspace = await self.workspace_repo.create(new_workspace, initial_members=[owner_as_member])
+        # 2. Define DB Operation
+        async def db_op() -> WorkspaceModel:
+            new_workspace = WorkspaceModel(
+                name=create_dto.name,
+                owner_id=user.id,
+                organization_id=org_id,
+            )
+            return await self.workspace_repo.create(new_workspace, initial_members=[owner_as_member])
 
-        # 3. Write tuple to OpenFGA
-        try:
+        # 3. Define FGA Operation
+        async def fga_op(created_workspace: WorkspaceModel):
             writes = [
                 ClientTuple(
                     user=f"user:{user.id}",
-                    relation="admin",
+                    relation="owner",
                     object=f"workspace:{created_workspace.id}",
                 )
             ]
@@ -123,11 +124,21 @@ class WorkspaceService:
             await fga_client.write(
                 ClientWriteRequest(writes=writes)
             )
-        except Exception as e:
-            # TODO: We should rollback or retry. For now, we log.
-            print(f"Failed to write tuple to OpenFGA: {e}")
+
+        # 4. Define Rollback Operation
+        async def rollback_op(created_workspace: WorkspaceModel):
+            if created_workspace and created_workspace.id:
+                await self.workspace_repo.delete(created_workspace.id)
+
+        # 5. Execute via ConsistencyService
+        created_workspace = await self.consistency_service.perform_dual_write(
+            db_op=db_op,
+            fga_op=fga_op,
+            rollback_op=rollback_op,
+            error_message="Failed to create workspace."
+        )
         
-        # Populate permissions for the new workspace (Admin)
+        # Populate permissions for the new workspace (Owner/Admin)
         created_workspace.permissions = WorkspacePermissions(
             can_assign_ws_roles=True,
             can_edit=True,

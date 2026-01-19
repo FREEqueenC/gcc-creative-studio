@@ -71,10 +71,12 @@ async def setup_fga(client: OpenFgaClient):
             "type": "organization",
             "relations": {
                 "platform": {"this": {}},
+                "owner": {"this": {}},
                 "admin": {
                     "union": {
                         "child": [
                             {"this": {}},
+                            {"computedUserset": {"object": "", "relation": "owner"}},
                             {"tupleToUserset": {"computedUserset": {"object": "", "relation": "super_admin"}, "tupleset": {"object": "", "relation": "platform"}}}
                         ]
                     }
@@ -106,6 +108,7 @@ async def setup_fga(client: OpenFgaClient):
             "metadata": {
                 "relations": {
                     "platform": {"directly_related_user_types": [{"type": "platform"}]},
+                    "owner": {"directly_related_user_types": [{"type": "user"}]},
                     "admin": {"directly_related_user_types": [{"type": "user"}]},
                     "member": {"directly_related_user_types": [{"type": "user"}]},
                     
@@ -126,9 +129,18 @@ async def setup_fga(client: OpenFgaClient):
             "type": "workspace",
             "relations": {
                 "parent": {"this": {}},
+                "owner": {"this": {}},
                 
                 # --- Base Roles (Synced from DB) ---
-                "admin": {"union": {"child": [{"this": {}}, {"tupleToUserset": {"computedUserset": {"object": "", "relation": "admin"}, "tupleset": {"object": "", "relation": "parent"}}}]}},
+                "admin": {
+                    "union": {
+                        "child": [
+                            {"this": {}},
+                            {"computedUserset": {"object": "", "relation": "owner"}},
+                            {"tupleToUserset": {"computedUserset": {"object": "", "relation": "admin"}, "tupleset": {"object": "", "relation": "parent"}}}
+                        ]
+                    }
+                },
                 "editor": {"union": {"child": [{"this": {}}, {"computedUserset": {"object": "", "relation": "admin"}}]}},
                 "viewer": {"union": {"child": [{"this": {}}, {"computedUserset": {"object": "", "relation": "editor"}}]}},
                 
@@ -224,6 +236,7 @@ async def setup_fga(client: OpenFgaClient):
             "metadata": {
                 "relations": {
                     "parent": {"directly_related_user_types": [{"type": "organization"}]},
+                    "owner": {"directly_related_user_types": [{"type": "user"}]},
                     
                     # Roles
                     "admin": {"directly_related_user_types": [{"type": "user"}]},

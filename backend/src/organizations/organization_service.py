@@ -74,23 +74,44 @@ class OrganizationService:
 
     async def create_organization(self, schema: OrganizationModel, user_id: int) -> OrganizationModel:
         """Creates a new organization, writes FGA tuples, and seeds default data."""
-        created_org = await self.repo.create(schema, user_id)
         
-        # Write FGA tuple
-        try:
+        # 1. Set Owner ID
+        schema.owner_id = user_id
+        
+        # 2. Define DB Operation
+        async def db_op() -> OrganizationModel:
+            return await self.repo.create(schema, user_id)
+
+        # 3. Define FGA Operation
+        async def fga_op(created_org: OrganizationModel):
             await fga_client.write(
                 ClientWriteRequest(
                     writes=[
                         ClientTuple(
                             user=f"user:{user_id}",
-                            relation="admin",
+                            relation="owner",
                             object=f"organization:{created_org.id}",
-                        )
+                        ),
+                        # We also add them as admin explicitly, though owner implies admin, 
+                        # it's good to be explicit or just rely on owner.
+                        # The user asked for owner role. Owner implies Admin in our model.
+                        # Let's just write owner.
                     ]
                 )
             )
-        except Exception as e:
-            print(f"Failed to write tuple to OpenFGA: {e}")
+
+        # 4. Define Rollback Operation
+        async def rollback_op(created_org: OrganizationModel):
+            if created_org and created_org.id:
+                await self.repo.delete(created_org.id)
+
+        # 5. Execute via ConsistencyService
+        created_org = await self.consistency_service.perform_dual_write(
+            db_op=db_op,
+            fga_op=fga_op,
+            rollback_op=rollback_op,
+            error_message="Failed to create organization."
+        )
             
         # Seed Organization Data (Workspaces, Assets)
         try:
@@ -103,9 +124,8 @@ class OrganizationService:
         except Exception as e:
              print(f"Failed to seed organization {created_org.id}: {e}")
 
-        # Populate permissions for the new org (Admin)
-        # TODO: This should be done by FGA, we should use OrganizationPermissions to have it typed safely
-        created_org.permissions: OrganizationPermissions = OrganizationPermissions(
+        # Populate permissions for the new org (Owner/Admin)
+        created_org.permissions = OrganizationPermissions(
             can_assign_org_roles=True,
             can_edit_org_brand_guidelines=True,
             can_view_org_brand_guidelines=True,

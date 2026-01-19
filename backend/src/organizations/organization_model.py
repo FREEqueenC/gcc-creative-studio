@@ -29,6 +29,7 @@ class OrganizationRoleEnum(str, Enum):
     """Defines the permissions a user has within an organization."""
     MEMBER = "member"
     ADMIN = "admin"
+    OWNER = "owner"
 
 class Organization(Base):
     """
@@ -40,6 +41,7 @@ class Organization(Base):
     name: Mapped[str] = mapped_column(String, nullable=False)
     # For "Personal" orgs we just use "gmail.com" etc.
     domain: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
+    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     
     created_at: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True),
@@ -62,6 +64,7 @@ class Organization(Base):
         back_populates="organization",
         cascade="all, delete-orphan",
     )
+    owner: Mapped["User"] = relationship(foreign_keys=[owner_id])
 
 class UserOrganization(Base):
     """

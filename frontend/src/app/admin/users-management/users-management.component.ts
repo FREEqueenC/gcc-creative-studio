@@ -293,6 +293,8 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
 
     // Using a switch statement makes it easy to add more roles later
     switch (roleLower) {
+      case 'owner':
+        return '!bg-purple-500/20 !text-purple-300';
       case 'admin':
       case UserRolesEnum.ADMIN.toLowerCase():
         return '!bg-amber-500/20 !text-amber-300';
@@ -322,9 +324,9 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
 
   get availableRoles(): string[] {
     if (this.selectedOrganizationId != null) {
-      return ['admin', 'member'];
+      return ['owner', 'admin', 'member'];
     } else if (this.selectedWorkspaceId != null) {
-      return ['admin', 'editor', 'viewer'];
+      return ['owner', 'admin', 'editor', 'viewer'];
     }
     return [];
   }

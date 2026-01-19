@@ -112,14 +112,24 @@ class WorkspaceService:
                 )
             ]
             
-            if org_id:
-                 writes.append(
+            # If Public, add Organization Members as Editors
+            if create_dto.scope == WorkspaceScopeEnum.PUBLIC:
+                writes.append(
+                    ClientTuple(
+                        user=f"organization:{org_id}#member",
+                        relation="editor",
+                        object=f"workspace:{created_workspace.id}",
+                    )
+                )
+            
+            if org_id is not None:
+                writes.append(
                     ClientTuple(
                         user=f"organization:{org_id}",
                         relation="parent",
                         object=f"workspace:{created_workspace.id}",
                     )
-                 )
+                )
 
             await fga_client.write(
                 ClientWriteRequest(writes=writes)
@@ -587,15 +597,20 @@ class WorkspaceService:
                 )
                 public_ws = created_public_ws
             
-            # TODO: Ensure user is a member of this public workspace (so it shows up in their list)
-            # Even if it's public, our list_workspaces_for_user logic might rely on membership for now?
-            # Actually list_workspaces_for_user fetches ALL public workspaces globally.
-            # We should probably refine that to only fetch Global Public + Org Public.
-            # But for now, let's just ensure they are a member to be safe and explicit.
-            # is_member = await self.workspace_repo.is_member(public_ws.id, user.id)
-            # if not is_member:
-            #    # Add as viewer
-            #    member = WorkspaceMember(user_id=user.id, email=user.email, role=WorkspaceRoleEnum.VIEWER)
-            #    await self.workspace_repo.add_member_to_workspace(public_ws.id, member, user.id)
-            pass
+            # Ensure OpenFGA Group Tuple exists for this Public Workspace
+            # organization:ORG_ID#member -> editor -> workspace:WS_ID
+            try:
+                await fga_client.write(
+                    ClientWriteRequest(
+                        writes=[
+                            ClientTuple(
+                                user=f"organization:{org.id}#member",
+                                relation="editor",
+                                object=f"workspace:{public_ws.id}",
+                            )
+                        ]
+                    )
+                )
+            except Exception as e:
+                print(f"Failed to write group tuple to OpenFGA: {e}")
 

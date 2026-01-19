@@ -240,7 +240,7 @@ async def setup_fga(client: OpenFgaClient):
                     
                     # Roles
                     "admin": {"directly_related_user_types": [{"type": "user"}]},
-                    "editor": {"directly_related_user_types": [{"type": "user"}]},
+                    "editor": {"directly_related_user_types": [{"type": "user"}, {"type": "organization", "relation": "member"}]},
                     "viewer": {"directly_related_user_types": [{"type": "user"}, {"type": "user", "wildcard": {}}]},
                     
                     # Workspace Member Management

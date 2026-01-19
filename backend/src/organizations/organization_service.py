@@ -112,17 +112,6 @@ class OrganizationService:
             rollback_op=rollback_op,
             error_message="Failed to create organization."
         )
-            
-        # Seed Organization Data (Workspaces, Assets)
-        try:
-            # We need the full user model for seeding (to set owner)
-            user = await self.user_repo.get(user_id)
-            if user:
-                await self.seeder.seed_organization(created_org.id, user)
-            else:
-                print(f"User {user_id} not found, skipping seeding for org {created_org.id}")
-        except Exception as e:
-             print(f"Failed to seed organization {created_org.id}: {e}")
 
         # Populate permissions for the new org (Owner/Admin)
         created_org.permissions = OrganizationPermissions(
@@ -236,8 +225,6 @@ class OrganizationService:
                 name=name,
                 domain=domain
             )
-            return await self.create_organization(new_org, user.id)
-
             return await self.create_organization(new_org, user.id)
 
     async def get_organizations_for_admin(

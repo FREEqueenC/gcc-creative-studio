@@ -332,6 +332,9 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
     if (this.selectedOrganizationId != null) {
       return ['owner', 'admin', 'member'];
     } else if (this.selectedWorkspaceId != null) {
+      if (this.selectedWorkspace?.scope === 'public') {
+         return ['owner', 'admin', 'editor'];
+      }
       return ['owner', 'admin', 'editor', 'viewer'];
     }
     return [];
@@ -343,7 +346,7 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
       return org?.role || 'member'; 
     } else if (this.selectedWorkspaceId != null) {
       const ws = user.workspaces?.find(w => w.id === this.selectedWorkspaceId);
-      return ws?.role || 'viewer';
+      return ws?.role || 'editor';
     }
     return '';
   }
@@ -351,8 +354,6 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
   getSystemRole(user: UserModel): string {
     return user.isSuperAdmin ? 'Super Admin' : 'User';
   }
-
-
 
   get canAssignRoles(): boolean {
     if (this.currentUser?.isSuperAdmin) return true;

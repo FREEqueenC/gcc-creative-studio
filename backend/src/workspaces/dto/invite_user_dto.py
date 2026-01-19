@@ -22,6 +22,6 @@ class InviteUserDto(BaseModel):
     """Data transfer object for inviting a user to a workspace."""
 
     email: EmailStr
-    role: WorkspaceRoleEnum = Field(default=WorkspaceRoleEnum.VIEWER)
+    role: WorkspaceRoleEnum = Field(default=WorkspaceRoleEnum.EDITOR)
 
     model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)

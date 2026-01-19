@@ -330,10 +330,12 @@ async def backfill_organizations():
                     elif fga_role == "owner":
                         # Map owner to admin since 'owner' relation doesn't exist in FGA model yet
                         relation = "admin"
-                        
+                    
+                # Group Tuple for Public Workspaces, add Organization Members as Editors
+                if ws.scope == WorkspaceScopeEnum.PUBLIC.value and ws.organization_id is not None:
                     writes.append(ClientTuple(
-                        user=f"user:{member.user_id}",
-                        relation=relation,
+                        user=f"organization:{ws.organization_id}#member",
+                        relation="editor",
                         object=f"workspace:{ws.id}"
                     ))
 

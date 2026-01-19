@@ -23,6 +23,7 @@ from src.videos.dto.create_veo_dto import CreateVeoDto
 from src.videos.veo_service import VeoService
 from src.workspaces.repository.workspace_repository import WorkspaceRepository
 from src.workspaces.workspace_auth_guard import workspace_auth_service
+from src.common.permissions import WorkspacePermissionEnum
 
 router = APIRouter(
     prefix="/api/videos",
@@ -46,6 +47,7 @@ async def generate_videos(
             workspace_id=video_request.workspace_id,
             user=current_user,
             workspace_repo=workspace_repo,
+            permission=WorkspacePermissionEnum.CAN_GENERATE_VIDEOS,
         )
 
         # Get the executor from the app state
@@ -91,6 +93,7 @@ async def concatenate_videos(
             workspace_id=concat_request.workspace_id,
             user=current_user,
             workspace_repo=workspace_repo,
+            permission=WorkspacePermissionEnum.CAN_GENERATE_VIDEOS,
         )
         executor = request.app.state.executor
         placeholder_item = await service.start_video_concatenation_job(

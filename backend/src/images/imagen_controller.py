@@ -25,6 +25,7 @@ from src.images.schema.imagen_result_model import ImageGenerationResult
 from src.users.user_model import UserModel
 from src.workspaces.workspace_auth_guard import workspace_auth_service
 from src.workspaces.repository.workspace_repository import WorkspaceRepository
+from src.common.permissions import WorkspacePermissionEnum
 
 router = APIRouter(
     prefix="/api/images",
@@ -48,6 +49,7 @@ async def generate_images(
             workspace_id=image_request.workspace_id,
             user=current_user,
             workspace_repo=workspace_repo,
+            permission=WorkspacePermissionEnum.CAN_GENERATE_IMAGES,
         )
 
         # Get the executor from the app state
@@ -84,6 +86,7 @@ async def generate_images_vto(
             workspace_id=image_request.workspace_id,
             user=current_user,
             workspace_repo=workspace_repo,
+            permission=WorkspacePermissionEnum.CAN_GENERATE_VTO,
         )
 
         # Get the process pool from the application state

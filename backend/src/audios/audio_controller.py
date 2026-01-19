@@ -26,6 +26,7 @@ from src.users.user_model import UserModel
 
 from src.workspaces.repository.workspace_repository import WorkspaceRepository
 from src.workspaces.workspace_auth_guard import workspace_auth_service
+from src.common.permissions import WorkspacePermissionEnum
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +52,7 @@ async def generate_audio(
         workspace_id=create_audio_dto.workspace_id,
         user=current_user,
         workspace_repo=workspace_repo,
+        permission=WorkspacePermissionEnum.CAN_GENERATE_AUDIO,
     )
 
     return await audio_service.generate_audio(create_audio_dto, current_user)

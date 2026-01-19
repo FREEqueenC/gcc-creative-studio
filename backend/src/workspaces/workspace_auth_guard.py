@@ -23,7 +23,7 @@ from src.workspaces.schema.workspace_model import (
     WorkspaceModel,
     WorkspaceScopeEnum,
 )
-
+from src.common.permissions import WorkspacePermissionEnum
 
 class WorkspaceAuth:
     """
@@ -66,21 +66,16 @@ class WorkspaceAuth:
         # If permission is 'admin' or 'editor', we MUST check FGA even if public (usually).
         # Assuming 'public' only implies 'viewer' access.
         
-        if not (is_public and permission == "viewer"):
+        if not (is_public and permission == WorkspacePermissionEnum.VIEWER):
             # Check FGA permission
             # We check the requested relation on 'workspace' object
+            # StrEnum automatically converts to string, so we can pass it directly
             has_permission = await check_permission(user, "workspace", str(workspace_id), permission)
             
             if not has_permission:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
-                    detail=f"You do not have '{permission}' permission on this workspace.",
-                )
-            
-            if not has_permission:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="You do not have permission to access this workspace.",
+                    detail=f"You do not have permission on this workspace.",
                 )
 
         # If authorized, return the full workspace object

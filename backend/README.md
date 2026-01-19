@@ -120,8 +120,9 @@ The power flows downwards. If you have a role at the top, you inherit permission
 
 ```mermaid
 graph TD
-    Platform[Platform (Super Admin)] -->|Inherits| Org[Organization (Admin)]
-    Org -->|Inherits| WS[Workspace (Admin)]
+    Platform[Platform (Super Admin)] -->|Inherits| OrgOwner[Organization (Owner)]
+    OrgOwner -->|Inherits| OrgAdmin[Organization (Admin)]
+    OrgAdmin -->|Inherits| WS[Workspace (Admin)]
     WS -->|Inherits| Asset[Asset (Edit/View)]
 ```
 
@@ -132,47 +133,84 @@ The root level singleton.
 *   **Object ID**: `platform:creative-studio`
 *   **Relations**:
     *   `super_admin`: The "God Mode" role. Has full access to everything.
+        *   *Capabilities*: Can manage all organizations, workspaces, and users. Can change their own role and transfer ownership.
 
 #### B. Organization (`organization`)
 Represents a tenant (e.g., "Acme Corp" or "User's Personal Org").
 *   **Relations**:
-    *   `admin`: Full control over the organization.
-        *   *Inheritance*: Includes `platform:super_admin`.
+    *   `owner`: The single owner of the organization.
+        *   *Inheritance*: Includes `admin`.
+        *   *Capabilities*: Can transfer ownership, delete the organization, and manage all aspects.
+    *   `admin`: Full control over the organization (except ownership transfer).
+        *   *Inheritance*: Includes `platform:super_admin` and `owner`.
     *   `member`: Basic membership.
-        *   *Inheritance*: Includes `admin` (Admins are also Members).
+        *   *Inheritance*: Includes `admin` (Admins/Owners are also Members).
+*   **Permissions (Computed)**:
+    *   **Member Management**:
+        *   `can_invite_org_members`: Checks `admin`.
+        *   `can_add_org_members`: Checks `admin`.
+        *   `can_remove_org_members`: Checks `admin`.
+        *   `can_assign_org_roles`: Checks `admin`.
+    *   **Brand Guidelines**:
+        *   `can_edit_org_brand_guidelines`: Checks `admin`.
+        *   `can_view_org_brand_guidelines`: Checks `member`.
+    *   **General**:
+        *   `can_access_admin_panel`: Checks `admin`.
+        *   `can_view_all_org_workspaces`: Checks `admin`.
 
 #### C. Workspace (`workspace`)
 A project or folder within an organization.
 *   **Relations (Roles)**:
+    *   `owner`: The single owner of the workspace.
+        *   *Inheritance*: Includes `admin`.
     *   `admin`: Can manage settings, members, and delete the workspace.
-        *   *Inheritance*: Includes `organization:admin`.
+        *   *Inheritance*: Includes `organization:admin` and `owner`.
     *   `editor`: Can create/edit content.
         *   *Inheritance*: Includes `admin`.
     *   `viewer`: Can view content.
         *   *Inheritance*: Includes `editor`.
 *   **Permissions (Computed)**:
-    *   `can_manage_workflows`: Checks `editor`.
-    *   `can_view_workflows`: Checks `viewer` OR `can_manage_workflows`.
-    *   `can_generate_images`: Checks `editor`.
-    *   `can_view_images`: Checks `viewer` OR `can_generate_images`.
-    *   *(Same pattern for Videos, Audio, VTO)*
-
-#### D. Asset (`asset`)
-A specific file (Image, Video, etc.) inside a workspace.
-*   **Relations**:
-    *   `parent`: The workspace it belongs to.
-    *   `can_edit`: Checks `workspace:editor`.
-    *   `can_view`: Checks `workspace:viewer`.
+    *   **Member Management**:
+        *   `can_invite_ws_members`: Checks `admin`.
+        *   `can_add_ws_members`: Checks `admin`.
+        *   `can_remove_ws_members`: Checks `admin`.
+        *   `can_assign_ws_roles`: Checks `admin`.
+    *   **Workflows Module** (Gated by `workflow_add_on`):
+        *   `can_view_ws_workflows`: Checks `admin` OR (`viewer` AND `workflow_add_on`).
+        *   `can_execute_ws_workflows`: Checks `admin` OR (`editor` AND `workflow_add_on`).
+        *   `can_edit_ws_workflows`: Checks `admin` OR (`editor` AND `workflow_add_on`).
+    *   **Brand Guidelines Module** (Gated by `brand_guidelines_add_on`):
+        *   `can_view_ws_brand_guidelines`: Checks `viewer` (All members).
+        *   `can_edit_ws_brand_guidelines`: Checks `admin` OR (`editor` AND `brand_guidelines_add_on`).
+    *   **GenAI Features**:
+        *   `can_generate_images`: Checks `editor`.
+        *   `can_view_images`: Checks `viewer`.
+        *   `can_generate_videos`: Checks `editor`.
+        *   `can_view_videos`: Checks `viewer`.
+        *   `can_generate_audio`: Checks `editor`.
+        *   `can_view_audio`: Checks `viewer`.
+        *   `can_generate_vto`: Checks `editor`.
+        *   `can_view_vto`: Checks `viewer`.
 
 ### 3. "How Do I Check...?" (Cheat Sheet)
 
 | Question | FGA Check (Object, Relation) |
 | :--- | :--- |
 | **Is User a Super Admin?** | `platform:creative-studio`, `super_admin` |
+| **Is User an Org Owner?** | `organization:{id}`, `owner` |
 | **Is User an Org Admin?** | `organization:{id}`, `admin` |
 | **Is User an Org Member?** | `organization:{id}`, `member` |
+| **Is User a Workspace Owner?** | `workspace:{id}`, `owner` |
 | **Can User Manage Workspace?** | `workspace:{id}`, `admin` |
 | **Can User Edit Workspace?** | `workspace:{id}`, `editor` |
 | **Can User View Workspace?** | `workspace:{id}`, `viewer` |
 | **Can User Generate Images?** | `workspace:{id}`, `can_generate_images` |
+
+### 4. Dual-Write & Consistency
+
+We use a **Dual-Write** pattern to ensure consistency between our SQL Database (PostgreSQL) and OpenFGA.
+*   **ConsistencyService**: A dedicated service handles the atomic updates.
+*   **Rollback**: If the FGA write fails, the DB transaction is rolled back (and vice-versa where applicable).
+*   **Ownership Transfer**: When ownership is transferred, the previous owner is automatically demoted to `ADMIN` in both the DB and OpenFGA.
+
 

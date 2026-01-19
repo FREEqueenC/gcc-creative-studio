@@ -312,6 +312,12 @@ class WorkspaceService:
         is_transferring_ownership = role == WorkspaceRoleEnum.OWNER
         previous_owner_id = workspace.owner_id
 
+        if not is_transferring_ownership and workspace.owner_id == user_id:
+             raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cannot change the role of the workspace owner. Transfer ownership to another user first."
+            )
+
         # 3. Define DB Operation
         async def db_op() -> WorkspaceModel:
             if is_transferring_ownership and previous_owner_id and previous_owner_id != user_id:

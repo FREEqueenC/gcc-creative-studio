@@ -153,6 +153,8 @@ async def backfill_organizations():
                         update(Workspace).where(Workspace.id == orphaned_public_ws.id).values(organization_id=primary_org.id)
                      )
                      await db.commit()
+                else:
+                     logger.info(f"No orphaned PUBLIC workspace found for {user.email}. Skipping.")
 
                 if orphaned_ws:
                      logger.info(f"Adopting orphaned workspace {orphaned_ws.id} for {user.email} into Org {primary_org.name}")
@@ -169,6 +171,8 @@ async def backfill_organizations():
                         (w for w in user_workspaces if w.organization_id == primary_org.id and w.scope == WorkspaceScopeEnum.PRIVATE and w.owner_id == user.id),
                         None
                     )
+                    if personal_ws:
+                        logger.info(f"Personal workspace {personal_ws.id} already exists in Org {primary_org.name}. Skipping adoption.")
                 
                 if not personal_ws:
                     logger.info(f"Creating Personal Workspace for {user.email} in Org {primary_org.name}")

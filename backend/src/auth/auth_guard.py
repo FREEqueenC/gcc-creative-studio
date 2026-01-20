@@ -16,7 +16,8 @@ import asyncio
 import logging
 from typing import List
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Query
+from typing import Optional
 from fastapi.security import OAuth2PasswordBearer
 from firebase_admin import auth
 
@@ -32,15 +33,30 @@ from src.users.user_service import UserService
 # user_service = UserService()  <-- REMOVED
 
 # This scheme will require the client to send a token in the Authorization header.
-# It tells FastAPI how to find the token but doesn't validate it itself.
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+# We set auto_error=False so we can check Query params if header is missing.
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token", auto_error=False)
+
+
+async def get_token_from_header_or_query(
+    token_header: Optional[str] = Depends(oauth2_scheme),
+    token_query: Optional[str] = Query(None, alias="token")
+) -> str:
+    if token_header:
+        return token_header
+    if token_query:
+        return token_query
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Not authenticated",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
 
 
 logger = logging.getLogger(__name__)
 
 
 async def get_current_user(
-    token: str = Depends(oauth2_scheme),
+    token: str = Depends(get_token_from_header_or_query),
     user_service: UserService = Depends(UserService),
 ) -> UserModel:
     """

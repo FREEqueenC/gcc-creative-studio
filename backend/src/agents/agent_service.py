@@ -1,10 +1,19 @@
 import logging
+import asyncio
 from enum import Enum
-from typing import Dict, Any, List
+from typing import Dict, Any, List, AsyncGenerator
 from fastapi import Depends
 
-from src.agents.enforcer_agent import BrandingEnforcerAgent
-from src.agents.validator_agent import ValidatorAgent
+# ADK Imports
+from google.adk.runners import Runner
+from google.adk.sessions import InMemorySessionService
+from google.adk.agents import SequentialAgent
+from google.adk.events.event import Event
+from google.genai import types
+
+# Backend Imports
+from src.agents.enforcer_agent import BrandingEnforcerAgent as LegacyEnforcer # Keep just in case or remove?
+from src.agents.validator_agent import ValidatorAgent as LegacyValidator
 from src.agents.dto.agent_dto import AgentGenerationRequest, AgentGenerationResponse, MediaTypeEnum
 from src.images.dto.create_imagen_dto import CreateImagenDto, AspectRatioEnum
 from src.videos.dto.create_veo_dto import CreateVeoDto
@@ -15,30 +24,70 @@ from src.audios.audio_service import AudioService
 from src.images.imagen_service import ImagenService
 from src.users.user_model import UserModel
 from src.audios.audio_constants import VoiceEnum, LanguageEnum
+from src.common.schema.media_item_model import JobStatusEnum
+
+# New ADK Agents
+from src.agents.adk.enforcer import BrandingEnforcerADK
+from src.agents.adk.generator import MediaGeneratorADK
+from src.agents.adk.validator import ValidatorADK
+from src.tools.adk_wrappers import create_adk_search_tool
+from src.common.vector_search_service import VectorSearchService
+from src.multimodal.gemini_service import GeminiService
+from src.brand_guidelines.repository.brand_guideline_repository import BrandGuidelineRepository
+from src.common.event_bus import get_event_bus, EventBus
 
 logger = logging.getLogger(__name__)
 
 class AgentService:
     """
-    Orchestrates the Agentic RAG flow for Images, Video, and Audio.
-    1. Enforcer: Enhances prompt using retrieved guidelines.
-    2. Generator: Generates assets using enhanced prompt.
-    3. Validator: Audits generated assets (Async/Post-process).
+    Orchestrates the Agentic RAG flow using Google ADK.
+    Phase 1: Enforcer -> Generator (Sync/Fast).
+    Validation is triggered via background polling (as before) but can use ADK Validator.
     """
 
     def __init__(
         self,
-        enforcer_agent: BrandingEnforcerAgent = Depends(),
-        validator_agent: ValidatorAgent = Depends(),
+        # Services required for Agents
+        vector_search_service: VectorSearchService = Depends(),
+        gemini_service: GeminiService = Depends(),
+        brand_guideline_repo: BrandGuidelineRepository = Depends(),
         imagen_service: ImagenService = Depends(),
         veo_service: VeoService = Depends(),
-        audio_service: AudioService = Depends()
+        audio_service: AudioService = Depends(),
+        # Legacy Validator Needed? We can use ADK Validator or Legacy.
+        # Let's use LegacyValidator implementation inside ADK Validator or just use ADK Validator.
+        # For background polling, we need the service instance mostly.
     ):
-        self.enforcer_agent = enforcer_agent
-        self.validator_agent = validator_agent
         self.imagen_service = imagen_service
         self.veo_service = veo_service
         self.audio_service = audio_service
+        
+        # Initialize ADK Agents
+        # Note: In a real app, these might be singletons or factory-created.
+        self.enforcer = BrandingEnforcerADK(
+            name="BrandingEnforcer",
+            vector_search_service=vector_search_service,
+            gemini_service=gemini_service,
+            brand_guideline_repo=brand_guideline_repo
+        )
+        
+        self.generator = MediaGeneratorADK(
+            name="MediaGenerator",
+            imagen_service=imagen_service,
+            veo_service=veo_service,
+            audio_service=audio_service
+        )
+        
+        # We also initialize the ValidatorADK for potential use (even if triggers later)
+        self.validator_adk = ValidatorADK(
+            name="Validator",
+            gemini_service=gemini_service,
+            media_repo=None # Will be set dynamically based on media type? Or we inject a generic repo wrapper?
+            # ValidatorADK expects media_repo to have get_by_id and update.
+            # We'll set it at runtime or inject the specific service.
+        )
+        self.session_service = InMemorySessionService()
+        self.event_bus = get_event_bus()
 
     async def generate_compliant_media(
         self, 
@@ -46,200 +95,259 @@ class AgentService:
         current_user: UserModel
     ) -> AgentGenerationResponse:
         """
-        Executes the full agentic flow.
+        Executes the ADK workflow.
         """
-        logger.info(f"Starting agentic generation for user {current_user.email} - Type: {request.media_type}")
+        logger.info(f"Starting ADK agentic generation for user {current_user.email} - Type: {request.media_type}")
         
-        # 1. Enforce Guidelines
-        enforcement_result = await self.enforcer_agent.enforce_guidelines(
-            user_prompt=request.prompt,
-            workspace_id=request.workspace_id
+        # 1. Setup Session State
+        session_id = f"sess_{request.workspace_id}_{current_user.email}_{id(request)}"
+        state = {
+            "original_prompt": request.prompt,
+            "workspace_id": str(request.workspace_id),
+            "media_type": request.media_type.value if hasattr(request.media_type, 'value') else request.media_type,
+            "current_user": current_user,
+            "request_config": {
+                "generation_model": request.generation_model,
+                "aspect_ratio": request.aspect_ratio,
+                "number_of_media": request.number_of_media,
+                "style": request.style,
+                "duration_seconds": request.duration_seconds,
+                "generate_audio": request.generate_audio,
+                "voice_name": request.voice_name
+            },
+            "reference_image_uris": [request.reference_image_uri] if request.reference_image_uri else []
+        }
+        
+        # 2. Run Enforcer Agent
+        logger.info("Running BrandingEnforcerADK...")
+        
+        # NOTE: The ADK BaseAgent seems to infer 'app_name' from the package or defaults to 'adk'.
+        # To avoid mismatch warnings/errors, we align the Runner with the Agent's expected app_name.
+        enforcer_app_name = "adk"
+        
+        # Ensure session exists in the 'adk' namespace as well
+        await self.session_service.create_session(
+            app_name=enforcer_app_name,
+            user_id=current_user.email,
+            session_id=session_id,
+            state=state
         )
-        enhanced_prompt = enforcement_result["enhanced_prompt"]
-        logger.info(f"Enforcement Result: {enforcement_result}")
-        # logger.info(f"Enhanced Prompt: {enhanced_prompt}")
 
-        # 2. Determine Model
-        # The DTO now parses string inputs to Enums automatically where possible,
-        # or we accept the Enum directly if the frontend sends it.
-        generation_model = request.generation_model
+        enforcer_runner = Runner(
+            agent=self.enforcer,
+            app_name=enforcer_app_name,
+            session_service=self.session_service
+        )
+
+        prompt_with_context = (
+            f"Context:\n"
+            f"Workspace ID: {request.workspace_id}\n"
+            f"Original Prompt: {request.prompt}\n\n"
+            f"Task: Rewrite the prompt according to brand guidelines."
+        )
+        enforcer_start_msg = types.Content(role="user", parts=[types.Part(text=prompt_with_context)])
         
-        # 3. Dispatch to appropriate Service
-        from concurrent.futures import ThreadPoolExecutor
-        executor = ThreadPoolExecutor(max_workers=1) # TODO: Use shared app executor
+        async for event in enforcer_runner.run_async(user_id=current_user.email, session_id=session_id, new_message=enforcer_start_msg):
+            # Log ALL events for debugging
+            logger.info(f"[Enforcer Event] {event.author} ({type(event).__name__}): {event}")
+            
+            if event.content:
+                 text = event.content.parts[0].text if event.content.parts else ''
+                 logger.info(f"[Enforcer Content] {text}")
+                 
+                 # Publish to user stream 
+                 if text:
+                    await self.event_bus.publish(f"user_{current_user.email}", event)
 
-        media_response = None
+        # 3. Parse Enforcer Output
+        # Re-fetch session from the 'adk' namespace to get the agent's response
+        enforcer_session = await self.session_service.get_session(app_name=enforcer_app_name, user_id=current_user.email, session_id=session_id)
         
-        if request.media_type == MediaTypeEnum.IMAGE:
-            # Default to Gemini 2.0 Flash if not specified
-            if not generation_model:
-                generation_model = GenerationModelEnum.GEMINI_2_5_FLASH_IMAGE_PREVIEW
-                
-            ar_enum = request.aspect_ratio or AspectRatioEnum.RATIO_1_1
-            
-            # Gather reference images from both the user request and the enforcer agent
-            all_reference_uris = []
-            if request.reference_image_uri:
-                all_reference_uris.append(request.reference_image_uri)
-            
-            # Add reference images retrieved by the Enforcer (e.g. brand assets)
-            enforcer_ref_uris = enforcement_result.get("reference_image_uris", [])
-            if enforcer_ref_uris:
-                all_reference_uris.extend(enforcer_ref_uris)
-            
-            imagen_dto = CreateImagenDto(
-                prompt=enhanced_prompt,
-                workspace_id=request.workspace_id,
-                generation_model=generation_model,
-                aspect_ratio=ar_enum,
-                number_of_media=request.number_of_media,
-                style=request.style,
-                reference_image_gcs_uris=all_reference_uris if all_reference_uris else None
-            )
-            media_response = await self.imagen_service.start_image_generation_job(
-                request_dto=imagen_dto,
-                user=current_user,
-                executor=executor
-            )
-            
-        elif request.media_type == MediaTypeEnum.VIDEO:
-            # Default to Veo 2.0
-            if not generation_model:
-                generation_model = GenerationModelEnum.VEO_2_0_001
-            
-            # Map aspect ratio
-            ar_enum = request.aspect_ratio or AspectRatioEnum.RATIO_16_9
+        enhanced_prompt = request.prompt
+        reference_image_uris = []
+        guidelines_used = ""
+        
+        if enforcer_session and enforcer_session.events:
+            last_message = enforcer_session.events[-1]
+            if last_message.content and last_message.content.parts:
+                 text = last_message.content.parts[0].text
+                 try:
+                     import json
+                     # Clean potential markdown
+                     clean_text = text.strip()
+                     if clean_text.startswith("```json"):
+                         clean_text = clean_text[7:]
+                     elif clean_text.startswith("```"):
+                         clean_text = clean_text[3:]
+                     if clean_text.endswith("```"):
+                         clean_text = clean_text[:-3]
+                     
+                     data = json.loads(clean_text)
+                     enhanced_prompt = data.get("enhanced_prompt", request.prompt)
+                     reference_image_uris = data.get("reference_image_uris", [])
+                     guidelines_used = data.get("guidelines_used", "")
+                     
+                     logger.info(f"CAPTURED ENHANCED PROMPT: {enhanced_prompt}")
+                     logger.info(f"CAPTURED REFERENCE IMAGES: {reference_image_uris}")
+                     
+                 except (json.JSONDecodeError, AttributeError, ImportError):
+                     logger.warning("Failed to parse Enforcer JSON output. Using raw text as fallback.")
+                     # Fallback: if it's not JSON, maybe it's just the text prompt
+                     if text.strip():
+                        enhanced_prompt = text
 
-            veo_dto = CreateVeoDto(
-                prompt=enhanced_prompt,
-                workspace_id=request.workspace_id,
-                generation_model=generation_model,
-                aspect_ratio=ar_enum,
-                duration_seconds=request.duration_seconds,
-                generate_audio=request.generate_audio,
-                style=request.style,
-            )
-            media_response = await self.veo_service.start_video_generation_job(
-                request_dto=veo_dto,
-                user=current_user,
-                executor=executor
-            )
-
-        elif request.media_type == MediaTypeEnum.AUDIO:
-            # Default to Gemini 2.5 Flash TTS
-            if not generation_model:
-                generation_model = GenerationModelEnum.GEMINI_2_5_FLASH_TTS
-            
-            audio_dto = CreateAudioDto(
-                prompt=enhanced_prompt,
-                workspace_id=request.workspace_id,
-                model=generation_model,
-                voice_name=request.voice_name or VoiceEnum.PUCK,
-                language_code=LanguageEnum.EN_US,
-                sample_count=request.number_of_media or 1
-            )
-            # Audio service execution
-            media_response = await self.audio_service.generate_audio(
-                request_dto=audio_dto,
-                user=current_user
-            )
-
-        else:
-             raise ValueError(f"Unsupported media type: {request.media_type}")
-
-        # 4. Trigger Validation (Fire & Forget Task)
-        if media_response and media_response.id:
-             import asyncio
-             from src.common.schema.media_item_model import JobStatusEnum
+        # Update Session State for Generator
+        # Since MediaGeneratorADK is also in 'src.agents.adk', it will also require app_name="adk".
+        # So we update the 'adk' session directly.
+        if enforcer_session:
+             # Merge reference URIs
+             existing_uris = enforcer_session.state.get("reference_image_uris", [])
+             all_uris = list(set(existing_uris + reference_image_uris))
              
-             # Determine which service to use for polling
-             repo_service = None
-             if request.media_type == "IMAGE":
-                 repo_service = self.imagen_service
-             elif request.media_type == "VIDEO":
-                 repo_service = self.veo_service
-             elif request.media_type == "AUDIO":
-                 repo_service = self.audio_service
+             enforcer_session.state["enhanced_prompt"] = enhanced_prompt
+             enforcer_session.state["reference_image_uris"] = all_uris
+             enforcer_session.state["guidelines_used"] = guidelines_used
+             logger.info("Updated 'adk' session state with Enforcer results.")
 
-             if repo_service:
-                 async def poll_and_validate(mid: int, service_instance, guidelines: str, orig_prompt: str):
-                     try:
-                         # Polling configuration: 10 minutes max
-                         max_attempts = 120 
-                         delay = 5
-                         
-                         for _ in range(max_attempts):
-                             await asyncio.sleep(delay)
-                             if not hasattr(service_instance, 'media_repo'):
-                                 return
+        # 4. Run Generator Agent
+        logger.info("Running MediaGeneratorADK...")
+        
+        # Publish a starting event manually to update UI immediately
+        start_event = Event(
+            author="MediaGeneratorADK",
+            content=types.Content(parts=[types.Part(text="Starting generation process...")])
+        )
+        await self.event_bus.publish(f"user_{current_user.email}", start_event)
+        
+        # Generator also needs 'adk' app_name to match package location
+        generator_runner = Runner(
+            agent=self.generator,
+            app_name=enforcer_app_name, 
+            session_service=self.session_service
+        )
+        
+        # We can send a dummy signal or "Start Generation".
+        gen_trigger = types.Content(role="user", parts=[types.Part(text="Proceed with generation.")])
+        
+        async for event in generator_runner.run_async(user_id=current_user.email, session_id=session_id, new_message=gen_trigger):
+             if event.content:
+                 # Generator events (e.g. "Generating...")
+                 await self.event_bus.publish(f"user_{current_user.email}", event)
 
-                             item = await service_instance.media_repo.get_by_id(mid)
-                             if not item:
-                                 return
-                                 
-                             if item.status == JobStatusEnum.COMPLETED:
-                                 logger.info(f"Generation completed for {mid}. Triggering validation.")
-                                 validation_results = await self.validator_agent.validate_batch(
-                                     media_item_ids=[mid],
-                                     guidelines_text=guidelines,
-                                     original_prompt=orig_prompt,
-                                     media_repo=service_instance.media_repo
-                                 )
-                                 
-                                 # Ensure results are sorted by URI to match the index order in gcs_uris
-                                 # This assumes item.gcs_uris order is consistent (it is a List)
-                                 # create a map for O(1) lookup
-                                 res_map = {r['uri']: r for r in validation_results}
-                                 in_order_results = []
-                                 for uri in item.gcs_uris:
-                                     if uri in res_map:
-                                         in_order_results.append(res_map[uri])
-                                     else:
-                                         # Should not happen if validate_batch covers all
-                                         in_order_results.append({"validation": {"is_compliant": False, "reasoning": "Validation missing", "score": 0}})
-                                 
-                                 # Persist validation results
-                                 # Persist validation results
-                                 all_validations = []
-                                 combined_critique = []
-                                 
-                                 for res in in_order_results:
-                                     validation_data = res.get("validation", {})
-                                     all_validations.append(validation_data)
-                                     # Optional: Combine critiques or just use the first/generic one
-                                     # For now, let's append them for observability or pick the first failed one?
-                                     # Combining is safer for visibility.
-                                     score = validation_data.get('score', 0)
-                                     status = "COMPLIANT" if validation_data.get('is_compliant') else "NON-COMPLIANT"
-                                     combined_critique.append(f"[Image {len(all_validations)}] {status} (Score: {score}): {validation_data.get('reasoning', '')}")
+        # 5. Extract Final Results from the 'adk' session
+        final_session = await self.session_service.get_session(app_name=enforcer_app_name, user_id=current_user.email, session_id=session_id)
+        final_state = final_session.state if final_session else {}
+        assets = final_state.get("generated_assets", [])
 
-                                 update_payload = {
-                                     "raw_data": {"validations": all_validations},
-                                     "critique": "\n\n".join(combined_critique)
-                                 }
-                                 await service_instance.media_repo.update(mid, update_payload)
-                                 logger.info(f"Validation saved for {mid}. Validated {len(all_validations)} images.")
-                                 return
-                                 
-                             if item.status == JobStatusEnum.FAILED:
-                                 return
-                         
-                         logger.warning(f"Polling timed out for {mid}.")
-                         
-                     except Exception as e:
-                         logger.error(f"Async validation task failed for {mid}: {e}")
 
-                 # Launch the background task
-                 guidelines_used = enforcement_result.get("guidelines_used", "")
-                 asyncio.create_task(poll_and_validate(media_response.id, repo_service, guidelines_used, request.prompt))
+        
+        # 5. Trigger Background Validation (Legacy Logic Compatibility)
+        if assets:
+            job_id = assets[0]['id']
+            # Determine Repo
+            repo_service = None
+            if request.media_type == "IMAGE":
+                repo_service = self.imagen_service
+            elif request.media_type == "VIDEO":
+                repo_service = self.veo_service
+            elif request.media_type == "AUDIO":
+                repo_service = self.audio_service
+            
+            if repo_service:
+                # We reuse the legacy poll_and_validate logic or adapt it to use ValidatorADK
+                # Let's adapt to use ValidatorADK in a separate "Runner" or manual run
+                self.validator_adk.media_repo = repo_service.media_repo
+                
+                asyncio.create_task(self._run_async_validation(
+                    job_id=job_id,
+                    guidelines=guidelines_used, 
+                    prompt=enhanced_prompt, # Use enhanced prompt for validation context? Or original? Legacy used original. But enhanced has more detail. Let's use enhanced or both. Legacy used 'original_prompt'.
+                    # User request: "also check if it faithfully represents the original user prompt" -> So ORIGINAL.
+                    # But guidelines check needs guidelines.
+                    user_id=current_user.email
+                ))
 
-        # 5. Return Response
         return AgentGenerationResponse(
             original_prompt=request.prompt,
             enhanced_prompt=enhanced_prompt,
-            generated_assets=[{
-                "id": media_response.id,
-                "status": media_response.status,
-                "note": "Generation started. Validation is queued."
-            }] if media_response else []
+            generated_assets=assets,
+            session_id=session_id
         )
+
+    async def _run_async_validation(self, job_id: int, guidelines: str, prompt: str, user_id: str):
+        """
+        Runs the ValidatorADK in a separate ephemeral session/runner.
+        Detailed: Creates a fresh DB session to avoid 'Session is closed' errors in background tasks.
+        """
+        logger.info(f"Triggering Async Validation for Job {job_id}")
+        
+        from src.database import AsyncSessionLocal
+        from src.images.repository.media_item_repository import MediaRepository
+        
+        # Create a fresh session for the background task
+        async with AsyncSessionLocal() as session:
+            # We need to configure the ValidatorADK with a fresh repo bound to this session
+            media_repo = MediaRepository(session)
+            
+            # Temporarily inject the fresh repo into the agent
+            # NOTE: this is not thread-safe if Agent is a singleton. 
+            # Ideally ValidatorADK should take repo in `run` or we instantiate a transient ValidatorADK.
+            # Given AgentService is request-scoped, 'self.validator_adk' is also request-scoped instance?
+            # NO. AgentService is request-scoped (Depends()), but if it holds state, it's local.
+            # So modifying `self.validator_adk.media_repo` here is safe for THIS request's lifecycle?
+            # NO. The request finishes, AgentService is garbage collected? 
+            # Actually, `self` is captured by the async task closure.
+            # So `self.validator_adk` stays alive.
+            # But `self.session_service` (InMemory) is also used.
+            
+            self.validator_adk.media_repo = media_repo
+            
+            session_id = f"val_sess_{job_id}"
+            state = {
+                "job_id": job_id,
+                "guidelines_used": guidelines,
+                "original_prompt": prompt
+            }
+            
+            await self.session_service.create_session(app_name="GCCCreativeStudio", user_id=user_id, session_id=session_id, state=state)
+            
+            runner = Runner(
+                agent=self.validator_adk,
+                app_name="GCCCreativeStudio",
+                session_service=self.session_service
+            )
+            
+            trigger_msg = types.Content(role="user", parts=[types.Part(text=f"Check validation for job {job_id}")])
+            async for event in runner.run_async(user_id=user_id, session_id=session_id, new_message=trigger_msg):
+                 text = event.content.parts[0].text if event.content and event.content.parts else ''
+                 logger.info(f"[Validation Event] {event.author}: {text}")
+                 await self.event_bus.publish(f"user_{user_id}", event)
+            
+            # Persist results
+            final_session = await self.session_service.get_session(app_name="GCCCreativeStudio", user_id=user_id, session_id=session_id)
+            if final_session and final_session.state.get("validation_report"):
+                 report = final_session.state.get("validation_report")
+                 await self._persist_validation(job_id, report, media_repo)
+
+    async def _persist_validation(self, mid: int, validation_results: List[Any], media_repo: Any):
+        # Flatten logic from legacy
+        all_validations = []
+        combined_critique = []
+        
+        for res in validation_results:
+             # validation_results in ADK might be formatted slightly differently, check `validator.py`
+             # It returns `validate_asset` output: {is_compliant, score, reasoning}
+             # It does NOT wrap in {validation: ...} like legacy loop did?
+             # Let's standardize.
+             all_validations.append(res)
+             score = res.get('score', 0)
+             status = "COMPLIANT" if res.get('is_compliant') else "NON-COMPLIANT"
+             combined_critique.append(f"{status} (Score: {score}): {res.get('reasoning', '')}")
+
+        update_payload = {
+            "raw_data": {"validations": all_validations},
+            "critique": "\n\n".join(combined_critique)
+        }
+        if media_repo:
+            await media_repo.update(mid, update_payload)
+            logger.info(f"Persisted validation for {mid}")

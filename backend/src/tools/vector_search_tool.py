@@ -80,6 +80,7 @@ def create_search_branding_guidelines_tool(
                     index_type="text",
                     sparse_embedding=sparse_embedding
                 )
+                logger.info(f"Text index search results: {text_results}")   
                 if text_results:
                     search_results.extend(text_results)
             except Exception as e:
@@ -95,6 +96,7 @@ def create_search_branding_guidelines_tool(
                     index_type="image",
                     sparse_embedding=sparse_embedding
                 )
+                logger.info(f"Image index search results: {image_results}")
                 if image_results:
                     search_results.extend(image_results)
             except Exception as e:
@@ -145,13 +147,59 @@ def create_search_branding_guidelines_tool(
                     full_uri = f"gs://{gcs_service.bucket_name}/{blob_path}"
                     content_bytes = gcs_service.download_bytes_from_gcs(full_uri)
                     if content_bytes:
-                        chunk_data = json.loads(content_bytes)
-                        text = chunk_data.get("guideline_text") or "\n".join(chunk_data.get("brand_rules", []))
+                        try:
+                            chunk_data = json.loads(content_bytes)
+                        except json.JSONDecodeError:
+                            logger.error(f"Failed to decode JSON from {blob_path}")
+                            continue
+
+                        # Robust extraction of text content
+                        extracted_parts = []
+                        
+                        # 1. Standard text fields
+                        if chunk_data.get("guideline_text"):
+                            extracted_parts.append(chunk_data["guideline_text"])
+                        elif chunk_data.get("brand_rules"):
+                            rules = chunk_data["brand_rules"]
+                            if isinstance(rules, list):
+                                extracted_parts.append("\n".join(str(r) for r in rules))
+                            elif isinstance(rules, str):
+                                extracted_parts.append(rules)
+                        
+                        # 2. Structured summary fields
+                        # Support both CamelCase (from old prompts) and snake_case (from schema/new prompts)
+                        name = chunk_data.get("name") or chunk_data.get("brand_name")
+                        if name:
+                             extracted_parts.append(f"Brand Name: {name}")
+                        
+                        tov = chunk_data.get("toneOfVoiceSummary") or chunk_data.get("tone_of_voice_summary")
+                        if tov:
+                            extracted_parts.append(f"Tone of Voice: {tov}")
+                            
+                        vis = chunk_data.get("visualStyleSummary") or chunk_data.get("visual_style_summary")
+                        if vis:
+                            extracted_parts.append(f"Visual Style: {vis}")
+                            
+                        palette = chunk_data.get("colorPalette") or chunk_data.get("color_palette")
+                        if palette:
+                            if isinstance(palette, list):
+                                extracted_parts.append(f"Color Palette: {', '.join(str(c) for c in palette)}")
+
+                        # 3. Fallback: Dump unknown keys if meaningful content is sparse
+                        if not extracted_parts:
+                             # Try to extract any string values from unknown keys if it looks like a flat dict of info
+                             for key, val in chunk_data.items():
+                                 if isinstance(val, str) and len(val) > 20 and key not in ["status", "errorMessage"]:
+                                     extracted_parts.append(f"{key}: {val}")
+
+                        text = "\n\n".join(extracted_parts)
+                        
                         if text:
-                            snippet = text[:1000] + "..." if len(text) > 1000 else text
+                            # Apply a reasonable truncation if it's massive, but keep it rich
+                            snippet = text[:2000] + "..." if len(text) > 2000 else text
                             relevant_text_chunks.append(f"- [Source: {guideline.name}] {snippet}")
                 except Exception as e:
-                    logger.error(f"Failed to fetch chunk {blob_path}: {e}")
+                    logger.error(f"Failed to fetch or process chunk {blob_path}: {e}")
 
             elif type_ == "image":
                 if guideline.reference_image_uris and index < len(guideline.reference_image_uris):
@@ -196,7 +244,7 @@ def create_search_branding_guidelines_tool(
 
     return search_branding_guidelines
 
-    return search_branding_guidelines
+
 
 def create_fetch_guideline_tool(brand_guideline_repo: BrandGuidelineRepository):
     """

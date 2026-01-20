@@ -24,6 +24,7 @@ import {
   OnDestroy,
   OnInit,
   ViewChild,
+  NgZone,
 } from '@angular/core';
 import { MatChipInputEvent } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
@@ -56,6 +57,7 @@ import { WorkspaceStateService } from '../services/workspace/workspace-state.ser
 import { ImageStateService } from '../services/image-state.service';
 import { handleErrorSnackbar, handleSuccessSnackbar, handleInfoSnackbar } from '../utils/handleMessageSnackbar';
 import { MODEL_CONFIGS, GenerationModelConfig } from '../common/config/model-config';
+import { AgentEventService, AdkEvent } from '../services/agent-event.service';
 
 @Component({
   selector: 'app-home',
@@ -72,6 +74,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   referenceImages: ReferenceImage[] = [];
   sourceMediaItems: (SourceMediaItemLink | null)[] = [];
   activeWorkspaceId$: Observable<string | null>;
+  agentStatus: string | null = null;
 
   @HostListener('window:keydown.control.enter', ['$event'])
   handleCtrlEnter(event: KeyboardEvent) {
@@ -257,6 +260,8 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     private workspaceStateService: WorkspaceStateService,
     private imageStateService: ImageStateService,
     private agentService: AgentService,
+    private agentEventService: AgentEventService,
+    private zone: NgZone,
   ) {
     this.matIconRegistry
       .addSvgIcon(
@@ -310,8 +315,13 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
         this.processSearchResults(job);
         if (job.status === 'completed' || job.status === 'failed') {
           this.isImageGenerating = false;
+          this.agentStatus = null;
         } else {
           this.isImageGenerating = true;
+          // If we have an active job but no status text (e.g. after refresh), set a default
+          if (!this.agentStatus) {
+            this.agentStatus = 'Resuming generation...';
+          }
         }
       }
     });
@@ -385,6 +395,33 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
       )?.viewValue || 'No';
 
       this.service.imagePrompt = state.prompt;
+    });
+
+    // Subscribe to ADK Agent Events for Realtime Updates
+    this.agentEventService.connect();
+    this.agentEventService.getEvents().subscribe((event: AdkEvent) => {
+      this.zone.run(() => {
+        // console.log('Processing Agent Event:', event); // Debug log
+
+        if (event.author === 'BrandingEnforcer' || event.author === 'BrandingEnforcerADK') {
+          this.agentStatus = "Consulting Brand Guidelines...";
+
+          // Check if this is the final output event containing the enhanced prompt
+          const text = event.content?.parts?.[0]?.text;
+          if (text && text.includes('enhanced_prompt')) {
+            this.agentStatus = "Optimizing Prompt with Brand Guidelines...";
+          }
+        } else if (event.author === 'MediaGenerator' || event.author === 'MediaGeneratorADK') {
+          this.agentStatus = "Generating high-fidelity media...";
+        } else {
+          // Fallback for other agents or default state
+          // If we have a specific message, show it, otherwise keep previous or default
+          if (event.content?.parts?.[0]?.text) {
+            // Optional: Show raw text if it's short, otherwise generic
+            // this.agentStatus = event.content.parts[0].text;
+          }
+        }
+      });
     });
   }
 
@@ -736,27 +773,28 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
       this.agentService.generateMedia(agentRequest)
         .pipe(finalize(() => {
           // We don't set isLoading=false here immediately because we start polling
-          // But startImagenPolling doesn't control isLoading.
-          // startImagenGeneration sets isLoading=false in finalize.
+          // But startImagenGeneration sets isLoading=false in finalize.
           // We should probably set isLoading=false here too as the *request* is done.
           this.isLoading = false;
+          this.agentStatus = null;
         }))
         .subscribe({
           next: (response) => {
+            this.agentStatus = 'Agent started...';
+
             if (response.generatedAssets && response.generatedAssets.length > 0) {
               const assetId = response.generatedAssets[0].id;
               // Track the job using SearchService
               this.service.trackImageGeneration(assetId);
-              let msg = 'Agentic generation started. Validation in progress...';
               if (response.enhancedPrompt) {
                 // optionally show the enhanced prompt or just log it
                 console.log('Enhanced Prompt:', response.enhancedPrompt);
               }
-              handleInfoSnackbar(this._snackBar, msg);
             }
           },
           error: (error) => {
             this.isImageGenerating = false;
+            this.agentStatus = null;
             handleErrorSnackbar(this._snackBar, error, 'Agent Generation');
           }
         });

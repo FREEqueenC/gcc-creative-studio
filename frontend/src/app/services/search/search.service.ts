@@ -41,6 +41,8 @@ import {
   handleSuccessSnackbar,
 } from '../../utils/handleMessageSnackbar';
 
+const ACTIVE_IMAGE_JOB_KEY = 'active_image_job_id';
+
 export interface RewritePromptRequest {
   targetType: 'image' | 'video';
   userPrompt: string;
@@ -79,7 +81,20 @@ export class SearchService {
   constructor(
     private http: HttpClient,
     private _snackBar: MatSnackBar,
-  ) {}
+  ) {
+    this.restoreActiveImageJob();
+  }
+
+  private restoreActiveImageJob() {
+    const storedId = localStorage.getItem(ACTIVE_IMAGE_JOB_KEY);
+    if (storedId) {
+      const id = parseInt(storedId, 10);
+      if (!isNaN(id)) {
+        console.log(`Restoring active image job: ${id}`);
+        this.trackImageGeneration(id);
+      }
+    }
+  }
 
   searchImagen(searchRequest: ImagenRequest) {
     const searchURL = `${environment.backendURL}/images/generate-images`;
@@ -96,6 +111,7 @@ export class SearchService {
     return this.http.post<MediaItem>(searchURL, searchRequest).pipe(
       tap(initialItem => {
         this.activeImageJob.next(initialItem);
+        localStorage.setItem(ACTIVE_IMAGE_JOB_KEY, initialItem.id.toString());
         this.startImagenPolling(initialItem.id);
       }),
     );
@@ -128,6 +144,7 @@ export class SearchService {
       .subscribe({
         next: (item) => {
           this.activeImageJob.next(item);
+          localStorage.setItem(ACTIVE_IMAGE_JOB_KEY, mediaId.toString());
           // Start polling after successful fetch
           this.startImagenPolling(mediaId);
         },
@@ -165,6 +182,7 @@ export class SearchService {
             latestItem.status === JobStatus.FAILED
           ) {
             this.stopImagenPolling();
+            localStorage.removeItem(ACTIVE_IMAGE_JOB_KEY);
             if (latestItem.status === JobStatus.COMPLETED) {
               handleSuccessSnackbar(this._snackBar, 'Your images are ready!');
             } else {

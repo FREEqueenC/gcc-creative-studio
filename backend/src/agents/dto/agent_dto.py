@@ -81,3 +81,4 @@ class AgentGenerationResponse(BaseDto):
     original_prompt: str
     enhanced_prompt: str
     generated_assets: List[Dict[str, Any]] # Contains uri, validation_status, reasoning
+    session_id: str

@@ -384,9 +384,9 @@ class GeminiService:
         # making the output easy to parse and use.
         prompt = """
         Analyze the provided brand guidelines PDF and extract the following information into a structured JSON object:
-        1.  "colorPalette": A list of the primary brand colors as hex codes (e.g., ["#RRGGBB", ...]).
-        2.  "toneOfVoiceSummary": A detailed and comprehensive summary of the brand's tone of voice, approximately 200-250 words, formatted in Markdown. This summary should be suitable for use as a prefix in a text generation prompt, capturing nuances like personality, vocabulary, and attitude.
-        3.  "visualStyleSummary": A detailed and comprehensive summary of the brand's visual style, aesthetics, and imagery, approximately 5000-6000 words, formatted in Markdown. This summary should be suitable for use as a prefix in an image generation prompt, covering aspects like photography style, graphic elements, and overall mood.
+        1.  "color_palette": A list of the primary brand colors as hex codes (e.g., ["#RRGGBB", ...]).
+        2.  "tone_of_voice_summary": A detailed and comprehensive summary of the brand's tone of voice, approximately 200-250 words, formatted in Markdown. This summary should be suitable for use as a prefix in a text generation prompt, capturing nuances like personality, vocabulary, and attitude.
+        3.  "visual_style_summary": A detailed and comprehensive summary of the brand's visual style, aesthetics, and imagery, approximately 5000-6000 words, formatted in Markdown. This summary should be suitable for use as a prefix in an image generation prompt, covering aspects like photography style, graphic elements, and overall mood.
 
         Your response MUST be a single, valid JSON object and nothing else.
         """

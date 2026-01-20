@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from sqlalchemy import select
+from sqlalchemy import select, update
 from src.database import AsyncSessionLocal, get_connection
 from src.users.user_model import User, UserModel
 from src.workspaces.schema.workspace_model import Workspace, WorkspaceScopeEnum, WorkspaceRoleEnum, WorkspaceMemberAssociation
@@ -11,6 +11,7 @@ from src.users.repository.user_repository import UserRepository
 from src.workspaces.repository.workspace_repository import WorkspaceRepository
 from src.organizations.organization_model import UserOrganization
 from src.organizations.organization_model import OrganizationRoleEnum
+from src.common.consistency_service import ConsistencyService
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -35,7 +36,8 @@ async def backfill_organizations():
             # 1. Initialize Repositories and Services
             user_repo = UserRepository(db)
             org_repo = OrganizationRepository(db)
-            org_service = OrganizationService(org_repo)
+            consistency_service = ConsistencyService()
+            org_service = OrganizationService(repo=org_repo, db=db, consistency_service=consistency_service)
             workspace_repo = WorkspaceRepository(db)
             
             # 2. Fetch all users
@@ -95,6 +97,17 @@ async def backfill_organizations():
             # 4. Process Each User
             user_primary_org_map = {} # user_id -> OrganizationModel
             
+            # DEBUG: Check total counts
+            total_ws = await db.execute(select(Workspace))
+            total_ws_count = len(total_ws.scalars().all())
+            total_members = await db.execute(select(WorkspaceMemberAssociation))
+            all_members = total_members.scalars().all()
+            total_members_count = len(all_members)
+            logger.info(f"DEBUG: Total Workspaces in DB: {total_ws_count}")
+            logger.info(f"DEBUG: Total Workspace Members in DB: {total_members_count}")
+            for m in all_members:
+                logger.info(f"DEBUG: Member - User: {m.user_id}, Workspace: {m.workspace_id}, Role: {m.role}")
+
             for user in users:
                 logger.info(f"Processing user: {user.email}")
                 
@@ -114,10 +127,48 @@ async def backfill_organizations():
                 # 4.2 Ensure Personal Workspace in Primary Org
                 # Check if exists
                 user_workspaces = await workspace_repo.find_by_member_id(user.id)
-                personal_ws = next(
-                    (w for w in user_workspaces if w.organization_id == primary_org.id and w.scope == WorkspaceScopeEnum.PRIVATE and w.owner_id == user.id),
+                
+                # Filter out any potential None values
+                user_workspaces = [w for w in user_workspaces if w is not None]
+                
+                logger.info(f"Found {len(user_workspaces)} workspaces for user {user.id} ({user.email}) (Member + Owner)")
+                for w in user_workspaces:
+                    logger.info(f"  - WS ID: {w.id}, Name: '{w.name}', OrgID: {w.organization_id}, Scope: '{w.scope}', OwnerID: {w.owner_id}")
+
+                # Check for orphaned personal workspace (Private, Owner is User, Org ID is None)
+                orphaned_ws = next(
+                    (w for w in user_workspaces if w.organization_id is None and w.scope == WorkspaceScopeEnum.PRIVATE and w.owner_id == user.id),
                     None
                 )
+                
+                # Check for orphaned public workspace (Public, Owner is User, Org ID is None)
+                orphaned_public_ws = next(
+                    (w for w in user_workspaces if w.organization_id is None and w.scope == WorkspaceScopeEnum.PUBLIC and w.owner_id == user.id),
+                    None
+                )
+
+                if orphaned_public_ws:
+                     logger.info(f"Adopting orphaned PUBLIC workspace {orphaned_public_ws.id} for {user.email} into Org {primary_org.name}")
+                     await db.execute(
+                        update(Workspace).where(Workspace.id == orphaned_public_ws.id).values(organization_id=primary_org.id)
+                     )
+                     await db.commit()
+
+                if orphaned_ws:
+                     logger.info(f"Adopting orphaned workspace {orphaned_ws.id} for {user.email} into Org {primary_org.name}")
+                     # Update via DB directly to ensure it sticks
+                     await db.execute(
+                        update(Workspace).where(Workspace.id == orphaned_ws.id).values(organization_id=primary_org.id)
+                     )
+                     await db.commit()
+                     # Re-fetch or manually update the model for downstream logic if needed, 
+                     # but for now we just need to know it exists so we don't create a new one.
+                     personal_ws = orphaned_ws 
+                else:
+                    personal_ws = next(
+                        (w for w in user_workspaces if w.organization_id == primary_org.id and w.scope == WorkspaceScopeEnum.PRIVATE and w.owner_id == user.id),
+                        None
+                    )
                 
                 if not personal_ws:
                     logger.info(f"Creating Personal Workspace for {user.email} in Org {primary_org.name}")

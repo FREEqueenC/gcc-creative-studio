@@ -15,8 +15,8 @@ class ConsistencyService:
     async def perform_dual_write(
         self,
         db_op: Callable[[], Awaitable[T]],
-        fga_op: Callable[[], Awaitable[Any]],
-        rollback_op: Callable[[], Awaitable[Any]],
+        fga_op: Callable[[T], Awaitable[Any]],
+        rollback_op: Callable[[T], Awaitable[Any]],
         error_message: str = "Failed to synchronize permissions."
     ) -> T:
         """
@@ -25,8 +25,8 @@ class ConsistencyService:
 
         Args:
             db_op: Async function that performs the DB update and returns the result.
-            fga_op: Async function that performs the FGA update.
-            rollback_op: Async function that reverts the DB update if FGA fails.
+            fga_op: Async function that performs the FGA update. Receives the result of db_op.
+            rollback_op: Async function that reverts the DB update if FGA fails. Receives the result of db_op.
             error_message: Error message to display if the operation fails.
 
         Returns:
@@ -42,13 +42,13 @@ class ConsistencyService:
 
         # 2. Execute FGA Operation
         try:
-            await fga_op()
+            await fga_op(result)
         except Exception as e:
             logger.error(f"FGA Operation failed: {e}. Initiating rollback...")
             
             # 3. Compensating Transaction (Rollback)
             try:
-                await rollback_op()
+                await rollback_op(result)
                 logger.info("Rollback successful.")
             except Exception as rollback_error:
                 # Critical Error: Data is now inconsistent

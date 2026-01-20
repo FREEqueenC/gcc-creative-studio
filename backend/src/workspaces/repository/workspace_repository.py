@@ -356,3 +356,19 @@ class WorkspaceRepository(BaseRepository[Workspace, WorkspaceModel]):
             ]
         
         return self.schema.model_validate(workspace_dict)
+        
+    async def delete_with_members(self, workspace_id: int) -> bool:
+        """Deletes a workspace and all its members."""
+        from sqlalchemy import delete
+        
+        # Delete members first
+        await self.db.execute(
+            delete(WorkspaceMemberAssociation).where(WorkspaceMemberAssociation.workspace_id == workspace_id)
+        )
+        
+        # Delete workspace
+        await self.db.execute(
+            delete(self.model).where(self.model.id == workspace_id)
+        )
+        await self.db.commit()
+        return True

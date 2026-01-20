@@ -68,7 +68,7 @@ class WorkspaceService:
         
         # Determine Organization
         org_id = create_dto.organization_id
-        if not org_id:
+        if org_id is None:
             # Default to user's primary organization
             user_orgs = await self.organization_service.get_user_organizations(user.id)
             if user_orgs:
@@ -81,10 +81,17 @@ class WorkspaceService:
                 )
         
         # Double check: If we still don't have an org_id (should be impossible due to above check), fail.
-        if not org_id:
+        if org_id is None:
              raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Organization ID is required to create a workspace.",
+            )
+
+        # 3. Check Scope Permissions
+        if create_dto.scope == WorkspaceScopeEnum.PUBLIC and not user.is_super_admin:
+             raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only super admins can create public workspaces.",
             )
 
         # 1. Create the owner as the first member of the workspace
@@ -99,6 +106,7 @@ class WorkspaceService:
                 name=create_dto.name,
                 owner_id=user.id,
                 organization_id=org_id,
+                scope=create_dto.scope.value
             )
             return await self.workspace_repo.create(new_workspace, initial_members=[owner_as_member])
 
@@ -138,7 +146,10 @@ class WorkspaceService:
         # 4. Define Rollback Operation
         async def rollback_op(created_workspace: WorkspaceModel):
             if created_workspace and created_workspace.id:
-                await self.workspace_repo.delete(created_workspace.id)
+                try:
+                    await self.workspace_repo.delete_with_members(created_workspace.id)
+                except Exception as e:
+                    print(f"Rollback failed to delete workspace: {e}")
 
         # 5. Execute via ConsistencyService
         created_workspace = await self.consistency_service.perform_dual_write(
@@ -597,20 +608,20 @@ class WorkspaceService:
                 )
                 public_ws = created_public_ws
             
-            # Ensure OpenFGA Group Tuple exists for this Public Workspace
-            # organization:ORG_ID#member -> editor -> workspace:WS_ID
-            try:
-                await fga_client.write(
-                    ClientWriteRequest(
-                        writes=[
-                            ClientTuple(
-                                user=f"organization:{org.id}#member",
-                                relation="editor",
-                                object=f"workspace:{public_ws.id}",
-                            )
-                        ]
+                # Ensure OpenFGA Group Tuple exists for this Public Workspace
+                # organization:ORG_ID#member -> editor -> workspace:WS_ID
+                try:
+                    await fga_client.write(
+                        ClientWriteRequest(
+                            writes=[
+                                ClientTuple(
+                                    user=f"organization:{org.id}#member",
+                                    relation="editor",
+                                    object=f"workspace:{public_ws.id}",
+                                )
+                            ]
+                        )
                     )
-                )
-            except Exception as e:
-                print(f"Failed to write group tuple to OpenFGA: {e}")
+                except Exception as e:
+                    print(f"Failed to write group tuple to OpenFGA: {e}")
 

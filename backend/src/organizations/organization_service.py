@@ -176,7 +176,8 @@ class OrganizationService:
         new_org = OrganizationModel(
             id=0,
             name=name,
-            domain=None # Explicitly None for personal orgs
+            domain=None, # Explicitly None for personal orgs
+            owner_id=user.id
         )
         return await self.create_organization(new_org, user.id)
 
@@ -221,7 +222,8 @@ class OrganizationService:
             new_org = OrganizationModel(
                 id=0, # ignored
                 name=name,
-                domain=domain
+                domain=domain,
+                owner_id=user.id
             )
             return await self.create_organization(new_org, user.id)
 

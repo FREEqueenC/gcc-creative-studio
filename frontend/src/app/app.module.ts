@@ -91,15 +91,19 @@ import { HomeComponent } from './home/home.component';
 import { LoginComponent } from './login/login.component';
 import { VideoComponent } from './video/video.component';
 import { VtoComponent } from './vto/vto.component';
+import { WorkbenchComponent } from './workbench/workbench.component';
+import { BatchExecutionModalComponent } from './workflows/execution-history/batch-execution-modal/batch-execution-modal.component';
 import { ExecutionDetailsModalComponent } from './workflows/execution-history/execution-details-modal/execution-details-modal.component';
 import { ExecutionHistoryComponent } from './workflows/execution-history/execution-history.component';
 import { StepExecutionDetailsComponent } from './workflows/shared/step-execution-details/step-execution-details.component';
 import { AddStepModalComponent } from './workflows/workflow-editor/add-step-modal/add-step-modal.component';
 import { RunWorkflowModalComponent } from './workflows/workflow-editor/run-workflow-modal/run-workflow-modal.component';
+import { StepInputFieldComponent } from './workflows/workflow-editor/step-components/generic-step/components/step-input-field/step-input-field.component';
+import { StepMediaInputComponent } from './workflows/workflow-editor/step-components/generic-step/components/step-media-input/step-media-input.component';
 import { GenericStepComponent } from './workflows/workflow-editor/step-components/generic-step/generic-step.component';
 import { WorkflowEditorComponent } from './workflows/workflow-editor/workflow-editor.component';
 import { WorkflowListComponent } from './workflows/workflow-list/workflow-list.component';
-import { WorkbenchComponent } from './workbench/workbench.component';
+import { WorkflowStatusPipe } from './workflows/workflow-status.pipe';
 
 @NgModule({
   declarations: [
@@ -126,11 +130,14 @@ import { WorkbenchComponent } from './workbench/workbench.component';
     WorkflowEditorComponent,
     AddStepModalComponent,
     GenericStepComponent,
+    StepInputFieldComponent,
+    StepMediaInputComponent,
     RunWorkflowModalComponent,
     ExecutionHistoryComponent,
-    ExecutionHistoryComponent,
+
     ExecutionDetailsModalComponent,
     StepExecutionDetailsComponent,
+    BatchExecutionModalComponent,
   ],
   imports: [
     BrowserModule,
@@ -170,7 +177,8 @@ import { WorkbenchComponent } from './workbench/workbench.component';
     FlowPromptBoxComponent,
     DragDropModule,
     MatPaginatorModule,
-    ClipboardModule
+    ClipboardModule,
+    WorkflowStatusPipe
   ],
   providers: [
     provideClientHydration(),

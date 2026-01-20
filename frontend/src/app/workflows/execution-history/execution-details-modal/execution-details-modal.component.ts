@@ -18,7 +18,6 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { WorkflowService } from '../../workflow.service';
 
-import { forkJoin } from 'rxjs';
 import { NodeTypes, WorkflowModel } from '../../workflow.models';
 
 import { GalleryService } from '../../../gallery/gallery.service';
@@ -29,6 +28,7 @@ import { MediaResolutionService } from '../../shared/media-resolution.service';
 @Component({
     selector: 'app-execution-details-modal',
     templateUrl: './execution-details-modal.component.html',
+    styleUrls: ['./execution-details-modal.component.scss']
 })
 export class ExecutionDetailsModalComponent implements OnInit {
     isLoading = true;
@@ -56,23 +56,23 @@ export class ExecutionDetailsModalComponent implements OnInit {
 
     loadDetails(): void {
         this.isLoading = true;
-        // ForkJoin to get both details and workflow definition
-        forkJoin({
-            details: this.workflowService.getExecutionDetails(this.data.workflowId, this.data.executionId),
-            workflow: this.workflowService.getWorkflowById(this.data.workflowId)
-        }).subscribe({
-            next: ({ details, workflow }) => {
-                this.details = details;
-                this.workflow = workflow as WorkflowModel;
-                this.filterStepEntries();
-                this.resolveMediaUrls();
-                this.isLoading = false;
-            },
-            error: (err) => {
-                console.error('Failed to load details or workflow', err);
-                this.isLoading = false;
-            }
-        });
+        this.workflowService.getExecutionDetails(this.data.workflowId, this.data.executionId)
+            .subscribe({
+                next: (details) => {
+                    this.details = details;
+                    if (details.workflow_definition) {
+                        this.workflow = details.workflow_definition as WorkflowModel;
+                    }
+
+                    this.filterStepEntries();
+                    this.resolveMediaUrls();
+                    this.isLoading = false;
+                },
+                error: (err) => {
+                    console.error('Failed to load details', err);
+                    this.isLoading = false;
+                }
+            });
     }
 
     filterStepEntries(): void {
@@ -108,15 +108,7 @@ export class ExecutionDetailsModalComponent implements OnInit {
     }
 
     getStatusClass(state: string): string {
-        switch (state) {
-            case 'SUCCEEDED': return '!bg-green-500/20 !text-green-300';
-            case 'STATE_SUCCEEDED': return '!bg-green-500/20 !text-green-300';
-            case 'FAILED': return '!bg-red-500/20 !text-red-300';
-            case 'STATE_FAILED': return '!bg-red-500/20 !text-red-300';
-            case 'ACTIVE': return '!bg-blue-500/20 !text-blue-300';
-            case 'STATE_IN_PROGRESS': return '!bg-blue-500/20 !text-blue-300';
-            default: return '!bg-gray-500/20 !text-gray-300';
-        }
+        return ''; // Legacy/Unused
     }
 
     getStepType(stepId: string): NodeTypes | string | undefined {

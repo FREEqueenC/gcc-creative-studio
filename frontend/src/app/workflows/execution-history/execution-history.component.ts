@@ -22,6 +22,7 @@ import { handleErrorSnackbar, handleSuccessSnackbar } from '../../utils/handleMe
 import { RunWorkflowModalComponent } from '../workflow-editor/run-workflow-modal/run-workflow-modal.component';
 import { NodeTypes } from '../workflow.models';
 import { WorkflowService } from '../workflow.service';
+import { BatchExecutionModalComponent } from './batch-execution-modal/batch-execution-modal.component';
 import { ExecutionDetailsModalComponent } from './execution-details-modal/execution-details-modal.component';
 
 @Component({
@@ -106,6 +107,7 @@ export class ExecutionHistoryComponent implements OnInit {
 
         this.dialog.open(ExecutionDetailsModalComponent, {
             width: '800px',
+            maxWidth: '90vw',
             maxHeight: '90vh',
             data: {
                 workflowId: this.workflowId,
@@ -115,23 +117,34 @@ export class ExecutionHistoryComponent implements OnInit {
         });
     }
 
-    getStatusClass(state: string): string {
-        switch (state) {
-            case 'SUCCEEDED': return '!bg-green-500/20 !text-green-300';
-            case 'FAILED': return '!bg-red-500/20 !text-red-300';
-            case 'ACTIVE': return '!bg-blue-500/20 !text-blue-300';
-            default: return '!bg-gray-500/20 !text-gray-300';
+    openBatchExecution(): void {
+        if (!this.workflowId) return;
+
+        // Ensure workflow is loaded
+        if (!this.workflow) {
+            this.workflowService.getWorkflowById(this.workflowId).subscribe(wf => {
+                this.workflow = wf;
+                this.openBatchDialog();
+            });
+        } else {
+            this.openBatchDialog();
         }
     }
 
-    getStatusIcon(state: string): string {
-        switch (state) {
-            case 'SUCCEEDED': return 'check_circle';
-            case 'FAILED': return 'error';
-            case 'ACTIVE': return 'hourglass_top';
-            default: return 'help_outline';
-        }
+    private openBatchDialog(): void {
+        this.dialog.open(BatchExecutionModalComponent, {
+            width: '900px',
+            maxWidth: '95vw',
+            maxHeight: '90vh',
+            data: {
+                workflow: this.workflow
+            },
+            panelClass: 'batch-execution-modal'
+        });
     }
+
+
+
 
     runWorkflow(): void {
         if (!this.workflowId || this.isLoading) return;

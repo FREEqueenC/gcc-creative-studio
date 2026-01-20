@@ -5,6 +5,7 @@ import {
   flush,
   tick,
 } from '@angular/core/testing';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { AudioComponent } from './audio.component';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
@@ -25,7 +26,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectChange, MatSelectModule } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MediaLightboxComponent } from '../common/components/media-lightbox/media-lightbox.component';
+// Removed MediaLightboxComponent import - using mock instead
 import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { MatButtonHarness } from '@angular/material/button/testing';
@@ -38,8 +39,83 @@ import { NotificationService } from '../common/services/notification.service';
 import { AppInjector, setAppInjector } from '../app-injector';
 import { Injector } from '@angular/core';
 import { MatMenuModule } from '@angular/material/menu';
-import { NgOptimizedImage } from '@angular/common';
+// Removed NgOptimizedImage and IMAGE_LOADER
+import { CommonModule } from '@angular/common'; // Needed for *ngIf in mock template
 import { MatTooltipModule } from '@angular/material/tooltip';
+
+
+// Define a mock MediaLightboxComponent
+@Component({
+  selector: 'app-media-lightbox',
+  template: `
+    <div *ngIf="mediaItem">
+      <img *ngIf="selectedUrl && !isAudio && !isVideo" [src]="selectedUrl" [alt]="mediaItem.originalPrompt" [width]="imageWidth" [height]="imageHeight" class="main-media" />
+      <video *ngIf="selectedUrl && isVideo" [src]="selectedUrl" [poster]="posterUrl" class="main-media" controls muted></video>
+      <audio *ngIf="selectedUrl && isAudio" [src]="selectedUrl" controls></audio>
+    </div>
+  `,
+  standalone: true, // Keep it standalone like the real one
+  imports: [CommonModule] // CommonModule for *ngIf
+})
+class MockMediaLightboxComponent {
+  @Input() mediaItem: any; // Use 'any' for simplicity in mock
+  @Input() initialIndex = 0;
+  @Input() showSeeMoreInfoButton = false;
+  @Input() showShareButton = true;
+  @Input() showDownloadButton = true;
+  @Input() showEditButton = false;
+  @Input() showGenerateVideoButton = false;
+  @Input() showVtoButton = false;
+  @Output() editClicked = new EventEmitter<number>();
+  @Output() generateVideoClicked = new EventEmitter<{
+    role: 'start' | 'end';
+    index: number;
+  }>();
+  @Output() sendToVtoClicked = new EventEmitter<number>();
+  @Output() extendWithAiClicked = new EventEmitter<{
+    mediaItem: any;
+    selectedIndex: number;
+  }>();
+  @Output() concatenateClicked = new EventEmitter<{
+    mediaItem: any;
+    selectedIndex: number;
+  }>();
+
+  // Mimic necessary properties from the real component
+  selectedIndex = 0;
+  selectedUrl: string | undefined;
+  imageWidth = 1920;
+  imageHeight = 1920;
+  isPlaying = false;
+  currentTime = '0:00';
+  duration = '0:00';
+  progressValue = 0;
+
+  // Mock methods if they are called in the template or by the AudioComponent
+  togglePlay() {}
+  onTimeUpdate() {}
+  onAudioLoaded() {}
+  onAudioEnded() {}
+  selectMedia(index: number) {
+    if (this.mediaItem?.presignedUrls) {
+      this.selectedUrl = this.mediaItem.presignedUrls[index];
+    }
+  }
+
+  // Getters for *ngIf conditions in template
+  get isVideo(): boolean {
+    return this.mediaItem?.mimeType?.startsWith('video/') ?? false;
+  }
+  get isAudio(): boolean {
+    return this.mediaItem?.mimeType?.startsWith('audio/') ?? false;
+  }
+  get posterUrl(): string | undefined {
+    if (this.isVideo && this.mediaItem?.presignedThumbnailUrls?.length) {
+      return this.mediaItem.presignedThumbnailUrls[this.selectedIndex];
+    }
+    return undefined;
+  }
+}
 
 describe('AudioComponent', () => {
   let component: AudioComponent;
@@ -90,10 +166,9 @@ describe('AudioComponent', () => {
         MatIconModule,
         MatProgressSpinnerModule,
         MatDividerModule,
-        NgOptimizedImage,
         MatMenuModule,
         MatTooltipModule,
-        MediaLightboxComponent,
+        MockMediaLightboxComponent, // Mock is here, in imports as it's standalone
       ],
       providers: [
         { provide: AudioService, useValue: audioServiceSpy },

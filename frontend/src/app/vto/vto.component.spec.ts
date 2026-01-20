@@ -15,8 +15,9 @@
  */
 
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { CommonModule } from '@angular/common';
+import { CommonModule } from '@angular/common'; // CommonModule for *ngIf in mock template
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -39,23 +40,97 @@ import { MatStepperModule } from '@angular/material/stepper';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatMenuModule } from '@angular/material/menu';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { NgOptimizedImage } from '@angular/common';
+// Removed NgOptimizedImage
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AppInjector, setAppInjector } from '../app-injector';
 import { NotificationService } from '../common/services/notification.service';
-import { MediaLightboxComponent } from '../common/components/media-lightbox/media-lightbox.component';
+// Removed MediaLightboxComponent import - using mock instead
 import { MatCardModule } from '@angular/material/card';
 import { environment } from '../../environments/environment';
 import { DomSanitizer } from '@angular/platform-browser';
 
+
+// Define a mock MediaLightboxComponent
+@Component({
+  selector: 'app-media-lightbox',
+  template: `
+    <div *ngIf="mediaItem">
+      <img *ngIf="selectedUrl && !isAudio && !isVideo" [src]="selectedUrl" [alt]="mediaItem.originalPrompt" [width]="imageWidth" [height]="imageHeight" class="main-media" />
+      <video *ngIf="selectedUrl && isVideo" [src]="selectedUrl" [poster]="posterUrl" class="main-media" controls muted></video>
+      <audio *ngIf="selectedUrl && isAudio" [src]="selectedUrl" controls></audio>
+    </div>
+  `,
+  standalone: true, // Keep it standalone like the real one
+  imports: [CommonModule] // CommonModule for *ngIf
+})
+class MockMediaLightboxComponent {
+  @Input() mediaItem: any; // Use 'any' for simplicity in mock
+  @Input() initialIndex = 0;
+  @Input() showSeeMoreInfoButton = false;
+  @Input() showShareButton = true;
+  @Input() showDownloadButton = true;
+  @Input() showEditButton = false;
+  @Input() showGenerateVideoButton = false;
+  @Input() showVtoButton = false;
+  @Output() editClicked = new EventEmitter<number>();
+  @Output() generateVideoClicked = new EventEmitter<{
+    role: 'start' | 'end';
+    index: number;
+  }>();
+  @Output() sendToVtoClicked = new EventEmitter<number>();
+  @Output() extendWithAiClicked = new EventEmitter<{
+    mediaItem: any;
+    selectedIndex: number;
+  }>();
+  @Output() concatenateClicked = new EventEmitter<{
+    mediaItem: any;
+    selectedIndex: number;
+  }>();
+
+  // Mimic necessary properties from the real component
+  selectedIndex = 0;
+  selectedUrl: string | undefined;
+  imageWidth = 1920;
+  imageHeight = 1920;
+  isPlaying = false;
+  currentTime = '0:00';
+  duration = '0:00';
+  progressValue = 0;
+
+  // Mock methods if they are called in the template or by the VtoComponent
+  togglePlay() {}
+  onTimeUpdate() {}
+  onAudioLoaded() {}
+  onAudioEnded() {}
+  selectMedia(index: number) {
+    if (this.mediaItem?.presignedUrls) {
+      this.selectedUrl = this.mediaItem.presignedUrls[index];
+    }
+  }
+
+  // Getters for *ngIf conditions in template
+  get isVideo(): boolean {
+    return this.mediaItem?.mimeType?.startsWith('video/') ?? false;
+  }
+  get isAudio(): boolean {
+    return this.mediaItem?.mimeType?.startsWith('audio/') ?? false;
+  }
+  get posterUrl(): string | undefined {
+    if (this.isVideo && this.mediaItem?.presignedThumbnailUrls?.length) {
+      return this.mediaItem.presignedThumbnailUrls[this.selectedIndex];
+    }
+    return undefined;
+  }
+}
+
 // Mock data
 const mockVtoAssetsResponse = {
-  male_models: [{ id: 1, originalFilename: 'male_model.png', presignedUrl: 'gs://male_model.png', asset_type: 'vto_person_male' }],
-  female_models: [{ id: 2, originalFilename: 'female_model.png', presignedUrl: 'gs://female_model.png', asset_type: 'vto_person_female' }],
-  tops: [{ id: 3, originalFilename: 'top.png', presignedUrl: 'gs://top.png', asset_type: 'vto_top' }],
-  bottoms: [{ id: 4, originalFilename: 'bottom.png', presignedUrl: 'gs://bottom.png', asset_type: 'vto_bottom' }],
-  dresses: [{ id: 5, originalFilename: 'dress.png', presignedUrl: 'gs://dress.png', asset_type: 'vto_dress' }],
-  shoes: [{ id: 6, originalFilename: 'shoe.png', presignedUrl: 'gs://shoe.png', asset_type: 'vto_shoe' }],
+  male_models: [{ id: 1, originalFilename: 'male_model.png', presignedUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', asset_type: 'vto_person_male' }],
+  female_models: [{ id: 2, originalFilename: 'female_model.png', presignedUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', asset_type: 'vto_person_female' }],
+  tops: [{ id: 3, originalFilename: 'top.png', presignedUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', asset_type: 'vto_top' }],
+  bottoms: [{ id: 4, originalFilename: 'bottom.png', presignedUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', asset_type: 'vto_bottom' }],
+  dresses: [{ id: 5, originalFilename: 'dress.png', presignedUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', asset_type: 'vto_dress' }],
+  shoes: [{ id: 6, originalFilename: 'shoe.png', presignedUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', asset_type: 'vto_shoe' }],
 };
 
 const mockVtoJob: MediaItem = {
@@ -113,8 +188,7 @@ describe('VtoComponent', () => {
         MatProgressSpinnerModule,
         MatDialogModule,
         MatCardModule,
-        NgOptimizedImage,
-        MediaLightboxComponent,
+        MockMediaLightboxComponent, // Use mock here
       ],
       providers: [
         VtoStateService,

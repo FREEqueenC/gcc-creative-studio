@@ -36,7 +36,7 @@ resource "google_sql_database_instance" "default" {
     }
   }
   
-  deletion_protection = false # Set to true for production
+  deletion_protection = false # TODO: Set to true for production
 }
 
 resource "google_sql_database" "default" {

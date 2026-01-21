@@ -22,6 +22,9 @@ from src.config.logger_config import setup_logging
 
 setup_logging()
 
+from typing import Dict, List
+import mimetypes
+
 from src.config.config_service import config_service
 from src.database import AsyncSessionLocal, cleanup_connector
 from src.users.dto.user_create_dto import UserCreateDto
@@ -30,6 +33,18 @@ from src.users.user_model import UserModel
 from src.organizations.organization_service import OrganizationService
 from src.organizations.repository.organization_repository import OrganizationRepository
 from src.backfill_organizations import backfill_organizations
+from src.common.base_dto import AspectRatioEnum
+from src.common.storage_service import GcsService
+from src.media_templates.repository.media_template_repository import MediaTemplateRepository
+from src.source_assets.repository.source_asset_repository import SourceAssetRepository
+from src.workspaces.repository.workspace_repository import WorkspaceRepository
+from src.common.schema.media_item_model import AssetRoleEnum
+from src.source_assets.schema.source_asset_model import SourceAssetModel, AssetScopeEnum, AssetTypeEnum
+from src.media_templates.schema.media_template_model import MediaTemplateModel, GenerationParameters, IndustryEnum
+from src.workspaces.workspace_service import WorkspaceService
+
+# Placeholder for TEMPLATES if not defined elsewhere
+TEMPLATES: List[Dict] = []
 
 logger = logging.getLogger(__name__)
 
@@ -182,7 +197,7 @@ def upload_specific_assets(
     return uri_map
 
 
-async def seed_media_templates(db: AsyncSession, admin_user: Optional[UserModel]):
+async def seed_media_templates(db: AsyncSessionLocal, admin_user: Optional[UserModel]):
     """
     Uploads media template assets and seeds the media_templates collection.
     """
@@ -297,8 +312,8 @@ async def seed_media_templates(db: AsyncSession, admin_user: Optional[UserModel]
                     original_filename=local_uri,
                     gcs_uri=gcs_uri,
                     mime_type=mime_type,
-                    scope=AssetScope.SYSTEM,
-                    asset_type=AssetType.GENERIC_IMAGE,  # Default type for templates
+                    scope=AssetScopeEnum.SYSTEM,
+                    asset_type=AssetTypeEnum.GENERIC_IMAGE,  # Default type for templates
                     user_id=admin_user.id,
                     file_hash="",  # Not strictly needed for system assets
                 )
@@ -339,7 +354,7 @@ async def seed_media_templates(db: AsyncSession, admin_user: Optional[UserModel]
         logger.info(f"  - Successfully saved template '{template_name}'.")
 
 
-async def seed_vto_assets(db: AsyncSession, admin_user: Optional[UserModel]):
+async def seed_vto_assets(db: AsyncSessionLocal, admin_user: Optional[UserModel]):
     """
     Uploads system-level VTO assets (garments, models) for the VTO feature.
     """
@@ -384,7 +399,7 @@ async def seed_vto_assets(db: AsyncSession, admin_user: Optional[UserModel]):
                 # Join the remaining parts to get the type string, e.g., "vto_top"
                 type_string = "_".join(type_parts)
                 # Convert the string to an AssetType enum member
-                asset_type = AssetType(type_string)
+                asset_type = AssetTypeEnum(type_string)
                 logger.info(
                     f"  - Detected asset type as '{asset_type.value}' for {filename}"
                 )
@@ -401,7 +416,7 @@ async def seed_vto_assets(db: AsyncSession, admin_user: Optional[UserModel]):
                 gcs_uri=gcs_uri,
                 mime_type=mime_type,  # type: ignore
                 file_hash="",  # Not strictly needed for system assets
-                scope=AssetScope.SYSTEM,
+                scope=AssetScopeEnum.SYSTEM,
                 asset_type=asset_type,
                 user_id=admin_user.id,
                 aspect_ratio=AspectRatioEnum.RATIO_9_16,

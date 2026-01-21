@@ -42,13 +42,6 @@ resource "google_cloud_run_v2_service" "this" {
     percent = 100
   }
 
-  # TODO: Cloud Run defaults to looking for port 8080, but we are moving the app to 9000
-  # We need to tell Cloud Run which port to send traffic to.
-  # Note: The `ports` configuration is actually part of the container definition in V2,
-  # but for the Service level, we just ensure the container listens on the right port.
-  # In Cloud Run V2, the ingress port is determined by the container's PORT env var (which we set)
-  # OR explicitly in the container ports. Let's add the ports block to the container.
-
   template {
     service_account = google_service_account.run_sa.email
     volumes {
@@ -109,12 +102,6 @@ resource "google_cloud_run_v2_service" "this" {
           name  = env.key
           value = env.value
         }
-      }
-
-      # Set the PORT to 9000 as requested
-      env {
-        name  = "PORT"
-        value = "9000"
       }
 
       # secrets

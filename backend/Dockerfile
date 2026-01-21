@@ -51,4 +51,4 @@ ENV FRONTEND_URL="http://localhost:4200"
 
 EXPOSE 8080
 
-CMD ["gunicorn", "main:app", "--workers=4", "--worker-class=uvicorn.workers.UvicornWorker", "--timeout=36000", "--bind=0.0.0.0:8080"]
+CMD ["sh", "-c", "exec gunicorn main:app --workers=4 --worker-class=uvicorn.workers.UvicornWorker --timeout=36000 --bind 0.0.0.0:${PORT:-8080}"]

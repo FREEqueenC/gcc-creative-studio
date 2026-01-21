@@ -60,7 +60,7 @@ resource "google_cloud_run_v2_service" "this" {
       }
       
       ports {
-        container_port = 9000
+        container_port = 8080
       }
 
       env {
@@ -93,6 +93,12 @@ resource "google_cloud_run_v2_service" "this" {
       env {
         name  = "BACKEND_SERVICE_ACCOUNT_EMAIL"
         value = google_service_account.run_sa.email
+      }
+
+      # Explicitly tell backend where to find OpenFGA (now on 9000)
+      env {
+        name  = "OPENFGA_API_URL"
+        value = "http://localhost:9000"
       }
 
       # non secret env vars
@@ -151,9 +157,18 @@ resource "google_cloud_run_v2_service" "this" {
           }
         }
 
-        # Avoid port conflict with FastAPI (which defaults to 8080)
-        # We move FastAPI to 9000 and keep OpenFGA on 8080 (default)
+        # Configure OpenFGA to listen on port 9000 to avoid conflict with FastAPI (8080)
+        env {
+          name  = "OPENFGA_HTTP_ADDR"
+          value = ":9000"
+        }
         
+        # We also need to move the gRPC port just in case, though usually not exposed via HTTP/1
+        env {
+          name  = "OPENFGA_GRPC_ADDR"
+          value = ":9001"
+        }
+
         command = ["run"]
 
         env {

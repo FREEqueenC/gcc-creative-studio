@@ -474,14 +474,23 @@ handle_manual_steps() {
     # --- Automate .tfvars placeholder replacement ---
     info "\nConfiguring OAuth Client ID and Project ID in .tfvars file..."
     if [ -z "$AUTO_OAUTH_CLIENT_ID" ]; then
-        warn "The OAuth Client ID is required for the .tfvars file."
-        echo "1. Open this URL in your browser to find your OAuth Client ID:"
+        warn "The OAuth Client ID and Secret are required."
+        echo "1. Open this URL in your browser to find your OAuth Client ID and Secret, in case you can't see your secret generate a new one:"
         echo -e "   ${C_YELLOW}https://console.cloud.google.com/apis/credentials?project=${GCP_PROJECT_ID}${C_RESET}"
         echo "2. Find the OAuth 2.0 Client ID of type 'Web application'."
         prompt "Paste the OAuth Client ID here:"
         read -p "   Client ID: " AUTO_OAUTH_CLIENT_ID < /dev/tty
         if [ -z "$AUTO_OAUTH_CLIENT_ID" ]; then fail "OAuth Client ID is required to proceed."; fi
     fi
+
+    if [ -z "$AUTO_OAUTH_CLIENT_SECRET" ]; then
+        prompt "Paste the OAuth Client Secret here:"
+        read -s -p "   Client Secret: " AUTO_OAUTH_CLIENT_SECRET < /dev/tty; echo
+        if [ -z "$AUTO_OAUTH_CLIENT_SECRET" ]; then fail "OAuth Client Secret is required to proceed."; fi
+    fi
+
+    write_state "AUTO_OAUTH_CLIENT_ID" "$AUTO_OAUTH_CLIENT_ID"
+    write_state "AUTO_OAUTH_CLIENT_SECRET" "$AUTO_OAUTH_CLIENT_SECRET"
 
     sed -i.bak "s|YOUR_OAUTH_WEB_CLIENT_ID_HERE|$AUTO_OAUTH_CLIENT_ID|g" "$TFVARS_FILE_PATH"
     sed -i.bak "s|YOUR_GCP_PROJECT_ID|$GCP_PROJECT_ID|g" "$TFVARS_FILE_PATH"
@@ -516,37 +525,41 @@ setup_firebase_app() {
 populate_oauth_secrets() {
     step 8 "Automating OAuth Secret Population"
     cd "$REPO_ROOT"
-    info "Looking for the OAuth 2.0 Web Client ID using the Firebase Management API..."
+    if [ -n "$AUTO_OAUTH_CLIENT_ID" ]; then
+        info "Using OAuth Client ID from state: ${C_YELLOW}${AUTO_OAUTH_CLIENT_ID}${C_RESET}"
+    else
+        info "Looking for the OAuth 2.0 Web Client ID using the Firebase Management API..."
 
-    local AUTH_TOKEN=$(gcloud auth print-access-token)
-    local APP_ID=$(firebase apps:list --project="$GCP_PROJECT_ID" --json | jq -r --arg name "$FE_SERVICE_NAME" '.result[] | select(.displayName == $name) | .appId')
+        local AUTH_TOKEN=$(gcloud auth print-access-token)
+        local APP_ID=$(firebase apps:list --project="$GCP_PROJECT_ID" --json | jq -r --arg name "$FE_SERVICE_NAME" '.result[] | select(.displayName == $name) | .appId')
 
-    if [ -z "$APP_ID" ]; then
-        warn "Could not find Firebase App ID for '$FE_SERVICE_NAME'. Skipping OAuth secret population."
-        return
-    fi
+        if [ -z "$APP_ID" ]; then
+            warn "Could not find Firebase App ID for '$FE_SERVICE_NAME'. Skipping OAuth secret population."
+            return
+        fi
 
-    # Use the Firebase Management API to get the auth config, which includes the client ID.
-    local API_RESPONSE=$(curl -s -X GET \
-        -H "Authorization: Bearer $AUTH_TOKEN" \
-        "https://firebase.googleapis.com/v1beta1/projects/$GCP_PROJECT_ID/webApps/$APP_ID/config")
+        # Use the Firebase Management API to get the auth config, which includes the client ID.
+        local API_RESPONSE=$(curl -s -X GET \
+            -H "Authorization: Bearer $AUTH_TOKEN" \
+            "https://firebase.googleapis.com/v1beta1/projects/$GCP_PROJECT_ID/webApps/$APP_ID/config")
 
-    # The client ID is the one NOT associated with the API key.
-    AUTO_OAUTH_CLIENT_ID=$(echo "$API_RESPONSE" | jq -r '.oauthClientId')
+        # The client ID is the one NOT associated with the API key.
+        AUTO_OAUTH_CLIENT_ID=$(echo "$API_RESPONSE" | jq -r '.oauthClientId')
 
-    if [ -z "$AUTO_OAUTH_CLIENT_ID" ] || [ "$AUTO_OAUTH_CLIENT_ID" == "null" ]; then
-        warn "Could not automatically find the OAuth Client ID via API."
+        if [ -z "$AUTO_OAUTH_CLIENT_ID" ] || [ "$AUTO_OAUTH_CLIENT_ID" == "null" ]; then
+            warn "Could not automatically find the OAuth Client ID via API."
         info "Please perform the following manual steps:"
         echo "1. Open this URL in your browser to find your OAuth Client ID:"
         echo -e "   ${C_YELLOW}https://console.cloud.google.com/apis/credentials?project=${GCP_PROJECT_ID}${C_RESET}"
         echo "2. Find the OAuth 2.0 Client ID of type 'Web application'."
-        prompt "Paste the OAuth Client ID here:"
-        read -p "   Client ID: " AUTO_OAUTH_CLIENT_ID < /dev/tty
-        if [ -z "$AUTO_OAUTH_CLIENT_ID" ]; then
-            fail "OAuth Client ID is required to proceed. Please restart the script."
+            prompt "Paste the OAuth Client ID here:"
+            read -p "   Client ID: " AUTO_OAUTH_CLIENT_ID < /dev/tty
+            if [ -z "$AUTO_OAUTH_CLIENT_ID" ]; then
+                fail "OAuth Client ID is required to proceed. Please restart the script."
+            fi
+        else
+            info "Found OAuth Client ID via Firebase API."
         fi
-    else
-        info "Found OAuth Client ID via Firebase API."
     fi
 
     info "Populating secrets with Client ID: ${C_YELLOW}${AUTO_OAUTH_CLIENT_ID}${C_RESET}"
@@ -559,51 +572,57 @@ populate_oauth_secrets() {
     if gcloud secrets describe "GOOGLE_CLIENT_SECRET" --project="$GCP_PROJECT_ID" > /dev/null 2>&1; then
         info "Secret 'GOOGLE_CLIENT_SECRET' already exists. Skipping creation."
     else
-        warn "Secret 'GOOGLE_CLIENT_SECRET' not found."
-        info "Attempting to reset/retrieve the client secret via gcloud..."
-        
-        # Try to reset the secret. This returns the new secret.
-        # Note: This invalidates the old secret!
-        local NEW_SECRET=""
-        if [ -n "$AUTO_OAUTH_CLIENT_ID" ]; then
-             info "Resolving full IAP Client name..."
-             # We need to find the full resource name.
-             # 1. Get the Brand Name (usually projects/NUMBER/brands/NUMBER)
-             local BRAND_NAME=$(gcloud iap oauth-brands list --project="$GCP_PROJECT_ID" --format="value(name)" 2>/dev/null | head -n 1)
-             
-             if [ -n "$BRAND_NAME" ]; then
-                 # 2. Find the client in this brand that matches our Client ID
-                 local FULL_CLIENT_NAME=$(gcloud iap oauth-clients list --brand="$BRAND_NAME" --project="$GCP_PROJECT_ID" --format="value(name)" 2>/dev/null | grep "$AUTO_OAUTH_CLIENT_ID")
-                 
-                 if [ -n "$FULL_CLIENT_NAME" ]; then
-                     info "Resetting secret for: $FULL_CLIENT_NAME"
-                     NEW_SECRET=$(gcloud iap oauth-clients reset-secret "$FULL_CLIENT_NAME" --project="$GCP_PROJECT_ID" --format="value(secret)" 2>/dev/null)
-                 else
-                     warn "Could not find IAP Client matching ID: $AUTO_OAUTH_CLIENT_ID"
-                 fi
-             else
-                 warn "No IAP Brand found. Skipping automatic secret reset."
-             fi
-        fi
-
-        if [ -n "$NEW_SECRET" ]; then
-            info "Successfully retrieved a new Client Secret."
-            echo -n "$NEW_SECRET" | gcloud secrets create "GOOGLE_CLIENT_SECRET" --data-file="-" --project="$GCP_PROJECT_ID" --quiet
+        if [ -n "$AUTO_OAUTH_CLIENT_SECRET" ]; then
+            info "Using OAuth Client Secret from state."
+            echo -n "$AUTO_OAUTH_CLIENT_SECRET" | gcloud secrets create "GOOGLE_CLIENT_SECRET" --data-file="-" --project="$GCP_PROJECT_ID" --quiet
             success "Secret 'GOOGLE_CLIENT_SECRET' created and populated."
         else
-            warn "Could not automatically reset/retrieve the Client Secret."
-            info "Please perform the following manual steps:"
-            echo "1. Go to: ${C_YELLOW}https://console.cloud.google.com/apis/credentials?project=${GCP_PROJECT_ID}${C_RESET}"
-            echo "2. Click on your OAuth 2.0 Client ID."
-            echo "3. Copy the 'Client secret' (or reset it if needed)."
-            prompt "Paste the Client Secret here:"
-            read -s -p "   Client Secret: " MANUAL_SECRET < /dev/tty; echo
+            warn "Secret 'GOOGLE_CLIENT_SECRET' not found."
+            info "Attempting to reset/retrieve the client secret via gcloud..."
             
-            if [ -n "$MANUAL_SECRET" ]; then
-                 echo -n "$MANUAL_SECRET" | gcloud secrets create "GOOGLE_CLIENT_SECRET" --data-file="-" --project="$GCP_PROJECT_ID" --quiet
-                 success "Secret 'GOOGLE_CLIENT_SECRET' created and populated manually."
+            # Try to reset the secret. This returns the new secret.
+            # Note: This invalidates the old secret!
+            local NEW_SECRET=""
+            if [ -n "$AUTO_OAUTH_CLIENT_ID" ]; then
+                info "Resolving full IAP Client name..."
+                # We need to find the full resource name.
+                # 1. Get the Brand Name (usually projects/NUMBER/brands/NUMBER)
+                local BRAND_NAME=$(gcloud iap oauth-brands list --project="$GCP_PROJECT_ID" --format="value(name)" 2>/dev/null | head -n 1)
+                
+                if [ -n "$BRAND_NAME" ]; then
+                    # 2. Find the client in this brand that matches our Client ID
+                    local FULL_CLIENT_NAME=$(gcloud iap oauth-clients list --brand="$BRAND_NAME" --project="$GCP_PROJECT_ID" --format="value(name)" 2>/dev/null | grep "$AUTO_OAUTH_CLIENT_ID")
+                    
+                    if [ -n "$FULL_CLIENT_NAME" ]; then
+                        info "Resetting secret for: $FULL_CLIENT_NAME"
+                        NEW_SECRET=$(gcloud iap oauth-clients reset-secret "$FULL_CLIENT_NAME" --project="$GCP_PROJECT_ID" --format="value(secret)" 2>/dev/null)
+                    else
+                        warn "Could not find IAP Client matching ID: $AUTO_OAUTH_CLIENT_ID"
+                    fi
+                else
+                    warn "No IAP Brand found. Skipping automatic secret reset."
+                fi
+            fi
+
+            if [ -n "$NEW_SECRET" ]; then
+                info "Successfully retrieved a new Client Secret."
+                echo -n "$NEW_SECRET" | gcloud secrets create "GOOGLE_CLIENT_SECRET" --data-file="-" --project="$GCP_PROJECT_ID" --quiet
+                success "Secret 'GOOGLE_CLIENT_SECRET' created and populated."
             else
-                 fail "Client Secret is required. Please restart the script."
+                warn "Could not automatically reset/retrieve the Client Secret."
+                info "Please perform the following manual steps:"
+                echo "1. Go to: ${C_YELLOW}https://console.cloud.google.com/apis/credentials?project=${GCP_PROJECT_ID}${C_RESET}"
+                echo "2. Click on your OAuth 2.0 Client ID."
+                echo "3. Copy the 'Client secret' (or reset it if needed)."
+                prompt "Paste the Client Secret here:"
+                read -s -p "   Client Secret: " MANUAL_SECRET < /dev/tty; echo
+                
+                if [ -n "$MANUAL_SECRET" ]; then
+                    echo -n "$MANUAL_SECRET" | gcloud secrets create "GOOGLE_CLIENT_SECRET" --data-file="-" --project="$GCP_PROJECT_ID" --quiet
+                    success "Secret 'GOOGLE_CLIENT_SECRET' created and populated manually."
+                else
+                    fail "Client Secret is required. Please restart the script."
+                fi
             fi
         fi
     fi

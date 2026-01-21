@@ -33,3 +33,7 @@ output "openfga_db_uri_secret_id" {
   description = "The Secret ID containing the full OpenFGA Datastore URI."
   value       = google_secret_manager_secret.openfga_db_uri.secret_id
 }
+output "backend_run_sa_email" {
+  description = "The email of the backend Cloud Run service account."
+  value       = module.backend_service.run_sa_email
+}

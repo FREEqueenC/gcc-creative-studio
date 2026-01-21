@@ -42,6 +42,7 @@ resource "google_cloud_run_v2_job" "openfga_migrate" {
 
       max_retries = 3
       timeout     = "600s"
+      service_account = module.creative_studio_platform.backend_run_sa_email
     }
   }
   

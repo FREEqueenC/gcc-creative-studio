@@ -28,3 +28,8 @@ output "cloud_sql_connection_name" {
   description = "The connection name of the Cloud SQL instance to be used by the bootstrap script."
   value       = module.postgresql.connection_name
 }
+
+output "openfga_db_uri_secret_id" {
+  description = "The Secret ID containing the full OpenFGA Datastore URI."
+  value       = google_secret_manager_secret.openfga_db_uri.secret_id
+}

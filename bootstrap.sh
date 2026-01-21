@@ -674,6 +674,21 @@ run_terraform() {
     prompt "\nTerraform is ready to apply the changes. This will create the infrastructure, including empty secret shells."; prompt "Do you want to proceed with 'terraform apply'? (y/n)"; read -r REPLY < /dev/tty
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then warn "Apply cancelled."; return; fi
     terraform apply -auto-approve -var-file="$TFVARS_FILE_PATH" -parallelism=30
+
+    # --- Execute OpenFGA Migration Job ---
+    info "Executing OpenFGA database migration job..."
+    local REGION=$(terraform output -raw region)
+    local JOB_NAME="${ENV_NAME}-openfga-migrate"
+    if gcloud run jobs describe "$JOB_NAME" --region "$REGION" --project "$GCP_PROJECT_ID" > /dev/null 2>&1; then
+        info "Starting job execution for '$JOB_NAME' in region '$REGION'. This may take a moment..."
+        if gcloud run jobs execute "$JOB_NAME" --region "$REGION" --wait --project "$GCP_PROJECT_ID"; then
+            success "OpenFGA migration job completed successfully."
+        else
+            fail "OpenFGA migration job failed. Please check the logs in Cloud Run."
+        fi
+    else
+        warn "OpenFGA migration job '$JOB_NAME' not found. Skipping execution."
+    fi
 }
 
 update_oauth_client() {

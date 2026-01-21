@@ -142,3 +142,9 @@ variable "openfga_db_secret_id" {
   type        = string
   default     = "" 
 }
+
+variable "openfga_db_uri_secret_id" {
+  description = "Secret ID for OpenFGA DB URI"
+  type        = string
+  default     = ""
+}

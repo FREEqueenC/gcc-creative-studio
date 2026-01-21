@@ -92,3 +92,9 @@ variable "enable_openfga" {
   type        = bool
   default     = false
 }
+
+variable "openfga_db_user" {
+  description = "The database user for OpenFGA"
+  type        = string
+  default     = "openfga"
+}

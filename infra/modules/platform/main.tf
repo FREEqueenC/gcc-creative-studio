@@ -105,6 +105,24 @@ module "postgresql" {
   openfga_db_password = data.google_secret_manager_secret_version.openfga_db_password.secret_data
 }
 
+# --- OpenFGA URI Secret Construction ---
+# We construct the full URI here to avoid shell interpolation in the distroless container
+locals {
+  openfga_datastore_uri = "postgres://${var.openfga_db_user}:${data.google_secret_manager_secret_version.openfga_db_password.secret_data}@/openfga?host=/cloudsql/${module.postgresql.connection_name}&sslmode=disable"
+}
+
+resource "google_secret_manager_secret" "openfga_db_uri" {
+  secret_id = "creative-studio-openfga-db-uri"
+  replication {
+    auto {}
+  }
+}
+
+resource "google_secret_manager_secret_version" "openfga_db_uri" {
+  secret      = google_secret_manager_secret.openfga_db_uri.id
+  secret_data = local.openfga_datastore_uri
+}
+
 # --- Service Module Calls ---
 module "backend_service" {
   source = "../cloud-run-service"
@@ -144,6 +162,7 @@ module "backend_service" {
   
   enable_openfga            = var.enable_openfga
   openfga_db_secret_id      = "creative-studio-openfga-db-password"
+  openfga_db_uri_secret_id  = google_secret_manager_secret.openfga_db_uri.secret_id
 }
 
 resource "google_firebase_project" "default" {

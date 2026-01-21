@@ -140,7 +140,7 @@ resource "google_cloud_run_v2_service" "this" {
     dynamic "containers" {
       for_each = var.enable_openfga ? [1] : []
       content {
-        image = "openfga/openfga:latest-debug"
+        image = "openfga/openfga:latest"
         
         resources {
           limits = {
@@ -155,16 +155,10 @@ resource "google_cloud_run_v2_service" "this" {
         }
         
         env {
-          name  = "OPENFGA_DATASTORE_URI"
-          # Connect via the Cloud SQL Unix socket (mounted at /cloudsql/...)
-          # We use the dedicated OpenFGA user and password (injected via OPENFGA_DB_PASS)
-          value = "postgres://${var.openfga_db_user}:$(OPENFGA_DB_PASS)@/openfga?host=/cloudsql/${var.cloud_sql_connection_name}&sslmode=disable" 
-        }
-        env {
-          name = "OPENFGA_DB_PASS"
+          name = "OPENFGA_DATASTORE_URI"
           value_source {
             secret_key_ref {
-              secret = var.openfga_db_secret_id
+              secret  = var.openfga_db_uri_secret_id
               version = "latest"
             }
           }
@@ -172,13 +166,8 @@ resource "google_cloud_run_v2_service" "this" {
 
         # Avoid port conflict with FastAPI (which defaults to 8080)
         # We move FastAPI to 9000 and keep OpenFGA on 8080 (default)
-        # or vice versa. The user requested FastAPI on 9000.
-        # OpenFGA defaults to 8080 for HTTP and 8081 for GRPC.
-        # We don't need to change OpenFGA ports if FastAPI moves to 9000.
         
-        command = ["/bin/sh", "-c"]
-        # Run migrations before starting the server
-        args    = ["export OPENFGA_DATASTORE_URI=postgres://${var.openfga_db_user}:$OPENFGA_DB_PASS@/openfga?host=/cloudsql/${var.cloud_sql_connection_name}&sslmode=disable && /openfga migrate && /openfga run"]
+        command = ["run"]
 
         env {
           name  = "OPENFGA_PLAYGROUND_ENABLED"
@@ -281,6 +270,13 @@ resource "google_secret_manager_secret_iam_member" "db_password_access" {
 resource "google_secret_manager_secret_iam_member" "openfga_db_password_access" {
   count     = var.enable_openfga && var.openfga_db_secret_id != "" ? 1 : 0
   secret_id = var.openfga_db_secret_id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.run_sa.email}"
+}
+
+resource "google_secret_manager_secret_iam_member" "openfga_db_uri_access" {
+  count     = var.enable_openfga && var.openfga_db_uri_secret_id != "" ? 1 : 0
+  secret_id = var.openfga_db_uri_secret_id
   role      = "roles/secretmanager.secretAccessor"
   member    = "serviceAccount:${google_service_account.run_sa.email}"
 }

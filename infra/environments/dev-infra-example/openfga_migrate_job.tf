@@ -8,7 +8,7 @@ resource "google_cloud_run_v2_job" "openfga_migrate" {
     template {
       containers {
         image = "openfga/openfga:latest"
-        command = [
+        args = [
           "migrate"
         ]
         

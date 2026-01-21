@@ -169,7 +169,7 @@ resource "google_cloud_run_v2_service" "this" {
           value = ":9001"
         }
 
-        command = ["run"]
+        args = ["run"]
 
         env {
           name  = "OPENFGA_PLAYGROUND_ENABLED"

@@ -3,6 +3,7 @@ resource "google_cloud_run_v2_job" "openfga_migrate" {
   name     = "${var.environment}-openfga-migrate"
   location = var.gcp_region
   project  = var.gcp_project_id
+  deletion_protection = false
 
   template {
     template {

@@ -86,6 +86,14 @@ data "google_secret_manager_secret_version" "db_password" {
   version = "latest"
 }
 
+# --- OpenFGA Secret Management ---
+# Read the Secret (Created by Bootstrap script)
+data "google_secret_manager_secret_version" "openfga_db_password" {
+  secret  = "creative-studio-openfga-db-password"
+  project = var.gcp_project_id
+  version = "latest"
+}
+
 # 2. Call PostgreSQL Module
 module "postgresql" {
   source      = "../postgresql"
@@ -94,6 +102,7 @@ module "postgresql" {
   
   # Pass the ACTUAL value to create the user
   db_password = data.google_secret_manager_secret_version.db_password.secret_data
+  openfga_db_password = data.google_secret_manager_secret_version.openfga_db_password.secret_data
 }
 
 # --- Service Module Calls ---
@@ -132,6 +141,9 @@ module "backend_service" {
   
   # Pass the Secret ID reference (NOT the value) for Cloud Run
   db_secret_id              = "creative-studio-db-password"
+  
+  enable_openfga            = var.enable_openfga
+  openfga_db_secret_id      = "creative-studio-openfga-db-password"
 }
 
 resource "google_firebase_project" "default" {

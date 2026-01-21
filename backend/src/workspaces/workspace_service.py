@@ -62,7 +62,7 @@ class WorkspaceService:
         self.consistency_service = consistency_service
 
     async def create_workspace(
-        self, user: UserModel, create_dto: CreateWorkspaceDto
+        self, user: UserModel, create_dto: CreateWorkspaceDto, is_internal_call: bool = False
     ) -> WorkspaceModel:
         """Creates a new workspace with the creator as the admin."""
         
@@ -88,7 +88,7 @@ class WorkspaceService:
             )
 
         # 3. Check Scope Permissions
-        if create_dto.scope == WorkspaceScopeEnum.PUBLIC and not user.is_super_admin:
+        if create_dto.scope == WorkspaceScopeEnum.PUBLIC and not user.is_super_admin and not is_internal_call:
              raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Only super admins can create public workspaces.",
@@ -604,7 +604,8 @@ class WorkspaceService:
                         name=ws_name,
                         organization_id=org.id,
                         scope=WorkspaceScopeEnum.PUBLIC
-                    )
+                    ),
+                    is_internal_call=True
                 )
                 public_ws = created_public_ws
             

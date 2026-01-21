@@ -127,8 +127,9 @@ async def get_current_user(
     # Construct a minimal user dict with the correct ID for the check
     check_user = {"id": str(user_model.id)}
     is_super_admin = await check_permission(check_user, "platform", "creative-studio", "super_admin")
-    user_model.is_super_admin = is_super_admin
+    user_model.is_super_admin = is_super_admin or user_model.is_super_admin
 
+    # TODO: No need to force this as is calculated by openfga
     # Check if user can access admin panel
     # Logic: Super Admin OR Admin of ANY Organization
     if is_super_admin:

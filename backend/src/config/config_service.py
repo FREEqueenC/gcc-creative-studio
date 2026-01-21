@@ -59,9 +59,6 @@ class ConfigService(BaseSettings):
     GEMINI_MODEL_ID: str = "gemini-2.5-pro"
     GEMINI_AUDIO_ANALYSIS_MODEL_ID: str = "gemini-2.5-pro"
 
-    # --- Collections ---
-    FIREBASE_DB: str = "cstudio-development"
-
     # --- Database Configuration ---
     INSTANCE_CONNECTION_NAME: str = ""
     DB_USER: str = "postgres"

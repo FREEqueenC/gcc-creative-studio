@@ -23,9 +23,10 @@ services:
     restart: unless-stopped
     depends_on:
       - openfga
+      - postgres
 
     env_file:
-      - ./backend/.env # Update as needed, for ex to './backend/.local.env'
+      - ./backend/docker.env
 
     # Override the Dockerfile's CMD to enable --reload.
     # Using 1 worker is better for a dev/reload environment.
@@ -45,6 +46,19 @@ services:
       - ~/.config/gcloud/:/root/.config/gcloud:ro # Linux/macOS example:
       # - %APPDATA%/gcloud:/root/.config/gcloud:ro # Windows example:
 
+  # Migration service to initialize the database
+  openfga-migration:
+    image: openfga/openfga:latest
+    container_name: creative-studio-openfga-migration
+    command: migrate
+    environment:
+      - OPENFGA_DATASTORE_ENGINE=postgres
+      - OPENFGA_DATASTORE_URI=postgres://studio_user:studio_pass@postgres:5432/creative_studio?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: no
+
   # Make sure to disable the  Local Network Access Checks on Chrome when trying this
   # https://github.com/openfga/openfga/issues/338#issuecomment-3511304207
   openfga:
@@ -59,6 +73,13 @@ services:
       - OPENFGA_PLAYGROUND_ENABLED=true
       - OPENFGA_CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
       - OPENFGA_CORS_ALLOWED_HEADERS=*
+      - OPENFGA_DATASTORE_ENGINE=postgres
+      - OPENFGA_DATASTORE_URI=postgres://studio_user:studio_pass@postgres:5432/creative_studio?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+      openfga-migration:
+        condition: service_completed_successfully
     restart: unless-stopped
 
   frontend:
@@ -89,5 +110,33 @@ services:
       - ./frontend/proxy.conf.json:/app/proxy.conf.json
 
 # Define the named volume at the top level
+  postgres:
+    image: postgres:15-alpine
+    container_name: creative-studio-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=studio_user
+      - POSTGRES_PASSWORD=studio_pass
+      - POSTGRES_DB=creative_studio
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U studio_user -d creative_studio"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  adminer:
+    image: adminer
+    container_name: creative-studio-adminer
+    ports:
+      - "8081:8080"
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
 volumes:
   backend_venv:
+  postgres_data:

@@ -16,12 +16,7 @@ terraform {
   required_providers {
     google      = { source = "hashicorp/google" }
     google-beta = { source = "hashicorp/google-beta" }
-    openfga     = { source = "openfga/openfga" }
   }
-}
-
-provider "openfga" {
-  api_url = var.openfga_api_url
 }
 
 provider "google" {
@@ -55,7 +50,11 @@ module "creative_studio_platform" {
   environment               = var.environment
   backend_service_name      = var.backend_service_name
   backend_custom_audiences  = var.backend_custom_audiences
-  be_env_vars               = var.be_env_vars
+  be_env_vars               = {
+    for k, v in var.be_env_vars : k => merge(v, {
+      # OPENFGA_STORE_ID is now handled by the app itself (fga_setup.py)
+    })
+  }
   frontend_service_name     = var.frontend_service_name
   frontend_custom_audiences = var.frontend_custom_audiences
   firebase_site_id          = var.firebase_site_id != "" ? var.firebase_site_id : var.gcp_project_id
@@ -67,6 +66,8 @@ module "creative_studio_platform" {
   frontend_secrets       = var.frontend_secrets
   backend_secrets        = var.backend_secrets
   fe_build_substitutions = var.fe_build_substitutions
+  
+  enable_openfga         = true
 
   depends_on = [ google_project_service.apis ]
 }

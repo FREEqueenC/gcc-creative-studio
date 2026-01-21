@@ -129,3 +129,16 @@ variable "db_secret_id" {
 }
 variable "db_name" { type = string }
 variable "db_user" { type = string }
+
+variable "enable_openfga" {
+  description = "Enable OpenFGA sidecar container"
+  type        = bool
+  default     = false
+}
+
+variable "openfga_db_user" { default = "openfga" }
+variable "openfga_db_secret_id" { 
+  description = "Secret ID for OpenFGA DB Password"
+  type        = string
+  default     = "" 
+}

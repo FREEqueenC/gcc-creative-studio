@@ -643,6 +643,27 @@ setup_db_secrets() {
 
         success "Secret '$SECRET_NAME' created successfully."
     fi
+
+    local OPENFGA_SECRET_NAME="creative-studio-openfga-db-password"
+    
+    # 5. Check if the OpenFGA secret already exists
+    if gcloud secrets describe "$OPENFGA_SECRET_NAME" --project="$GCP_PROJECT_ID" > /dev/null 2>&1; then
+        info "Secret '$OPENFGA_SECRET_NAME' already exists. Skipping creation."
+    else
+        info "Creating new secret '$OPENFGA_SECRET_NAME'..."
+        
+        # 6. Generate a secure random password for OpenFGA
+        local OPENFGA_DB_PASSWORD=$(openssl rand -base64 20 | tr -dc 'a-zA-Z0-9' | head -c 16)
+        
+        # 7. Create the secret and add the first version
+        printf "%s" "$OPENFGA_DB_PASSWORD" | gcloud secrets create "$OPENFGA_SECRET_NAME" \
+            --data-file=- \
+            --replication-policy="automatic" \
+            --project="$GCP_PROJECT_ID" \
+            --quiet
+
+        success "Secret '$OPENFGA_SECRET_NAME' created successfully."
+    fi
 }
 
 run_terraform() {

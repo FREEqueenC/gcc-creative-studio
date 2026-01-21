@@ -37,6 +37,18 @@ resource "google_cloud_run_v2_service" "this" {
   custom_audiences = var.custom_audiences
   deletion_protection = false
 
+  traffic {
+    type = "TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST"
+    percent = 100
+  }
+
+  # TODO: Cloud Run defaults to looking for port 8080, but we are moving the app to 9000
+  # We need to tell Cloud Run which port to send traffic to.
+  # Note: The `ports` configuration is actually part of the container definition in V2,
+  # but for the Service level, we just ensure the container listens on the right port.
+  # In Cloud Run V2, the ingress port is determined by the container's PORT env var (which we set)
+  # OR explicitly in the container ports. Let's add the ports block to the container.
+
   template {
     service_account = google_service_account.run_sa.email
     volumes {
@@ -52,6 +64,10 @@ resource "google_cloud_run_v2_service" "this" {
           cpu    = var.cpu
           memory = var.memory
         }
+      }
+      
+      ports {
+        container_port = 9000
       }
 
       env {
@@ -95,6 +111,12 @@ resource "google_cloud_run_v2_service" "this" {
         }
       }
 
+      # Set the PORT to 9000 as requested
+      env {
+        name  = "PORT"
+        value = "9000"
+      }
+
       # secrets
       dynamic "env" {
         for_each = var.runtime_secrets
@@ -112,6 +134,61 @@ resource "google_cloud_run_v2_service" "this" {
       volume_mounts {
         name = "cloudsql"
         mount_path = "/cloudsql"
+      }
+    }
+
+    dynamic "containers" {
+      for_each = var.enable_openfga ? [1] : []
+      content {
+        image = "openfga/openfga:latest-debug"
+        
+        resources {
+          limits = {
+            cpu    = "1000m"
+            memory = "512Mi"
+          }
+        }
+
+        env {
+          name  = "OPENFGA_DATASTORE_ENGINE"
+          value = "postgres"
+        }
+        
+        env {
+          name  = "OPENFGA_DATASTORE_URI"
+          # Connect via the Cloud SQL Unix socket (mounted at /cloudsql/...)
+          # We use the dedicated OpenFGA user and password (injected via OPENFGA_DB_PASS)
+          value = "postgres://${var.openfga_db_user}:$(OPENFGA_DB_PASS)@/openfga?host=/cloudsql/${var.cloud_sql_connection_name}&sslmode=disable" 
+        }
+        env {
+          name = "OPENFGA_DB_PASS"
+          value_source {
+            secret_key_ref {
+              secret = var.openfga_db_secret_id
+              version = "latest"
+            }
+          }
+        }
+
+        # Avoid port conflict with FastAPI (which defaults to 8080)
+        # We move FastAPI to 9000 and keep OpenFGA on 8080 (default)
+        # or vice versa. The user requested FastAPI on 9000.
+        # OpenFGA defaults to 8080 for HTTP and 8081 for GRPC.
+        # We don't need to change OpenFGA ports if FastAPI moves to 9000.
+        
+        command = ["/bin/sh", "-c"]
+        # Run migrations before starting the server
+        args    = ["export OPENFGA_DATASTORE_URI=postgres://${var.openfga_db_user}:$OPENFGA_DB_PASS@/openfga?host=/cloudsql/${var.cloud_sql_connection_name}&sslmode=disable && /openfga migrate && /openfga run"]
+
+        env {
+          name  = "OPENFGA_PLAYGROUND_ENABLED"
+          value = "false"
+        }
+        
+        volume_mounts {
+          name       = "cloudsql"
+          mount_path = "/cloudsql"
+        }
       }
     }
     scaling {
@@ -199,6 +276,13 @@ resource "google_secret_manager_secret_iam_member" "db_password_access" {
   secret_id = var.db_secret_id
   role      = "roles/secretmanager.secretAccessor"
   member  = "serviceAccount:${google_service_account.run_sa.email}"
+}
+
+resource "google_secret_manager_secret_iam_member" "openfga_db_password_access" {
+  count     = var.enable_openfga && var.openfga_db_secret_id != "" ? 1 : 0
+  secret_id = var.openfga_db_secret_id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.run_sa.email}"
 }
 
 # This is required for the Cloud Run instance to talk to the Cloud SQL Auth Proxy

@@ -105,6 +105,19 @@ async def get_connection():
         )
         return conn
 
+    # If no instance connection name is provided, assume we are connecting directly to a local DB
+    # (or a DB specified by host/port) without the Cloud SQL Connector.
+    if not config_service.INSTANCE_CONNECTION_NAME:
+        import asyncpg
+        conn = await asyncpg.connect(
+            user=config_service.DB_USER,
+            password=config_service.DB_PASS,
+            database=config_service.DB_NAME,
+            host=config_service.DB_HOST,
+            port=config_service.DB_PORT,
+        )
+        return conn
+
     connector = DatabaseConnector.get_instance().get_connector()
 
     conn = await connector.connect_async(

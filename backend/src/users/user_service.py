@@ -74,6 +74,7 @@ class UserService:
             return await self.user_repo.create(user_data)
         except IntegrityError:
             # Handle race condition: User might have been created by another request
+            await self.user_repo.db.rollback()
             # between our check and the insert.
             existing_user = await self.user_repo.get_by_email(email)
             if existing_user:

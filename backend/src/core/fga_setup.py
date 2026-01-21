@@ -3,11 +3,18 @@ import os
 from openfga_sdk import OpenFgaClient
 from openfga_sdk.models.create_store_request import CreateStoreRequest
 from openfga_sdk.models.write_authorization_model_request import WriteAuthorizationModelRequest
+from tenacity import retry, stop_after_delay, wait_fixed, before_sleep_log
 
 logger = logging.getLogger(__name__)
 
 STORE_NAME = "Creative Studio"
 
+@retry(
+    stop=stop_after_delay(60), # Wait up to 60 seconds for sidecar to be ready
+    wait=wait_fixed(2),        # Check every 2 seconds
+    before_sleep=before_sleep_log(logger, logging.INFO),
+    reraise=True
+)
 async def setup_fga(client: OpenFgaClient):
     """
     Ensures the OpenFGA store exists and has the correct authorization model.

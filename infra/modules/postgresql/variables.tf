@@ -17,3 +17,6 @@ variable "region" {}
 variable "db_name" { default = "creative_studio" }
 variable "db_user" { default = "studio_user" }
 variable "db_password" { sensitive = true }
+
+variable "openfga_db_user" { default = "openfga" }
+variable "openfga_db_password" { sensitive = true }

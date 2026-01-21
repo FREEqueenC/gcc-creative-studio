@@ -16,11 +16,6 @@ variable "gcp_project_id" { type = string }
 variable "gcp_region" { type = string }
 variable "environment" { type = string }
 
-variable "firebase_db_name" {
-  type = string
-  default = "cstudio"
-}
-
 variable "firebase_site_id" {
   type        = string
   description = "The site ID for the Firebase Hosting site. Must be unique across all Firebase projects."
@@ -90,4 +85,10 @@ variable "backend_runtime_secrets" {
   type        = map(string)
   description = "Secrets to mount in the backend container at runtime."
   default     = {}
+}
+
+variable "enable_openfga" {
+  description = "Enable OpenFGA sidecar container"
+  type        = bool
+  default     = false
 }

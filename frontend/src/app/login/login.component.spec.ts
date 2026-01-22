@@ -120,9 +120,6 @@ describe('LoginComponent', () => {
             expect(component.loader).toBeTrue();
             expect(component.invalidLogin).toBeFalse();
             expect(component.errorMessage).toBe('');
-    
-            // No tick() here, as NEVER never completes
-            // expect(component.loader).toBeFalse(); // This expectation should now be removed or moved to other tests
           }));
     describe('in local environment', () => {
       beforeEach(() => {
@@ -144,6 +141,7 @@ describe('LoginComponent', () => {
       }));
 
       it('should handle error from signInWithGoogleFirebase', fakeAsync(() => {
+        consoleErrorSpy.and.stub();
         const error = new Error('Access Denied');
         authService.signInWithGoogleFirebase.and.returnValue(
           throwError(() => error),
@@ -160,6 +158,7 @@ describe('LoginComponent', () => {
       }));
 
       it('should handle string error from signInWithGoogleFirebase', fakeAsync(() => {
+        consoleErrorSpy.and.stub();
         const error = 'An unexpected error occurred';
         authService.signInWithGoogleFirebase.and.returnValue(
           throwError(() => error),
@@ -198,6 +197,7 @@ describe('LoginComponent', () => {
       }));
 
       it('should handle error from signInForGoogleIdentityPlatform', fakeAsync(() => {
+        consoleErrorSpy.and.stub();
         const error = new Error(
           'An unexpected error occurred during sign-in. Please try again.',
         );
@@ -216,6 +216,7 @@ describe('LoginComponent', () => {
       }));
 
       it('should handle string error from signInForGoogleIdentityPlatform', fakeAsync(() => {
+        consoleErrorSpy.and.stub();
         const error = 'An unexpected error occurred';
         authService.signInForGoogleIdentityPlatform.and.returnValue(
           throwError(() => error),

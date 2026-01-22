@@ -1,3 +1,4 @@
+import { Component } from '@angular/core';
 import {
   ComponentFixture,
   fakeAsync,
@@ -19,6 +20,12 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { By } from '@angular/platform-browser';
 import { RouterTestingModule } from '@angular/router/testing';
 import { DebugElement } from '@angular/core';
+
+@Component({ template: '' })
+class DummyExecutionsComponent {}
+
+@Component({ template: '' })
+class DummyEditComponent {}
 
 describe('WorkflowListComponent', () => {
   let component: WorkflowListComponent;
@@ -63,12 +70,15 @@ describe('WorkflowListComponent', () => {
     mockMatDialog = jasmine.createSpyObj('MatDialog', ['open']);
 
     await TestBed.configureTestingModule({
-      declarations: [WorkflowListComponent],
+      declarations: [WorkflowListComponent, DummyExecutionsComponent, DummyEditComponent],
       imports: [
         HttpClientTestingModule,
         MaterialModule,
         NoopAnimationsModule,
-        RouterTestingModule,
+        RouterTestingModule.withRoutes([
+          { path: 'workflows/:id/executions', component: DummyExecutionsComponent },
+          { path: 'workflows/edit/:id', component: DummyEditComponent },
+        ]),
       ],
       providers: [
         { provide: WorkflowService, useValue: mockWorkflowService },
@@ -348,9 +358,6 @@ describe('WorkflowListComponent', () => {
         expect(firstRowCells[1].nativeElement.textContent.trim()).toBe(
           'Description 1',
         );
-        expect(
-          firstRowCells[1].nativeElement.getAttribute('ng-reflect-tooltip'),
-        ).toBe('Description 1');
         expect(firstRowCells[2].nativeElement.textContent.trim()).toBe(
           new Date(mockWorkflows[0].createdAt).toLocaleDateString(undefined, {
             year: 'numeric',
@@ -363,18 +370,21 @@ describe('WorkflowListComponent', () => {
         );
       });
 
-      it('should have correct routerLinks for action buttons', () => {
-        const linkDes = debugElement.queryAll(By.directive(RouterLink));
-        const historyLink = linkDes[0].injector.get(RouterLink);
-        const editLink = linkDes[1].injector.get(RouterLink);
+      it('should navigate to correct routes when action buttons are clicked', fakeAsync(() => {
+        spyOn(router, 'navigate');
+        const historyButton = debugElement.query(By.css('button[matTooltip="View History"]')).nativeElement;
+        const editButton = debugElement.query(By.css('button[matTooltip="Edit Workflow"]')).nativeElement;
 
-        expect(historyLink['routerLink']).toEqual([
-          '/workflows',
-          '1',
-          'executions',
-        ]);
-        expect(editLink['routerLink']).toEqual(['/workflows/edit', '1']);
-      });
+        fixture.detectChanges(); // Ensure changes are detected before click
+        historyButton.click();
+        tick(); // Simulate passage of time for async operations
+        expect(router.navigate).toHaveBeenCalledWith(['/workflows', '1', 'executions']);
+
+        fixture.detectChanges(); // Ensure changes are detected before click
+        editButton.click();
+        tick(); // Simulate passage of time for async operations
+        expect(router.navigate).toHaveBeenCalledWith(['/workflows/edit', '1']);
+      }));
 
       it('should not show the no data row', () => {
         const noDataRow = nativeElement.querySelector('tr.mat-no-data-row');

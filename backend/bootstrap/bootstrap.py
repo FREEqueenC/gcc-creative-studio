@@ -366,7 +366,7 @@ async def seed_vto_assets(db: AsyncSessionLocal, admin_user: Optional[UserModel]
     logger.info("--- Starting VTO System Asset Seeding ---")
     asset_repo = SourceAssetRepository(db)
     workspace_repo = WorkspaceRepository(db)
-    public_workspace = await workspace_repo.get_public_workspace()
+    public_workspace = await workspace_repo.get_system_public_workspace()
 
     if not public_workspace:
         logger.error("Cannot seed VTO assets: Public workspace not found.")

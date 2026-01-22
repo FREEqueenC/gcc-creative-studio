@@ -41,7 +41,7 @@ export class AuthInterceptor implements HttpInterceptor {
 
     return next.handle(authorizedRequest).pipe(
       catchError((error: HttpErrorResponse) => {
-        if (error.status === 401) {
+        if (error.status === 401 || error.status === 403) {
           // If 401, it means we are not authenticated.
           // We should clear session and redirect to login.
           this.authService.logout();

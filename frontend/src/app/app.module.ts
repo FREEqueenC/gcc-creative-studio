@@ -184,10 +184,12 @@ import { WorkflowStatusPipe } from './workflows/workflow-status.pipe';
     provideClientHydration(),
     provideHttpClient(withInterceptorsFromDi()),
     provideFirebaseApp(() => initializeApp(environment.firebase)),
+    provideAuth(() => getAuth()),
     provideFirestore(() => getFirestore()),
     provideAnalytics(() => getAnalytics()),
     importProvidersFrom([
       AngularFireModule.initializeApp(environment.firebase),
+      AngularFireAuthModule,
       AngularFirestoreModule,
       AngularFireDatabaseModule,
       AngularFireAnalyticsModule,

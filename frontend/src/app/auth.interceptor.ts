@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {Injectable} from '@angular/core';
+import {Injectable, Injector} from '@angular/core';
 import {
   HttpRequest,
   HttpHandler,
@@ -28,7 +28,7 @@ import {AuthService} from './common/services/auth.service';
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
-  constructor(private authService: AuthService) {}
+  constructor(private injector: Injector) {}
 
   intercept(
     request: HttpRequest<unknown>,
@@ -44,7 +44,8 @@ export class AuthInterceptor implements HttpInterceptor {
         if (error.status === 401 || error.status === 403) {
           // If 401, it means we are not authenticated.
           // We should clear session and redirect to login.
-          this.authService.logout();
+          const authService = this.injector.get(AuthService);
+          authService.logout();
         }
         return throwError(() => error);
       }),

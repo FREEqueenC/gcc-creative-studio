@@ -14,70 +14,65 @@
  * limitations under the License.
  */
 
-import {Injectable, Inject, PLATFORM_ID} from '@angular/core';
+import {Injectable, PLATFORM_ID, inject} from '@angular/core';
 import {Router} from '@angular/router';
-import {HttpClient} from '@angular/common/http';
-import {environment} from '../../../environments/environment';
-import {BehaviorSubject, Observable, of} from 'rxjs';
-import {catchError, tap, map} from 'rxjs/operators';
-import {isPlatformBrowser} from '@angular/common';
 import {UserModel, UserRolesEnum} from '../models/user.model';
+import {HttpClient, HttpHeaders, HttpErrorResponse} from '@angular/common/http';
+import {environment} from '../../../environments/environment';
+import {Auth, IdTokenResult} from '@angular/fire/auth';
+import {UserService} from '../services/user.service';
+import {
+  GoogleAuthProvider,
+  signInWithPopup,
+  UserCredential,
+} from '@angular/fire/auth';
+import {Observable, from, throwError, of, BehaviorSubject} from 'rxjs';
+import {catchError, tap, map, switchMap} from 'rxjs/operators';
+import {isPlatformBrowser} from '@angular/common';
 
+// Declare the 'google' global object from the Google Identity Services script
+declare const google: any;
+
+const FIREBASE_SESSION_KEY = 'firebase_session';
 const USER_DETAILS = 'USER_DETAILS';
 const LOGIN_ROUTE = '/login';
+
+interface FirebaseSession {
+  token: string;
+  expiry: number; // Expiration timestamp in milliseconds
+}
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
+  private readonly auth: Auth = inject(Auth);
+  private platformId = inject(PLATFORM_ID);
+  private readonly provider: GoogleAuthProvider = new GoogleAuthProvider();
+
+  // Store token temporarily in memory for the session
+  private currentOAuthAccessToken: string | null = null;
+  private firebaseIdToken: string | null = null; // To store the Firebase token for the test
+  private firebaseTokenExpiry: number | null = null; // To store token expiration time (in ms)
+
   private currentUserSubject = new BehaviorSubject<UserModel | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 
   constructor(
     private router: Router,
     private httpClient: HttpClient,
-    @Inject(PLATFORM_ID) private platformId: Object
+    private userService: UserService,
   ) {
+    this.provider.setCustomParameters({
+      // Set custom params for the provider
+      prompt: 'select_account',
+    });
+    this.loadSessionFromStorage();
     this.loadUserFromStorage();
   }
 
-  login() {
-    if (isPlatformBrowser(this.platformId)) {
-      window.location.href = `${environment.backendURL}/login/google`;
-    }
-  }
-
-  logout() {
-    this.httpClient.get(`${environment.backendURL}/logout`).subscribe({
-      next: () => {
-        this.clearSession();
-        this.router.navigate([LOGIN_ROUTE]);
-      },
-      error: (err) => {
-        console.error('Logout failed', err);
-        this.clearSession();
-        this.router.navigate([LOGIN_ROUTE]);
-      }
-    });
-  }
-
   getUser(): Observable<UserModel | null> {
-    return this.httpClient.get<UserModel>(`${environment.backendURL}/me`).pipe(
-      tap((user) => {
-        this.currentUserSubject.next(user);
-        if (isPlatformBrowser(this.platformId)) {
-          localStorage.setItem(USER_DETAILS, JSON.stringify(user));
-        }
-      }),
-      catchError((err) => {
-        console.error('Failed to fetch user', err);
-        this.currentUserSubject.next(null);
-        if (isPlatformBrowser(this.platformId)) {
-          localStorage.removeItem(USER_DETAILS);
-        }
-        return of(null);
-      })
-    );
+    return this.currentUser$;
   }
 
   private loadUserFromStorage() {
@@ -95,35 +90,311 @@ export class AuthService {
     }
   }
 
-  private clearSession() {
-    this.currentUserSubject.next(null);
-    if (isPlatformBrowser(this.platformId)) {
-      localStorage.removeItem(USER_DETAILS);
+  /**
+   * A test sign-in method to get a Google ID token compatible with Firebase.
+   *
+   * @returns An Observable that emits the Firebase-compatible ID token.
+   */
+  signInWithGoogleFirebase(): Observable<string> {
+    return from(signInWithPopup(this.auth, this.provider)).pipe(
+      // Step 1: Get the Firebase ID token from the successful sign-in.
+      switchMap((userCredential: UserCredential) => {
+        console.log('signInWithPopup userCredential:', userCredential);
+        if (!userCredential.user) {
+          return throwError(
+            () => new Error('Firebase user not found after sign-in.'),
+          );
+        }
+        return from(userCredential.user.getIdTokenResult());
+      }),
+      // Step 2: Save the session and sync with the backend.
+      switchMap((idTokenResult: IdTokenResult) => {
+        console.log('getIdTokenResult idTokenResult:', idTokenResult);
+        const token = idTokenResult.token;
+        const expirationTime = Date.parse(idTokenResult.expirationTime);
+
+        // Save session details to memory and local storage.
+        this.firebaseIdToken = token;
+        this.firebaseTokenExpiry = expirationTime;
+        const session: FirebaseSession = {token, expiry: expirationTime};
+        localStorage.setItem(FIREBASE_SESSION_KEY, JSON.stringify(session));
+
+        // Call the backend to get or create the user profile.
+        return this.syncUserWithBackend$(token).pipe(
+          map(() => token), // Pass the token along for the final result.
+        );
+      }),
+      catchError((error: any) => {
+        console.error('An error occurred during the sign-in process:', error);
+        console.error('Error details:', JSON.stringify(error, null, 2));
+        return throwError(
+          () => new Error(`Sign-in failed. Please try again. ${error?.message || 'Unknown error'}`),
+        );
+      }),
+    );
+  }
+
+  /**
+   * Asynchronously gets a valid Firebase token.
+   * 1. Checks for a valid, non-expired token in memory/cache.
+   * 2. If expired or missing, attempts a silent refresh.
+   * 3. If silent refresh fails, it emits an error, signaling a required re-login.
+   */
+  getValidFirebaseToken$(): Observable<string> {
+    // First, check our own session info which is loaded from localStorage.
+    // This is synchronous and tells us if we have a valid, non-expired token.
+    if (!this.isLoggedIn()) {
+      return throwError(
+        () => new Error('User session is not valid or has expired. 1'),
+      );
+    }
+
+    // If we have a valid session, check if the Firebase Auth instance is ready.
+    const currentUser = this.auth.currentUser;
+    if (currentUser) {
+      // Ideal case: Auth is ready, so we can force a token refresh to ensure it's fresh.
+      return from(currentUser.getIdToken(true)).pipe(
+        tap((token: string) => {
+          // Update the in-memory cache and localStorage with the refreshed token info.
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          const expiry = payload.exp * 1000;
+
+          this.firebaseIdToken = token;
+          this.firebaseTokenExpiry = expiry;
+
+          const session: FirebaseSession = {token, expiry};
+          localStorage.setItem(FIREBASE_SESSION_KEY, JSON.stringify(session));
+        }),
+      );
+    }
+
+    // Fallback case: The Firebase Auth instance is not yet initialized, but we
+    // have a valid token from localStorage. We can use this for the current
+    // request. The next request will likely hit the ideal case above.
+    return of(this.firebaseIdToken!);
+  }
+
+  /**
+   * A test sign-in method to get a Google ID token compatible with Identity Platform.
+   *
+   * @returns An Observable that emits the Identity Platform-compatible ID token.
+   */
+  signInForGoogleIdentityPlatform(): Observable<string> {
+    return this.promptForIdentityPlatformToken$().pipe(
+      switchMap(idToken => {
+        const payload = JSON.parse(atob(idToken.split('.')[1]));
+        const userEmail = payload.email?.toLowerCase();
+
+        // If allowed, proceed to save session and return token
+        this.firebaseIdToken = idToken;
+        this.firebaseTokenExpiry = payload.exp * 1000;
+
+        const session: FirebaseSession = {
+          token: idToken,
+          expiry: this.firebaseTokenExpiry,
+        };
+        localStorage.setItem(FIREBASE_SESSION_KEY, JSON.stringify(session));
+
+        // Call the backend to get or create the user profile.
+        return this.syncUserWithBackend$(idToken).pipe(
+          map(() => idToken), // Pass the token along for the final result.
+        );
+      }),
+    );
+  }
+
+  private promptForIdentityPlatformToken$(): Observable<string> {
+    const GOOGLE_CLIENT_ID = environment.GOOGLE_CLIENT_ID;
+
+    return new Observable<string>(observer => {
+      if (typeof google === 'undefined') {
+        return observer.error(
+          new Error(
+            'Google Identity Services script not loaded. Add it to index.html',
+          ),
+        );
+      }
+
+      const loginTimeout = setTimeout(() => {
+        observer.error(
+          new Error(
+            'Login timed out or third party sign-in may be disabled. Please try again and enable third party sign-in by clicking on the information button at the top left side of the browser.',
+          ),
+        );
+      }, 15000);
+
+      try {
+        google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: (response: any) => {
+            clearTimeout(loginTimeout);
+            const idToken = response.credential;
+            if (idToken) {
+              observer.next(idToken);
+              observer.complete();
+            } else {
+              observer.error(
+                new Error(
+                  'Google Sign-In response did not contain a credential.',
+                ),
+              );
+            }
+          },
+        });
+
+        // Trigger the One Tap prompt.
+        // Per new docs, we don't use the notification object for flow control.
+        google.accounts.id.prompt();
+      } catch (error) {
+        clearTimeout(loginTimeout);
+        console.error(
+          'Error during Google Identity Platform sign-in initialization:',
+          error,
+        );
+        observer.error(error);
+      }
+    });
+  }
+
+  /**
+   * Asynchronously gets a valid Identity Platform token.
+   * 1. Checks for a valid, non-expired token in memory/cache.
+   * 2. If expired or missing, attempts a silent refresh.
+   * 3. If silent refresh fails, it emits an error, signaling a required re-login.
+   */
+  getValidIdentityPlatformToken$(): Observable<string> {
+    // First, check our own session info which is loaded from localStorage.
+    // This is synchronous and tells us if we have a valid, non-expired token.
+    if (!this.isLoggedIn()) {
+      return of();
+    }
+
+    // Fallback case: The Firebase Auth instance is not yet initialized, but we
+    // have a valid token from localStorage. We can use this for the current
+    // request. The next request will likely hit the ideal case above.
+    return of(this.firebaseIdToken!);
+  }
+
+  private syncUserWithBackend$(token: string): Observable<UserModel> {
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+    return this.httpClient
+      .get<UserModel>(`${environment.backendURL}/me`, {headers})
+      .pipe(
+        tap((userDetails: UserModel) => {
+          // The backend is the source of truth. Save the returned profile to local storage.
+          localStorage.setItem(USER_DETAILS, JSON.stringify(userDetails));
+          this.currentUserSubject.next(userDetails);
+          console.log('User profile successfully synced with backend.');
+        }),
+        catchError((error: HttpErrorResponse) => {
+          console.error('Failed to sync user with backend', error);
+          // This is a critical error, so we should propagate it.
+          return throwError(
+            () =>
+              new Error(
+                error?.error?.detail ||
+                  `Could not synchronize user profile with the server. ${error?.error?.detail}`,
+              ),
+          );
+        }),
+      );
+  }
+
+  async logout(route: string = LOGIN_ROUTE) {
+    return this.auth
+      .signOut()
+      .then(() => {
+        this.currentOAuthAccessToken = null; // Clear stored token on logout
+        // Clear Firebase session data
+        this.firebaseIdToken = null;
+        this.firebaseTokenExpiry = null;
+        this.currentUserSubject.next(null);
+        localStorage.removeItem(FIREBASE_SESSION_KEY);
+        localStorage.removeItem(USER_DETAILS);
+        localStorage.removeItem('showTooltip');
+        void this.router.navigateByUrl(route);
+      })
+      .catch(e => {
+        console.error('Sign Out Error', e);
+        this.currentUserSubject.next(null);
+        localStorage.removeItem(FIREBASE_SESSION_KEY);
+        localStorage.removeItem(USER_DETAILS);
+        localStorage.removeItem('showTooltip');
+        void this.router.navigate([LOGIN_ROUTE]);
+      });
+  }
+
+  isLoggedIn() {
+    if (!isPlatformBrowser(this.platformId)) return false;
+
+    // Check if the in-memory token is valid
+    const now = Date.now();
+    const isTokenValid = !!(
+      this.firebaseIdToken &&
+      this.firebaseTokenExpiry &&
+      this.firebaseTokenExpiry > now
+    );
+
+    if (!isTokenValid && this.router.url !== LOGIN_ROUTE) {
+      void this.router.navigate([LOGIN_ROUTE]);
+    }
+
+    return isTokenValid;
+  }
+
+  private loadSessionFromStorage(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+
+    const sessionStr = localStorage.getItem(FIREBASE_SESSION_KEY);
+    if (sessionStr) {
+      const session: FirebaseSession = JSON.parse(sessionStr);
+      // Check if the stored session is still valid
+      if (session.expiry > Date.now()) {
+        this.firebaseIdToken = session.token;
+        this.firebaseTokenExpiry = session.expiry;
+      } else {
+        // If expired, remove it from storage.
+        localStorage.removeItem(FIREBASE_SESSION_KEY);
+      }
     }
   }
 
-  isLoggedIn(): boolean {
-    return !!this.currentUserSubject.value;
+  isUserLoggedIn() {
+    if (!isPlatformBrowser(this.platformId)) return false;
+
+    const isUserLoggedIn = localStorage.getItem(FIREBASE_SESSION_KEY) !== null;
+    return isUserLoggedIn;
   }
 
-  isUserAdmin(): boolean {
+  isUserAdmin() {
+    if (!isPlatformBrowser(this.platformId)) return false;
+
     const user = this.currentUserSubject.value;
     return !!user?.canAccessAdminPanel;
   }
-  
-  // Helper to get current value synchronously if needed
-  getCurrentUserValue(): UserModel | null {
-    return this.currentUserSubject.value;
+
+  getToken() {
+    return this.firebaseIdToken;
   }
 
-  checkPermission(objectType: string, objectId: string, relation: string): Observable<boolean> {
-    return this.httpClient.post<{allowed: boolean}>(`${environment.backendURL}/auth/check-permission`, {
-      object_type: objectType,
-      object_id: objectId,
-      relation: relation
-    }).pipe(
-      map(response => response.allowed),
-      catchError(() => of(false))
-    );
+  setOAuthAccessToken(token: string | null): void {
+    this.currentOAuthAccessToken = token;
+  }
+
+  getOAuthAccessToken(): string | null {
+    // Renamed from getAccessToken for clarity
+    return this.currentOAuthAccessToken;
+  }
+
+  /**
+   * Retrieves the currently stored access token.
+   */
+  getAccessToken(): string | null {
+    // Note: Tokens expire (usually after 1 hour).
+    // A robust implementation would check expiry or refresh the token.
+    // Firebase Auth automatically handles ID token refresh, but OAuth access token
+    // refresh requires re-authentication or more complex flows not covered here.
+    // For a simple deploy button click, getting a fresh token on sign-in might suffice.
+    return this.currentOAuthAccessToken;
   }
 }

@@ -9,13 +9,13 @@ from src.core.fga import check_permission
 
 router = APIRouter()
 
-@router.get("/me")
+@router.get("/api/me")
 async def get_me(user = Depends(get_current_user)):
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
     return user
 
-@router.get("/auth/check-permission")
+@router.get("/api/auth/check-permission")
 async def check_permission_route(
     object_type: str,
     object_id: str,

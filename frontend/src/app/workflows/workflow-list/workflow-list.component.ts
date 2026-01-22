@@ -45,19 +45,17 @@ import { WorkflowService } from '../workflow.service';
   templateUrl: './workflow-list.component.html',
   styleUrls: ['./workflow-list.component.scss'],
 })
-export class WorkflowListComponent implements OnInit, OnDestroy, AfterViewInit {
-  dataSource = new MatTableDataSource<WorkflowModel>([]);
+export class WorkflowListComponent implements OnInit, OnDestroy {
+  @ViewChild(MatPaginator) paginator!: MatPaginator;
+  @ViewChild(MatSort) sort!: MatSort;
+  dataSource: MatTableDataSource<WorkflowModel>;
   displayedColumns: string[] = [
     'name',
     'description',
-
     'createdAt',
     'updatedAt',
     'actions',
   ];
-
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
-  @ViewChild(MatSort) sort!: MatSort;
 
   // --- Pagination State ---
   totalWorkflows = 0;
@@ -77,7 +75,9 @@ export class WorkflowListComponent implements OnInit, OnDestroy, AfterViewInit {
     private workflowService: WorkflowService,
     private router: Router,
     public dialog: MatDialog,
-  ) {}
+  ) {
+    this.dataSource = new MatTableDataSource<WorkflowModel>();
+  }
 
   ngOnInit(): void {
     this.subscriptions.add(
@@ -101,9 +101,8 @@ export class WorkflowListComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngAfterViewInit() {
+    this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
-    // The paginator should not be assigned to the datasource directly
-    // as we are handling pagination manually.
   }
 
   handlePageEvent(event: PageEvent) {

@@ -37,6 +37,7 @@
     *ngIf="errorMessage && !isLoading"
     class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
     role="alert"
+    data-testid="error-message"
   >
     <strong class="font-bold">Error! </strong>
     <span class="block sm:inline">{{ errorMessage }}</span>
@@ -44,7 +45,7 @@
 
   <!-- Loading Indicator -->
   <div *ngIf="isLoading" class="flex justify-center items-center py-10">
-    <mat-spinner diameter="50"></mat-spinner>
+    <mat-progress-spinner diameter="50"></mat-progress-spinner>
   </div>
 
   <!-- Users Table -->
@@ -52,19 +53,19 @@
     *ngIf="!isLoading && !errorMessage"
     class="mat-elevation-z8 rounded-lg overflow-auto"
   >
-    <table mat-table [dataSource]="dataSource" matSort class="w-full">
+    <table mat-table [dataSource]="dataSource" class="w-full">
 
       <!-- Name Column -->
       <ng-container matColumnDef="name">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
-        <td mat-cell *matCellDef="let wf">{{ wf.name }}</td>
+        <th mat-header-cell *matHeaderCellDef>Name</th>
+        <td mat-cell *matCellDef="let row">{{ row.name }}</td>
       </ng-container>
 
       <!-- Description Column -->
       <ng-container matColumnDef="description">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header>Description</th>
-        <td mat-cell *matCellDef="let wf" class="truncate max-w-xs" [matTooltip]="wf.description">
-          {{ wf.description }}
+        <th mat-header-cell *matHeaderCellDef>Description</th>
+        <td mat-cell *matCellDef="let row" [matTooltip]="row.description">
+          {{ row.description }}
         </td>
       </ng-container>
 
@@ -72,27 +73,27 @@
 
       <!-- Created At Column -->
       <ng-container matColumnDef="createdAt">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header>Created At</th>
-        <td mat-cell *matCellDef="let wf">{{ wf.createdAt | date:'longDate' }}</td>
+        <th mat-header-cell *matHeaderCellDef>Created At</th>
+        <td mat-cell *matCellDef="let row">{{ row.createdAt | date:'longDate' }}</td>
       </ng-container>
 
       <!-- Updated At Column -->
       <ng-container matColumnDef="updatedAt">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header>Updated At</th>
-        <td mat-cell *matCellDef="let wf">{{ formatTimeAgo(wf.updatedAt) }}</td>
+        <th mat-header-cell *matHeaderCellDef>Updated At</th>
+        <td mat-cell *matCellDef="let row">{{ formatTimeAgo(row.updatedAt) }}</td>
       </ng-container>
 
       <!-- Actions Column -->
       <ng-container matColumnDef="actions">
         <th mat-header-cell *matHeaderCellDef class="!text-right !pr-4">Actions</th>
-        <td mat-cell *matCellDef="let wf" class="text-right pr-2">
-          <button mat-icon-button color="accent" [routerLink]="['/workflows', wf.id, 'executions']" matTooltip="View History">
+        <td mat-cell *matCellDef="let row" class="text-right pr-2">
+          <button mat-icon-button color="accent" [routerLink]="['/workflows', row.id, 'executions']" matTooltip="View History">
             <mat-icon>history</mat-icon>
           </button>
-          <button mat-icon-button color="primary" [routerLink]="['/workflows/edit', wf.id]" matTooltip="Edit Workflow">
+          <button mat-icon-button color="primary" [routerLink]="['/workflows/edit', row.id]" matTooltip="Edit Workflow">
             <mat-icon>edit</mat-icon>
           </button>
-          <button mat-icon-button color="warn" (click)="deleteWorkflow(wf, $event)" matTooltip="Delete Workflow">
+          <button mat-icon-button color="warn" (click)="deleteWorkflow(row, $event)" matTooltip="Delete Workflow">
             <mat-icon>delete</mat-icon>
           </button>
         </td>
@@ -108,12 +109,6 @@
         </td>
       </tr>
     </table>
-    <mat-paginator
-      (page)="handlePageEvent($event)"
-      [length]="totalWorkflows"
-      [pageSize]="limit"
-      [pageSizeOptions]="[10, 25, 100]"
-      showFirstLastButtons
-    ></mat-paginator>
+
   </div>
 </div>

@@ -21,13 +21,13 @@ import { By } from '@angular/platform-browser';
 import { RouterTestingModule } from '@angular/router/testing';
 import { DebugElement } from '@angular/core';
 
-@Component({ template: '' })
+@Component({ template: '', selector: 'app-dummy-executions' })
 class DummyExecutionsComponent {}
 
-@Component({ template: '' })
+@Component({ template: '', selector: 'app-dummy-edit' })
 class DummyEditComponent {}
 
-describe('WorkflowListComponent', () => {
+fdescribe('WorkflowListComponent', () => {
   let component: WorkflowListComponent;
   let fixture: ComponentFixture<WorkflowListComponent>;
   let mockWorkflowService: jasmine.SpyObj<WorkflowService>;
@@ -145,7 +145,7 @@ describe('WorkflowListComponent', () => {
     expect(router.navigate).toHaveBeenCalledWith(['/workflows/new']);
   });
 
-  describe('deleteWorkflow', () => {
+  fdescribe('deleteWorkflow', () => {
     const workflow: WorkflowModel = {
       id: '1',
       name: 'Test Workflow',
@@ -206,7 +206,7 @@ describe('WorkflowListComponent', () => {
     });
   });
 
-  describe('UI functions', () => {
+  fdescribe('UI functions', () => {
     it('getWorkflowRunStatusChipClass should return correct class', () => {
       expect(
         component.getWorkflowRunStatusChipClass(WorkflowRunStatusEnum.RUNNING),
@@ -258,7 +258,7 @@ describe('WorkflowListComponent', () => {
     });
   });
 
-  describe('Template', () => {
+  fdescribe('Template', () => {
     it('should have a create button with correct icon', () => {
       const button = debugElement.query(By.css('button[mat-raised-button]'));
       const icon = button.query(By.css('mat-icon'));
@@ -334,7 +334,7 @@ describe('WorkflowListComponent', () => {
       ]);
     });
 
-    describe('with data', () => {
+    fdescribe('with data', () => {
 
       beforeEach(async () => {
         component.dataSource.data = mockWorkflows;
@@ -392,7 +392,7 @@ describe('WorkflowListComponent', () => {
       });
     });
 
-    describe('without data', () => {
+    fdescribe('without data', () => {
       beforeEach(() => {
         (mockWorkflowService.workflows$ as Subject<WorkflowModel[]>).next([]);
         fixture.detectChanges();

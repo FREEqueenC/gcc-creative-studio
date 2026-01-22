@@ -792,6 +792,62 @@ update_secrets() {
     done; success "All secrets have been populated."
 }
 
+start_openfga_container() {
+    info "Starting local OpenFGA container for bootstrapping..."
+    
+    # 1. Retrieve OpenFGA DB Password
+    if ! gcloud secrets describe "creative-studio-openfga-db-password" --project="$GCP_PROJECT_ID" > /dev/null 2>&1; then
+        warn "Secret 'creative-studio-openfga-db-password' not found. Cannot start local OpenFGA."
+        return 1
+    fi
+    local OPENFGA_DB_PASSWORD=$(gcloud secrets versions access latest --secret="creative-studio-openfga-db-password" --project="$GCP_PROJECT_ID")
+
+    # 2. Start Container
+    # We use --network host to easily reach the Cloud SQL Proxy running on localhost:5432
+    # Note: On Mac/Windows Docker Desktop, --network host doesn't work as expected for reaching host.
+    # But assuming Cloud Shell or Linux, this is fine.
+    # If on Mac, we might need host.docker.internal and map ports.
+    
+    # Detect OS to choose network strategy
+    local DOCKER_ARGS="--network host"
+    local DB_HOST="127.0.0.1"
+    
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        DOCKER_ARGS="-p 8080:8080"
+        DB_HOST="host.docker.internal"
+    fi
+
+    docker run -d --name openfga-bootstrap \
+        $DOCKER_ARGS \
+        -e OPENFGA_DATASTORE_ENGINE=postgres \
+        -e OPENFGA_DATASTORE_URI="postgres://openfga:${OPENFGA_DB_PASSWORD}@${DB_HOST}:5432/openfga?sslmode=disable" \
+        -e OPENFGA_PLAYGROUND_ENABLED=false \
+        openfga/openfga:latest run > /dev/null
+
+    # 3. Wait for Healthy
+    info "Waiting for OpenFGA to be ready..."
+    local RETRIES=0
+    while [ $RETRIES -lt 30 ]; do
+        if curl -s http://localhost:8080/healthz > /dev/null; then
+            success "Local OpenFGA is ready."
+            return 0
+        fi
+        sleep 1
+        RETRIES=$((RETRIES+1))
+    done
+    
+    warn "OpenFGA failed to start or is not reachable."
+    docker logs openfga-bootstrap
+    return 1
+}
+
+stop_openfga_container() {
+    if docker ps -q -f name=openfga-bootstrap > /dev/null; then
+        info "Stopping local OpenFGA container..."
+        docker rm -f openfga-bootstrap > /dev/null
+    fi
+}
+
 seed_data() {
     step 13 "Seeding Initial Data (Workspaces, Templates, Assets)"
     cd "$REPO_ROOT"
@@ -809,8 +865,10 @@ seed_data() {
     # Establish Database Connectivity
     export_db_vars
     start_sql_proxy
-    # Ensure proxy stops even if this function fails
-    trap stop_sql_proxy EXIT
+    start_openfga_container
+    
+    # Ensure proxy and openfga stop even if this function fails
+    trap "stop_openfga_container; stop_sql_proxy" EXIT
 
     # Temporarily change to the project root so Python module resolution works
     pushd "$REPO_ROOT" > /dev/null
@@ -823,6 +881,7 @@ seed_data() {
     export GOOGLE_CLOUD_PROJECT=$GCP_PROJECT_ID
     export ADMIN_USER_EMAIL=$CURRENT_USER
     export GENMEDIA_BUCKET=$ASSET_BUCKET_NAME
+    export OPENFGA_API_URL="http://localhost:9000"
 
     local PYTHON_SCRIPT_PATH="backend/bootstrap/bootstrap.py"
     if [ ! -f "$PYTHON_SCRIPT_PATH" ]; then
@@ -860,6 +919,8 @@ seed_data() {
     popd > /dev/null
 
     # Cleanup
+    # Cleanup
+    stop_openfga_container
     stop_sql_proxy
     trap - EXIT
 }

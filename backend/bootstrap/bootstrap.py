@@ -40,8 +40,13 @@ from src.source_assets.repository.source_asset_repository import SourceAssetRepo
 from src.workspaces.repository.workspace_repository import WorkspaceRepository
 from src.common.schema.media_item_model import AssetRoleEnum
 from src.source_assets.schema.source_asset_model import SourceAssetModel, AssetScopeEnum, AssetTypeEnum
+from src.common.email_service import EmailService
+from src.common.consistency_service import ConsistencyService
 from src.media_templates.schema.media_template_model import MediaTemplateModel, GenerationParameters, IndustryEnum
 from src.workspaces.workspace_service import WorkspaceService
+from src.core.fga import fga_client, config as fga_config
+from openfga_sdk import OpenFgaClient
+from src.core.fga_setup import setup_fga
 
 # Placeholder for TEMPLATES if not defined elsewhere
 TEMPLATES: List[Dict] = []
@@ -431,13 +436,37 @@ async def main():
         await run_pending_migrations()
 
         async with AsyncSessionLocal() as db:
+            # Initialize OpenFGA
+            try:
+                logger.info("Initializing OpenFGA...")
+                real_fga_client = OpenFgaClient(fga_config)
+                fga_client.set_client(real_fga_client)
+                await setup_fga(real_fga_client)
+            except Exception as e:
+                logger.error(f"Failed to initialize OpenFGA: {e}")
+                # We should probably fail here as FGA is critical for workspace creation
+                raise e
+
             admin_user = await ensure_admin_user_exists(db)
             
             if admin_user:
                 # Ensure Admin Org exists and seed it
                 org_repo = OrganizationRepository(db)
                 org_service = OrganizationService(org_repo)
-                workspace_service = WorkspaceService(db)
+                
+                # Instantiate dependencies for WorkspaceService
+                workspace_repo = WorkspaceRepository(db)
+                user_repo = UserRepository(db)
+                email_service = EmailService()
+                consistency_service = ConsistencyService()
+                
+                workspace_service = WorkspaceService(
+                    workspace_repo=workspace_repo,
+                    user_repo=user_repo,
+                    email_service=email_service,
+                    organization_service=org_service,
+                    consistency_service=consistency_service
+                )
                 
                 # We need to ensure the admin has an organization to seed
                 # This logic is similar to backfill but for initial bootstrap

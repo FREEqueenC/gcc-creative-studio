@@ -697,7 +697,7 @@ run_terraform() {
     # --- Execute OpenFGA Migration Job ---
     info "Executing OpenFGA database migration job..."
     local REGION=$(terraform output -raw region)
-    local JOB_NAME="${ENV_NAME}-openfga-migrate"
+    local JOB_NAME=$(terraform output -raw openfga_migrate_job_name)
     if gcloud run jobs describe "$JOB_NAME" --region "$REGION" --project "$GCP_PROJECT_ID" > /dev/null 2>&1; then
         info "Starting job execution for '$JOB_NAME' in region '$REGION'. This may take a moment..."
         if gcloud run jobs execute "$JOB_NAME" --region "$REGION" --wait --project "$GCP_PROJECT_ID"; then

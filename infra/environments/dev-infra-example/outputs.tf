@@ -36,3 +36,7 @@ output "region" {
   description = "The GCP region."
   value       = var.gcp_region
 }
+output "openfga_migrate_job_name" {
+  description = "The name of the OpenFGA migration job."
+  value       = google_cloud_run_v2_job.openfga_migrate.name
+}

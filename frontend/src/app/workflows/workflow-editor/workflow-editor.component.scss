@@ -15,29 +15,56 @@
  */
 
 .editor-container {
-  padding: 10vh 10vw;
   background-color: transparent;
-  min-height: 100vh;
-  color: #f0f0f0;
+  padding: 20px 40px;
+  max-width: 1400px;
   margin: 0 auto;
+  margin-left: calc(5vw + 4.5rem);
+  margin-top: calc(10vh + 0px);
+  min-height: 100vh;
+  color: #E3E3E3;
+  font-family: 'Google Sans', sans-serif;
 }
 
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 40px;
-  margin-top: 5rem;
+/* Header Section */
+.header-section {
+  display: inline-flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 10px;
+  margin-bottom: 16px;
 
-  h2 {
-    font-size: 28px;
-    font-weight: 600;
-    margin: 0;
+  /* --- ROW 1: Top Actions (LEFT) --- */
+  .top-actions {
+    display: flex; /* Ensure flex is applied */
+    justify-content: flex-start;
+    flex-direction: row;
+    gap: 8px;
+    
+    mat-icon {
+      color: #e0e0e0;
+    }
   }
 
-  .actions {
+  .in-line-wrapper {
     display: flex;
-    gap: 12px;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+
+  .title-group {
+    text-align: left;
+    width: 100%;
+    
+    .page-title {
+      font-family: 'Google Sans', sans-serif;
+      font-weight: 400;
+      font-size: 45px;
+      line-height: 52px;
+      margin: 0;
+      color: #E3E3E3;
+    }
   }
 }
 
@@ -75,6 +102,15 @@
   }
 }
 
+/* Glassmorphism Card Style */
+@mixin glass-card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); /* Subtle shadow for depth */
+}
+
 .add-btn-container {
   position: fixed;
   bottom: 40px;
@@ -96,14 +132,13 @@
   app-virtual-try-on-step {
     display: block;
     width: 100%;
-    background-color: #2d2d2d;
-    border-radius: 12px;
-    border: 1px solid #444;
+    @include glass-card;
     transition: all 0.2s ease;
 
     &:hover {
-      border-color: #666;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.06) 100%);
+      border-color: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     }
   }
 }
@@ -141,11 +176,9 @@
 
 
 .user-input-panel {
-  border: 2px dashed var(--accent-color-light);
-  background-color: rgba(140, 92, 245, 0.05);
-  padding: 16px;
-  border-radius: 8px;
-  margin-bottom: 24px;
+  @include glass-card;
+  padding: 24px;
+  margin-bottom: 16px;
 
   .step-header {
     cursor: default;

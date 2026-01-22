@@ -14,45 +14,53 @@
  limitations under the License.
 -->
 
-<div class="editor-container h-full flex flex-col bg-neutral-800 text-white">
+<div class="editor-container h-full flex flex-col text-white">
   <!-- A. Global Header -->
-  <header class="flex items-center p-4 pb-10 border-b border-neutral-700">
-    <!-- Breadcrumbs/Title Area -->
-    <div class="flex-grow">
-      <div *ngIf="isReadOnly; else editableHeader">
-        <h1 class="text-2xl font-semibold">{{ displayedWorkflow?.name }}</h1>
-        <p class="text-sm text-neutral-400">{{ displayedWorkflow?.description }}</p>
-      </div>
-      <ng-template #editableHeader>
-        <div [formGroup]="workflowForm">
-          <input formControlName="name" placeholder="Untitled Workflow"
-            class="text-5xl font-semibold bg-transparent outline-none border-none p-0 w-full">
-          <input formControlName="description" placeholder="Add a description..."
-            class="text-sm text-neutral-400 bg-transparent outline-none border-none p-0 w-full mt-1">
+  <header class="header-section">
+    <!-- Top Actions (Back Button) -->
+    <div class="top-actions">
+        <button mat-icon-button routerLink="/workflows" matTooltip="Back to Workflows">
+            <mat-icon>arrow_back</mat-icon>
+        </button>
+    </div>
+
+    <div class="in-line-wrapper">
+        <!-- Breadcrumbs/Title Area -->
+        <div class="title-group flex-grow">
+        <div *ngIf="isReadOnly; else editableHeader">
+            <h1 class="page-title">{{ displayedWorkflow?.name }}</h1>
+            <p class="text-sm text-neutral-400 mt-1">{{ displayedWorkflow?.description }}</p>
         </div>
-      </ng-template>
-    </div>
+        <ng-template #editableHeader>
+            <div [formGroup]="workflowForm">
+            <input formControlName="name" placeholder="Untitled Workflow"
+                class="page-title bg-transparent outline-none border-none p-0 w-full placeholder-white/30">
+            <input formControlName="description" placeholder="Add a description..."
+                class="text-sm text-neutral-400 bg-transparent outline-none border-none p-0 w-full mt-1">
+            </div>
+        </ng-template>
+        </div>
 
-    <!-- Status Badge -->
-    <div class="mx-6">
-      <ng-container [ngSwitch]="mode">
-        <mat-chip *ngSwitchCase="EditorMode.Run" [ngClass]="getWorkflowStatusClass(currentExecutionState)">
-          <mat-icon *ngIf="getWorkflowStatusIcon(currentExecutionState)" class="!text-sm !w-4 !h-4 mr-1">
-            {{ getWorkflowStatusIcon(currentExecutionState) }}
-          </mat-icon>
-          {{ currentExecutionState || 'IDLE' }}
-        </mat-chip>
-      </ng-container>
-    </div>
+        <!-- Status Badge -->
+        <div class="mx-6">
+        <ng-container [ngSwitch]="mode">
+            <mat-chip *ngSwitchCase="EditorMode.Run" [ngClass]="currentExecutionState | workflowStatus:'class'">
+            <mat-icon *ngIf="currentExecutionState" class="!text-sm !w-4 !h-4 mr-1">
+                {{ currentExecutionState | workflowStatus:'icon' }}
+            </mat-icon>
+            {{ currentExecutionState || 'IDLE' }}
+            </mat-chip>
+        </ng-container>
+        </div>
 
-    <!-- Primary Actions -->
-    <div class="flex items-center gap-2">
-      <button *ngIf="!isReadOnly" mat-raised-button color="primary" (click)="run()">
-        <mat-icon>play_arrow</mat-icon>
-        Run Workflow
-      </button>
-      <button *ngIf="!isReadOnly" mat-raised-button color="primary" (click)="save()" [disabled]="workflowForm.pristine">Save</button>
-      <button mat-raised-button color="primary" routerLink="/workflows">Go Back</button>
+        <!-- Primary Actions -->
+        <div class="flex items-center gap-2">
+            <button *ngIf="!isReadOnly" mat-raised-button color="primary" (click)="run()">
+                <mat-icon>play_arrow</mat-icon>
+                Run Workflow
+            </button>
+            <button *ngIf="!isReadOnly" mat-raised-button color="primary" (click)="save()" [disabled]="workflowForm.pristine">Save</button>
+        </div>
     </div>
   </header>
 
@@ -80,8 +88,8 @@
               <div formGroupName="settings" class="step-settings">
                 <div formArrayName="definitions" class="definitions-list">
                   <div class="definition-row header-row">
-                    <div class="name-col">Parameter Name</div>
-                    <div class="type-col">Data Type</div>
+                    <div class="name-col"></div>
+                    <div class="type-col"></div>
                     <div class="action-col"></div>
                   </div>
                   <div *ngFor="let def of outputDefinitionsArray.controls; let i = index" [formGroupName]="i" class="definition-row">
@@ -110,12 +118,10 @@
         </div>
 
         <!-- Steps Section -->
-        <div cdkDropList formArrayName="steps" (cdkDropListDropped)="dropStep($event)" class="space-y-4">
+        <div cdkDropList formArrayName="steps" (cdkDropListDropped)="dropStep($event)" class="flex flex-col gap-4">
           <ng-container *ngFor="let step of stepsArray.controls; let i = index" [formGroupName]="i">
             <app-generic-step
-              class="step-card block bg-neutral-700/50 rounded-lg transition-all duration-200 hover:bg-neutral-700"
-              [class.ring-2]="selectedStepIndex === i"
-              [class.ring-blue-500]="selectedStepIndex === i"
+              class="step-card"
               (click)="selectedStepIndex = i"
               cdkDrag [cdkDragDisabled]="isReadOnly"
               [stepForm]="asFormGroup(step)"
@@ -178,9 +184,9 @@
         <div *ngIf="selectedStep" class="step-outputs">
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg font-semibold">{{ selectedStep.type | titlecase }} Outputs</h3>
-            <mat-chip [ngClass]="getStepStatusChipClass(selectedStep.status)">
-              <mat-icon *ngIf="getStepStatusIcon(selectedStep.status)" class="!text-sm !w-4 !h-4 mr-1">
-                {{ getStepStatusIcon(selectedStep.status) }}
+            <mat-chip *ngIf="selectedStep.status !== 'idle'" [ngClass]="selectedStep.status | workflowStatus:'class'">
+              <mat-icon class="!text-sm !w-4 !h-4 mr-1">
+                {{ selectedStep.status | workflowStatus:'icon' }}
               </mat-icon>
               {{ selectedStep.status | uppercase }}
             </mat-chip>

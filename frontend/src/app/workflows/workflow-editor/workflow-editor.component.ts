@@ -14,20 +14,19 @@
  * limitations under the License.
  */
 
-import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { CdkDragDrop } from '@angular/cdk/drag-drop';
+import { Component, DestroyRef, OnDestroy, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
   FormArray,
-  FormBuilder,
-  FormGroup,
-  Validators,
+  FormGroup
 } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Observable, Subscription, interval, of } from 'rxjs';
-import { finalize, switchMap, takeWhile, tap } from 'rxjs/operators';
+import { Observable, Subscription, of } from 'rxjs';
+import { switchMap, tap } from 'rxjs/operators';
 import { handleErrorSnackbar, handleSuccessSnackbar } from '../../utils/handleMessageSnackbar';
 import { MediaResolutionService } from '../shared/media-resolution.service';
 import {
@@ -39,11 +38,14 @@ import {
   WorkflowRunModel,
   WorkflowUpdateDto
 } from '../workflow.models';
+// import { STEP_CONFIGS_MAP } from '../shared/step-configs.map'; // Removed as only used by getStepConfig which is now in service (mostly)
+// But wait, template calls getStepConfig.
+import { STEP_CONFIGS_MAP } from '../shared/step-configs.map'; // Kept for template
 import { WorkflowService } from '../workflow.service';
 import { AddStepModalComponent } from './add-step-modal/add-step-modal.component';
 import { RunWorkflowModalComponent } from './run-workflow-modal/run-workflow-modal.component';
 
-import { STEP_CONFIGS_MAP } from '../shared/step-configs.map';
+import { WorkflowFormService } from './workflow-form.service';
 
 
 
@@ -51,6 +53,7 @@ import { STEP_CONFIGS_MAP } from '../shared/step-configs.map';
   selector: 'app-workflow-editor',
   templateUrl: './workflow-editor.component.html',
   styleUrls: ['./workflow-editor.component.scss'],
+  providers: [WorkflowFormService],
 })
 export class WorkflowEditorComponent implements OnInit, OnDestroy {
   // --- Component Mode & State ---
@@ -66,14 +69,16 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
   displayedWorkflow: WorkflowModel | WorkflowBase | null = null;
 
   // --- UI State ---
-  workflowForm!: FormGroup;
+  // workflowForm handled by service
+  get workflowForm() { return this.formService.workflowForm; }
   isLoading = false;
   submitted = false;
   errorMessage: string | null = null;
   selectedStepIndex: number | null = null;
   get selectedStep(): any | null {
     if (this.selectedStepIndex === null) return null;
-    if (this.selectedStepIndex < 0 || this.selectedStepIndex >= this.stepsArray.length) {
+    // stepsArray is accessed via getter now
+    if (!this.stepsArray || this.selectedStepIndex < 0 || this.selectedStepIndex >= this.stepsArray.length) {
       return null;
     }
     return this.stepsArray.at(this.selectedStepIndex).value;
@@ -84,11 +89,19 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
     const entry = this.executionStepEntries.find(e => e.step_id === this.selectedStep.stepId);
     return entry ? entry : null;
   }
+  // availableOutputsPerStep is now an observable, but template expects array.
+  // We can subscribe to it or usage async pipe.
+  // For minimal template change, we'll subscribe.
   availableOutputsPerStep: any[][] = [];
   previousOutputDefinitions: any[] = [];
 
+
+  private destroyRef = inject(DestroyRef);
+  private formService = inject(WorkflowFormService);
+
+
   private mainSubscription!: Subscription;
-  private pollingSubscription?: Subscription;
+  // private pollingSubscription?: Subscription; // Removed
   currentExecutionId: string | null = null;
   currentExecutionState: string | null = null;
   executionStepEntries: any[] = [];
@@ -97,15 +110,22 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
 
 
   constructor(
-    private fb: FormBuilder,
     private route: ActivatedRoute,
     private router: Router,
     private workflowService: WorkflowService,
     private dialog: MatDialog,
     private snackBar: MatSnackBar,
     private mediaResolutionService: MediaResolutionService,
-  ) {
-    this.initForm();
+
+
+  ) { }
+
+  get stepsArray(): FormArray {
+    return this.formService.stepsArray;
+  }
+
+  get outputDefinitionsArray(): FormArray {
+    return this.formService.outputDefinitionsArray;
   }
 
   asFormGroup(control: AbstractControl): FormGroup {
@@ -113,6 +133,14 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    // Initialize form immediately with empty/default data
+    this.formService.initForm();
+
+    // Subscribe to available outputs from service
+    this.formService.availableOutputsPerStep$.subscribe(outputs => {
+      this.availableOutputsPerStep = outputs;
+    });
+
     this.mainSubscription = this.route.paramMap
       .pipe(
         tap(() => (this.isLoading = true)),
@@ -144,14 +172,18 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
             this.workflowRun = data ? (data as WorkflowRunModel) : null;
             this.displayedWorkflow = this.workflowRun?.workflowSnapshot ?? null;
             this.workflowId = this.workflowRun?.id ?? null;
-            this.populateFormFromData(this.displayedWorkflow);
+            if (this.displayedWorkflow) {
+              this.formService.patchData(this.displayedWorkflow);
+            }
             this.workflowForm.disable(); // Read-only mode
           } else if (this.mode === EditorMode.Edit) {
             this.workflow = data as WorkflowModel;
             this.displayedWorkflow = this.workflow;
-            this.populateFormFromData(this.displayedWorkflow);
+            if (this.displayedWorkflow) {
+              this.formService.patchData(this.displayedWorkflow);
+            }
           } else {
-            this.resetFormForNew();
+            // Already initialized in initForm() defaults
           }
           this.isLoading = false;
         },
@@ -163,11 +195,19 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
       });
 
     // Initialize and subscribe to user input changes
-    this.syncOutputs();
+    // syncOutputs moved to service
     this.previousOutputDefinitions = this.outputDefinitionsArray.getRawValue();
     this.outputDefinitionsArray.valueChanges.subscribe((currentValues) => {
       this.handleOutputRenames(currentValues);
-      this.syncOutputs();
+      this.formService.syncOutputs(); // Trigger sync in service if needed, although service might handle specific adds/removes
+      // Actually outputDefinitionsArray.valueChanges might be too aggressive for full sync if service handles it.
+      // But service only handles explicit add/remove calls.
+      // If user types in name, we might need to sync?
+      // existing syncOutputs re-created controls.
+      // We might need to expose syncOutputs in service public API if we want to call it here.
+      // Or better, let service handle it internally.
+      // For now, let's assume service handles its own state for structure, and values just propagate.
+
       this.previousOutputDefinitions = currentValues;
     });
   }
@@ -223,112 +263,21 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
     if (this.mainSubscription) {
       this.mainSubscription.unsubscribe();
     }
-    if (this.pollingSubscription) {
-      this.pollingSubscription.unsubscribe();
+    if (this.mainSubscription) {
+      this.mainSubscription.unsubscribe();
     }
-  }
-
-  initForm() {
-    this.workflowForm = this.fb.group({
-      id: [''],
-      name: ['Untitled Workflow', Validators.required],
-      description: [''],
-      userId: ['user123'],
-      userInput: this.fb.group({
-        stepId: ['user_input'],
-        type: ['user_input'],
-        status: [StepStatusEnum.IDLE],
-        outputs: this.fb.group({}),
-        settings: this.fb.group({
-          definitions: this.fb.array([]),
-        }),
-      }),
-      steps: this.fb.array([]),
-    });
-  }
-
-  get stepsArray(): FormArray {
-    return this.workflowForm.get('steps') as FormArray;
-  }
-
-  get outputDefinitionsArray(): FormArray {
-    return this.workflowForm.get('userInput.settings.definitions') as FormArray;
-  }
-
-  private generateId(): string {
-    return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-  }
-
-  private createOutputDefinition(name: string, type: string, id?: string): FormGroup {
-    return this.fb.group({
-      id: [id || this.generateId()],
-      name: [name, Validators.required],
-      type: [type, Validators.required],
-    });
+    // pollingSubscription removal not needed, handled by DestroyRef
   }
 
   addOutput(name = '', type = 'text', id?: string): void {
-    this.outputDefinitionsArray.push(this.createOutputDefinition(name, type, id));
+    this.formService.addOutputDefinition(name, type, id);
   }
 
   removeOutput(index: number): void {
-    this.outputDefinitionsArray.removeAt(index);
+    this.formService.removeOutputDefinition(index);
   }
 
-  private syncOutputs(): void {
-    const outputs = this.workflowForm.get('userInput.outputs') as FormGroup;
-
-    Object.keys(outputs.controls).forEach(key => outputs.removeControl(key));
-    this.outputDefinitionsArray.controls.forEach(control => {
-      const name = control.get('name')?.value;
-      const type = control.get('type')?.value;
-      if (name && type) {
-        outputs.addControl(name, this.fb.control({ type: type }));
-      }
-    });
-    this.updateAvailableOutputs();
-  }
-
-  updateAvailableOutputs(): void {
-    const userInputOutputs: any[] = [];
-    this.outputDefinitionsArray.controls.forEach(control => {
-      const val = control.value;
-      if (val.name && val.type) {
-        userInputOutputs.push({
-          label: `User Input: ${val.name}`,
-          value: {
-            step: "user_input",
-            output: val.name,
-            _definitionId: val.id
-          },
-          type: val.type,
-        });
-      }
-    });
-
-    this.availableOutputsPerStep = this.stepsArray.controls.map((_, currentStepIndex) => {
-      const previousSteps = this.stepsArray.controls.slice(0, currentStepIndex);
-      const availableOutputs: any[] = [...userInputOutputs];
-
-      previousSteps.forEach((stepControl, stepIndex) => {
-        const step = stepControl.value;
-        const stepConfig = this.getStepConfig(step.type);
-        if (!stepConfig) return;
-
-        stepConfig.outputs.forEach((output: any) => {
-          availableOutputs.push({
-            label: `Step ${stepIndex + 1}: ${output.label}`,
-            value: {
-              step: step.stepId,
-              output: output.name,
-            },
-            type: output.type,
-          });
-        });
-      });
-      return availableOutputs;
-    });
-  }
+  // syncOutputs and updateAvailableOutputs removed, handled by service
 
   private handleOutputRenames(currentDefinitions: any[]) {
     if (this.isLoading) return;
@@ -370,58 +319,14 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
   }
 
   addStepToForm(type: string, existingData?: any) {
-    let stepData = existingData || {
-      stepId: `${type}_${Date.now()}`,
-      type: type,
-      status: StepStatusEnum.IDLE,
-      inputs: {},
-      outputs: {},
-      settings: {},
-    };
-
-    // Set default settings for specific step types if not already present
-    if (!existingData) {
-      switch (type) {
-        case NodeTypes.EDIT_IMAGE:
-          stepData.settings = {
-            ...stepData.settings,
-            aspectRatio: '1:1', // Default value
-            saveOutputToGallery: true, // Default value
-          };
-          break;
-        // Add other step types with their default settings here if needed
-      }
-    }
-
-    const stepGroup = this.fb.group({
-      stepId: [stepData.stepId],
-      type: [stepData.type],
-      status: [stepData.status],
-      inputs: this.createFormGroupFromData(stepData.inputs),
-      outputs: this.createFormGroupFromData(stepData.outputs),
-      settings: this.createFormGroupFromData(stepData.settings),
-    });
-
-    this.stepsArray.push(stepGroup);
-    this.updateAvailableOutputs();
+    this.formService.addStep(type, existingData);
   }
 
-  private createFormGroupFromData(data: any): FormGroup {
-    const groupConfig: any = {};
-    if (data) {
-      Object.keys(data).forEach(key => {
-        // Wrap value in array so FormBuilder treats it as [value, validators]
-        // This prevents arrays in data from being interpreted as validator configs
-        groupConfig[key] = [data[key]];
-      });
-    }
-    return this.fb.group(groupConfig);
-  }
+  // createFormGroupFromData removed, handled by service
 
   deleteStep(index: number) {
-    const deletedStepId = this.stepsArray.at(index).get('stepId')?.value;
-
-    this.stepsArray.removeAt(index);
+    const deletedStepId = this.formService.deleteStep(index);
+    this.formService.updateAfterDelete(); // Trigger update in service
 
     // Update selectedStepIndex
     if (this.selectedStepIndex === index) {
@@ -434,8 +339,6 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
     if (deletedStepId) {
       this.clearDependents(deletedStepId);
     }
-
-    this.updateAvailableOutputs();
   }
 
   private clearDependents(deletedStepId: string) {
@@ -456,11 +359,7 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
   }
 
   dropStep(event: CdkDragDrop<string[]>) {
-    moveItemInArray(
-      this.stepsArray.controls,
-      event.previousIndex,
-      event.currentIndex,
-    );
+    this.formService.moveStep(event.previousIndex, event.currentIndex);
 
     // Update selectedStepIndex if it was affected
     if (this.selectedStepIndex !== null) {
@@ -478,8 +377,6 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
         this.selectedStepIndex++;
       }
     }
-
-    this.updateAvailableOutputs();
   }
 
   save() {
@@ -698,24 +595,17 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
   onExecutionSelected(executionId: string): void {
     if (!this.workflowId) return;
 
-    // Stop any existing polling
-    if (this.pollingSubscription) {
-      this.pollingSubscription.unsubscribe();
-      this.pollingSubscription = undefined;
-    }
+    // No need to manually stop polling, new subscription will be isolated
 
     this.currentExecutionId = executionId;
     this.isLoading = true;
 
+    // Fetch once immediately, then start polling (or just start polling, but this keeps UI snappy)
     this.workflowService.getExecutionDetails(this.workflowId, executionId).subscribe({
       next: (details) => {
-        this.currentExecutionState = details.state;
-        this.executionStepEntries = details.step_entries || [];
-        this.updateStepStatuses(details);
-        this.resolveMediaUrls(details); // Resolve media URLs
+        this.handleExecutionUpdate(details);
         this.isLoading = false;
 
-        // If the selected execution is active, start polling
         if (details.state === 'ACTIVE') {
           this.startPollingExecution(this.workflowId!, executionId);
         }
@@ -729,44 +619,36 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
   }
 
   private startPollingExecution(workflowId: string, executionId: string): void {
-    // Poll every 5 seconds
-    this.pollingSubscription = interval(10000)
-      .pipe(
-        switchMap(() => this.workflowService.getExecutionDetails(workflowId, executionId)),
-        takeWhile((details) => {
-          // Continue polling while execution is active
-          return details.state === 'ACTIVE';
-        }, true), // inclusive: emit the final non-ACTIVE state
-        finalize(() => {
-          console.log('Polling stopped');
-          this.pollingSubscription = undefined;
-        })
-      )
+    this.workflowService.pollExecutionDetails(workflowId, executionId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (details) => {
-          console.log('Execution details:', details);
-          this.currentExecutionState = details.state;
-          this.executionStepEntries = details.step_entries || [];
-          this.updateStepStatuses(details);
-          this.resolveMediaUrls(details); // Resolve media URLs
-
-          // If execution completed, show notification
-          if (details.state !== 'ACTIVE') {
-            if (details.state === 'SUCCEEDED') {
-              handleSuccessSnackbar(this.snackBar, 'Workflow completed successfully!');
-            } else {
-              handleErrorSnackbar(
-                this.snackBar,
-                { message: `Workflow ${details.state.toLowerCase()}` },
-                'Workflow Execution'
-              );
-            }
-          }
+          this.handleExecutionUpdate(details);
         },
         error: (err) => {
-          console.error('Failed to get execution details', err);
+          console.error('Polling error', err);
         }
       });
+  }
+
+  private handleExecutionUpdate(details: any): void {
+    console.log('Execution details:', details);
+    this.currentExecutionState = details.state;
+    this.executionStepEntries = details.step_entries || [];
+    this.updateStepStatuses(details);
+    this.resolveMediaUrls(details);
+
+    if (details.state !== 'ACTIVE') {
+      if (details.state === 'SUCCEEDED') {
+        handleSuccessSnackbar(this.snackBar, 'Workflow completed successfully!');
+      } else {
+        handleErrorSnackbar(
+          this.snackBar,
+          { message: `Workflow ${details.state.toLowerCase()}` },
+          'Workflow Execution'
+        );
+      }
+    }
   }
 
   private updateStepStatuses(details: any): void {
@@ -815,162 +697,18 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
     });
   }
 
-  private populateFormFromData(data: WorkflowModel | WorkflowBase | null) {
-    if (!data) {
-      this.resetFormForNew();
-      return;
-    }
+  // populateFormFromData and resetFormForNew removed, handled by service patchData and initForm
 
-    const userInputStep = data.steps?.find(s => s.type === NodeTypes.USER_INPUT);
-    const otherSteps = data.steps?.filter(s => s.type !== NodeTypes.USER_INPUT) || [];
-    this.workflowForm.get('userInput.outputs') as FormGroup
-    // Patch basic form values
-    this.workflowForm.patchValue({
-      ...data,
-      userInput: {
-        ...(userInputStep || (this.workflowForm.get('userInput') as FormGroup).value),
-        status: StepStatusEnum.IDLE // Force IDLE status
-      },
-    });
+  // getStepIcon removed, use StepIconPipe in template
 
-    // Clear and populate the output definitions from the loaded data
-    this.outputDefinitionsArray.clear();
-    const outputIdMap = new Map<string, string>();
-
-    if (userInputStep && userInputStep.outputs) {
-      Object.entries(userInputStep.outputs).forEach(([key, value]: [string, any]) => {
-        const id = this.generateId();
-        outputIdMap.set(key, id);
-        // Transform key (identifier) to display name
-        this.addOutput(this.toDisplay(key), value.type, id);
-      });
-    }
-
-    // Clear and populate the steps
-    this.stepsArray.clear();
-    otherSteps.forEach(step => {
-      // Backfill _definitionId into inputs
-      // Backfill _definitionId into inputs
-      if (step.inputs) {
-        Object.values(step.inputs).forEach((input: any) => {
-          if (input && input.step === NodeTypes.USER_INPUT && input.output && outputIdMap.has(input.output)) {
-            input._definitionId = outputIdMap.get(input.output);
-            // Transform output name to display format to match UI
-            input.output = this.toDisplay(input.output);
-          }
-        });
-      }
-      // Force status to IDLE
-      const stepWithResetStatus = { ...step, status: StepStatusEnum.IDLE };
-      this.addStepToForm(step.type, stepWithResetStatus);
-    });
-
-    // Sync everything
-    this.syncOutputs();
-  }
-
-  private resetFormForNew() {
-    console.log("Reset form for new")
-    this.workflowForm.reset();
-    this.workflowForm.patchValue({
-      name: 'Untitled Workflow',
-      userId: '',
-    });
-    this.stepsArray.clear();
-    this.outputDefinitionsArray.clear();
-    this.addOutput('User_Text_Input', 'text');
-    this.addOutput('User_Image_Input', 'image');
-    this.updateAvailableOutputs();
-  }
-
-  getStepIcon(type: string): string {
-    switch (type) {
-      case NodeTypes.USER_INPUT:
-        return 'input';
-      case NodeTypes.GENERATE_TEXT:
-        return 'text_fields';
-      case NodeTypes.GENERATE_IMAGE:
-        return 'image';
-      case NodeTypes.EDIT_IMAGE:
-        return 'edit';
-      case NodeTypes.CROP_IMAGE:
-        return 'crop';
-      case NodeTypes.GENERATE_VIDEO:
-        return 'videocam';
-      case NodeTypes.VIRTUAL_TRY_ON:
-        return 'checkroom';
-      default:
-        return 'extension';
-    }
-  }
-
-  private toDisplay(name: string): string {
-    return name ? name.replace(/_/g, ' ') : name;
-  }
+  // toDisplay removed, used in service. kept toIdentifier for prepareSteps
 
   private toIdentifier(name: string): string {
     return name ? name.trim().replace(/\s+/g, '_') : name;
   }
 
 
-  getStepStatusChipClass(status: StepStatusEnum): string {
-    switch (status) {
-      case StepStatusEnum.PENDING:
-        return '!bg-gray-500/20 !text-gray-300';
-      case StepStatusEnum.RUNNING:
-        return '!bg-blue-500/20 !text-blue-300';
-      case StepStatusEnum.COMPLETED:
-        return '!bg-green-500/20 !text-green-300';
-      case StepStatusEnum.FAILED:
-        return '!bg-red-500/20 !text-red-300';
-      case StepStatusEnum.SKIPPED:
-        return '!bg-amber-500/20 !text-amber-300';
-      case StepStatusEnum.IDLE:
-      default:
-        return 'hidden';
-    }
-  }
 
-  getStepStatusIcon(status: StepStatusEnum): string {
-    switch (status) {
-      case StepStatusEnum.RUNNING:
-        return 'hourglass_top';
-      case StepStatusEnum.COMPLETED:
-        return 'check_circle';
-      case StepStatusEnum.FAILED:
-        return 'error';
-      default:
-        return '';
-    }
-  }
-
-  getWorkflowStatusClass(state: string | null): string {
-    switch (state) {
-      case 'ACTIVE':
-        return '!bg-blue-500/20 !text-blue-300';
-      case 'SUCCEEDED':
-        return '!bg-green-500/20 !text-green-300';
-      case 'FAILED':
-      case 'CANCELLED':
-        return '!bg-red-500/20 !text-red-300';
-      default:
-        return '!bg-gray-500/20 !text-gray-300';
-    }
-  }
-
-  getWorkflowStatusIcon(state: string | null): string {
-    switch (state) {
-      case 'ACTIVE':
-        return 'hourglass_top';
-      case 'SUCCEEDED':
-        return 'check_circle';
-      case 'FAILED':
-      case 'CANCELLED':
-        return 'error';
-      default:
-        return '';
-    }
-  }
 }
 
 export enum EditorMode {

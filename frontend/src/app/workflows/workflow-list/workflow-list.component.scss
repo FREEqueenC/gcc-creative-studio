@@ -14,57 +14,328 @@
  * limitations under the License.
  */
 
-.workflow-list-container {
-  padding: 30px;
-  background-color: #1a1a1a;
-  min-height: 100vh;
-  color: #f0f0f0;
-  margin: 0 10rem;
+:host {
+  display: block;
+  font-family: 'Google Sans', sans-serif;
   background-color: transparent;
+  color: #E3E3E3;
 }
 
-.header {
+.workflow-list-container {
+  background-color: transparent;
+  padding: 20px 40px;
+  max-width: 1400px;
+  margin: 0 auto;
+  margin-left: calc(5vw + 4.5rem);
+  margin-top: calc(10vh + 0px)
+}
+
+/* Header Section */
+.header-section {
+  display: inline-flex; /* As per your request */
+  flex-direction: column; /* Stacks the first div on top of the wrapper */
+  width: 100%; /* Ensures it spans the full width like the screenshot */
+  gap: 10px;
+  margin-bottom: 16px; /* Reduced bottom margin to bring list closer */
+/* --- ROW 1: Top Actions (LEFT) --- */
+  .top-actions {
+    justify-content: flex-start; /* Aligns items to the START (Left) */
+    flex-direction: row;
+    gap: 8px;
+    
+    mat-icon {
+      color: #e0e0e0;
+    }
+  }
+
+  .in-line-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+
+  .title-group {
+    text-align: left; /* Ensures text sits on the left */
+    width: 100%;
+    
+    h1.page-title {
+      font-family: 'Google Sans', sans-serif;
+      font-weight: 400;
+      font-size: 45px;
+      line-height: 52px;
+      margin: 0;
+    }
+  }
+}
+
+/* Create Button */
+.create-btn {
+  background: white !important;
+  color: #161616 !important;
+  border-radius: 100px !important; /* Pill shape */
+  padding: 0 24px !important;
+  height: 40px !important;
+  font-weight: 500 !important;
+  font-family: 'Google Sans Text', sans-serif;
+  font-size: 14px;
+  letter-spacing: 0.1px;
+  box-shadow: none !important;
+  
+  &:hover {
+    background: #F5F5F5 !important;
+  }
+
+  mat-icon {
+    margin-right: 8px;
+    font-size: 18px;
+    height: 18px;
+    width: 18px;
+  }
+}
+
+/* Filter Button */
+.filter-btn {
+  color: #C4C7C5;
+  
+  &:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.08);
+  }
+}
+
+/* Workflow List Container */
+.workflows-list {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30px;
-  margin-top: 5rem;
+  flex-direction: column;
+  gap: 12px; /* Spacing between cards */
 }
 
-.loading-state, .empty-state {
+.workflows-filter {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.search-container {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  padding: 2px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 36px; /* Initial width (button only + padding) */
+  overflow: hidden;
+
+  &.open {
+    width: 300px; /* Expanded width */
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .search-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #F8F9FA;
+    font-family: 'Google Sans', sans-serif;
+    font-size: 13px;
+    padding: 0;
+    outline: none;
+    opacity: 0; /* Hidden initially */
+    width: 0;
+    transition: all 0.2s ease;
+
+    &::placeholder {
+      color: rgba(255, 255, 255, 0.4);
+    }
+  }
+
+  &.open .search-input {
+    opacity: 1;
+    width: 100%;
+    padding: 0 0 0 12px;
+  }
+
+  .filter-btn {
+    color: #C4C7C5;
+    background: transparent;
+    min-width: 30px;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      line-height: 18px;
+    }
+    
+    &:hover {
+      color: white;
+      background: rgba(255, 255, 255, 0.1);
+    }
+  }
+}
+
+.workflow-card {
+  height: auto;
+  /* Glassmorphism Gradient: Top-down linear gradient */
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer; /* Entire card is clickable usually, or just actions */
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 16px;
+
+  /* Hover Effect: Slightly lighter background */
+  &:hover {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.06) 100%);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .card-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+
+  .info-group {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    
+    h2 {
+      font-size: 16px; 
+      font-weight: 500;
+      color: #F8F9FA;
+      margin: 0;
+      margin-top: 8px;
+      letter-spacing: 0.1px;
+      line-height: normal;
+    }
+
+    .description {
+      font-size: 12px;
+      color: #C4C7C5;
+      margin: 0;
+      font-weight: 400;
+      max-width: 600px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .meta-row {
+      display: flex;
+      align-items: left;
+      gap: 12px;
+      font-size: 11px;
+      color: #8E918F;
+      font-family: 'Google Sans Text', sans-serif;
+      margin-top: 4px;
+
+      span {
+        opacity: 0.8;
+      }
+      .time-ago {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      mat-icon {
+        font-size: 11px;
+        height: 11px;
+        width: 11px;
+      }
+    }
+  }
+
+  .actions-group {
+    display: flex;
+    gap: 4px;
+
+    button {
+      color: #C4C7C5;
+      
+      &:hover {
+        color: white;
+        background: rgba(255, 255, 255, 0.1);
+      }
+    }
+  }
+}
+
+/* Empty State */
+.empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  height: 400px;
-  color: #999;
+  padding: 80px 0;
+  color: rgba(255, 255, 255, 0.4);
 
-  mat-spinner {
-    margin-bottom: 20px;
-  }
-
-  .empty-icon {
+  mat-icon {
     font-size: 64px;
     width: 64px;
     height: 64px;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
     opacity: 0.5;
   }
-
-  h3 {
-    color: #fff;
-    margin-bottom: 10px;
+  
+  p {
+    font-size: 16px;
   }
 }
 
-.error-banner {
-  background-color: #3f1a1a;
-  border: 1px solid #ff5252;
-  color: #ff8a80;
-  padding: 15px;
-  border-radius: 8px;
-  margin-bottom: 20px;
+/* Paginator Customization */
+::ng-deep .mat-mdc-paginator {
+  background: transparent !important;
+  color: rgba(255, 255, 255, 0.6) !important;
+  font-family: 'Google Sans', sans-serif !important;
+  
+  .mat-mdc-paginator-icon {
+    fill: rgba(255, 255, 255, 0.6) !important;
+  }
+  
+  .mat-mdc-select-value {
+    color: rgba(255, 255, 255, 0.8) !important;
+  }
+  
+  .mat-mdc-select-arrow {
+    color: rgba(255, 255, 255, 0.6) !important;
+  }
+
+  .mat-mdc-form-field-outline {
+    color: rgba(255, 255, 255, 0.2) !important;
+  }
+}
+
+/* Avatar Placeholder - simple initial circle */
+.user-avatar-placeholder {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #FFD700 0%, #FDB931 100%); /* Gold gradient example */
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  color: #161616;
 }
+
+
+
+

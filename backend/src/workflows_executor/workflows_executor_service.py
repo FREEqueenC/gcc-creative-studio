@@ -33,7 +33,7 @@ from src.workflows_executor.dto.workflows_executor_dto import (
     VirtualTryOnRequest,
     GenerateAudioRequest,
 )
-from src.workflows.schema.workflow_model import ReferenceImage
+from src.workflows.schema.workflow_model import ReferenceMediaOrAsset
 from src.config.config_service import config_service
 
 logging.basicConfig(level=logging.INFO)
@@ -42,7 +42,7 @@ logger = logging.getLogger(__name__)
 class WorkflowsExecutorService:
     def __init__(self):
         self.backend_url = config_service.BACKEND_URL
-        self.rest_client = RestClient(timeout=300)
+        self.rest_client = RestClient(timeout=600)
         self.genai_client = GenAIModelSetup.init()
 
     def _normalize_asset_inputs(
@@ -75,7 +75,7 @@ class WorkflowsExecutorService:
                         "role": default_role.value,
                     }
                 )
-            elif isinstance(item, ReferenceImage):
+            elif isinstance(item, ReferenceMediaOrAsset):
                 if item.sourceMediaItem:
                     media_items.append(
                         {
@@ -100,7 +100,7 @@ class WorkflowsExecutorService:
         # Poll configuration
         initial_delay = 2
         poll_interval = 5
-        timeout = 300  # 5 minutes timeout
+        timeout = 600  # 10 minutes timeout
 
         await asyncio.sleep(initial_delay)
 
@@ -384,7 +384,7 @@ class WorkflowsExecutorService:
         # logic here
         return {"cropped_image": "https://example.com/cropped_image.png"}
 
-    def _map_to_vto_input_link(self, input_data: int | list | ReferenceImage) -> Optional[dict]:
+    def _map_to_vto_input_link(self, input_data: int | list | ReferenceMediaOrAsset) -> Optional[dict]:
         if not input_data:
             return None
 
@@ -394,8 +394,8 @@ class WorkflowsExecutorService:
                 return None
             input_data = input_data[0]
 
-        # Handle ReferenceImage
-        if isinstance(input_data, ReferenceImage):
+        # Handle ReferenceMediaOrAsset
+        if isinstance(input_data, ReferenceMediaOrAsset):
             if input_data.sourceMediaItem:
                 return {
                     "source_media_item": {

@@ -19,6 +19,10 @@ from src.common.dto.pagination_response_dto import PaginationResponseDto
 from src.users.user_model import UserModel, UserRoleEnum
 from src.workflows.dto.workflow_search_dto import WorkflowSearchDto
 from src.workflows.schema.workflow_model import WorkflowCreateDto, WorkflowModel, WorkflowExecuteDto
+from src.workflows.dto.batch_execution_dto import (
+    BatchExecutionRequestDto,
+    BatchExecutionResponseDto,
+)
 from src.workflows.workflow_service import WorkflowService
 from src.workspaces.workspace_auth_guard import workspace_auth_service
 
@@ -143,6 +147,7 @@ async def execute_workflow(
     workflow_id: str,
     workflow_execute_dto: WorkflowExecuteDto,
     authorization: str | None = Header(default=None),
+    current_user: UserModel = Depends(get_current_user),
     workflow_service: WorkflowService = Depends(),
 ):
     """
@@ -150,11 +155,36 @@ async def execute_workflow(
     """
     workflow_execute_dto.args["user_auth_header"] = authorization
 
-    response = workflow_service.execute_workflow(
-        workflow_id=workflow_id, args=workflow_execute_dto.args
+    response = await workflow_service.execute_workflow(
+        workflow_id=workflow_id,
+        args=workflow_execute_dto.args,
+        user=current_user
     )
     print(f"Created execution: {response}")
     return {"execution_id": response}
+
+
+@router.post("/{workflow_id}/batch-execute", response_model=BatchExecutionResponseDto)
+async def batch_execute_workflow(
+    workflow_id: str,
+    batch_dto: BatchExecutionRequestDto,
+    authorization: str | None = Header(default=None),
+    current_user: UserModel = Depends(get_current_user),
+    workflow_service: WorkflowService = Depends(),
+):
+    """
+    Executes a batch of workflow runs based on the provided items.
+    """
+    # Inject user_auth_header into each item's args
+    if authorization:
+        for item in batch_dto.items:
+            item.args["user_auth_header"] = authorization
+
+    return await workflow_service.batch_execute_workflow(
+        workflow_id=workflow_id,
+        batch_dto=batch_dto,
+        user=current_user,
+    )
 
 
 @router.get("/{workflow_id}/executions/{execution_id}")

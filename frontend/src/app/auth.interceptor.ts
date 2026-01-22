@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {Injectable, Injector} from '@angular/core';
+import {Injectable} from '@angular/core';
 import {
   HttpRequest,
   HttpHandler,
@@ -23,30 +23,40 @@ import {
   HttpErrorResponse,
 } from '@angular/common/http';
 import {Observable, throwError} from 'rxjs';
-import {catchError} from 'rxjs/operators';
+import {catchError, switchMap} from 'rxjs/operators';
 import {AuthService} from './common/services/auth.service';
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
-  constructor(private injector: Injector) {}
+  constructor(private authService: AuthService) {}
 
   intercept(
     request: HttpRequest<unknown>,
     next: HttpHandler,
   ): Observable<HttpEvent<unknown>> {
-    // Clone request to add withCredentials: true for cookies
-    const authorizedRequest = request.clone({
-      withCredentials: true,
-    });
-
-    return next.handle(authorizedRequest).pipe(
-      catchError((error: HttpErrorResponse) => {
-        if (error.status === 401 || error.status === 403) {
-          // If 401, it means we are not authenticated.
-          // We should clear session and redirect to login.
-          const authService = this.injector.get(AuthService);
-          authService.logout();
+    // Asynchronously get a valid token. This will use the cache or trigger a silent refresh.
+    return this.authService.getValidIdentityPlatformToken$().pipe(
+      switchMap(token => {
+        // Token was retrieved successfully. Clone the request and add the auth header.
+        const authorizedRequest = request.clone({
+          setHeaders: {Authorization: `Bearer ${token}`},
+        });
+        return next.handle(authorizedRequest);
+      }),
+      catchError(error => {
+        // If the error is NOT an HttpErrorResponse, it's a token refresh failure
+        // from our AuthService. In this case, the session is invalid, and we should log out.
+        if (!(error instanceof HttpErrorResponse)) {
+          console.error(
+            'AuthInterceptor: Session expired and could not be refreshed. Logging out.',
+            error,
+          );
+          this.authService.logout();
         }
+
+        // Otherwise, it's a backend API error (e.g., 404, 500). We should NOT log out.
+        // We just re-throw the original HttpErrorResponse so the calling service
+        // (e.g., UserService) can handle it and display an appropriate error message.
         return throwError(() => error);
       }),
     );

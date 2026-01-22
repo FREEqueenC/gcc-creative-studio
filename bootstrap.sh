@@ -793,6 +793,9 @@ update_secrets() {
 }
 
 start_openfga_container() {
+    # Ensure any previous container is removed first
+    stop_openfga_container
+
     info "Starting local OpenFGA container for bootstrapping..."
     
     # 1. Retrieve OpenFGA DB Password
@@ -813,7 +816,7 @@ start_openfga_container() {
     local DB_HOST="127.0.0.1"
     
     if [[ "$OSTYPE" == "darwin"* ]]; then
-        DOCKER_ARGS="-p 8080:8080"
+        DOCKER_ARGS="-p 9000:9000"
         DB_HOST="host.docker.internal"
     fi
 
@@ -822,13 +825,15 @@ start_openfga_container() {
         -e OPENFGA_DATASTORE_ENGINE=postgres \
         -e OPENFGA_DATASTORE_URI="postgres://openfga:${OPENFGA_DB_PASSWORD}@${DB_HOST}:5432/openfga?sslmode=disable" \
         -e OPENFGA_PLAYGROUND_ENABLED=false \
+        -e OPENFGA_HTTP_ADDR=":9000" \
+        -e OPENFGA_GRPC_ADDR=":9001" \
         openfga/openfga:latest run > /dev/null
 
     # 3. Wait for Healthy
     info "Waiting for OpenFGA to be ready..."
     local RETRIES=0
     while [ $RETRIES -lt 30 ]; do
-        if curl -s http://localhost:8080/healthz > /dev/null; then
+        if curl -s http://localhost:9000/healthz > /dev/null; then
             success "Local OpenFGA is ready."
             return 0
         fi
@@ -881,7 +886,7 @@ seed_data() {
     export GOOGLE_CLOUD_PROJECT=$GCP_PROJECT_ID
     export ADMIN_USER_EMAIL=$CURRENT_USER
     export GENMEDIA_BUCKET=$ASSET_BUCKET_NAME
-    export OPENFGA_API_URL="http://localhost:9000"
+    export OPENFGA_API_URL="http://127.0.0.1:9000"
 
     local PYTHON_SCRIPT_PATH="backend/bootstrap/bootstrap.py"
     if [ ! -f "$PYTHON_SCRIPT_PATH" ]; then

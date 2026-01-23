@@ -18,12 +18,15 @@
   display: block;
 }
 
-::ng-deep .workspace-menu-panel {
+::ng-deep .workspace-menu-panel.mat-mdc-menu-panel {
   max-width: 400px !important;
 
   .mat-mdc-menu-item {
     font-family: 'Google Sans', sans-serif !important;
 
+    .mat-mdc-menu-item-text {
+        font-family: 'Google Sans', sans-serif !important;
+      }
     .mat-icon {
       font-family: 'Material Icons' !important; // Restore icon font
     }

@@ -261,7 +261,7 @@ class WorkspaceService:
         """
         # Check if user is Super Admin
         if user.is_super_admin:
-            workspaces = await self.workspace_repo.get_all_workspaces(current_user_id=user.id)
+            workspaces = await self.workspace_repo.get_all_workspaces(current_user_id=user.id, limit=5)
         else:
             # Get user's organizations
             user_orgs = await self.organization_service.get_user_organizations(user.id)
@@ -276,7 +276,7 @@ class WorkspaceService:
             
             # Fetch accessible workspaces
             workspaces = await self.workspace_repo.find_accessible_by_user_and_orgs(
-                user.id, org_ids, admin_org_ids
+                user.id, org_ids, admin_org_ids, limit=5
             )
         
         # Populate permissions for each workspace

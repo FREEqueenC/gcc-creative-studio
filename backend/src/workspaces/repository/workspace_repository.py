@@ -69,7 +69,7 @@ class WorkspaceRepository(BaseRepository[Workspace, WorkspaceModel]):
             return None
         return self._map_to_schema(workspace)
 
-    async def get_all_workspaces(self, current_user_id: int) -> List[WorkspaceModel]:
+    async def get_all_workspaces(self, current_user_id: int, limit: Optional[int] = None) -> List[WorkspaceModel]:
         """Finds all workspaces in the system (for Super Admins)."""
         stmt = (
             select(self.model, WorkspaceMemberAssociation)
@@ -82,6 +82,8 @@ class WorkspaceRepository(BaseRepository[Workspace, WorkspaceModel]):
                 noload(self.model.members)
             )
         )
+        if limit:
+            stmt = stmt.limit(limit)
         result = await self.db.execute(stmt)
         
         results = []
@@ -356,7 +358,7 @@ class WorkspaceRepository(BaseRepository[Workspace, WorkspaceModel]):
         return self._map_to_schema(workspace)
 
     async def find_accessible_by_user_and_orgs(
-        self, user_id: int, org_ids: List[int], admin_org_ids: Optional[List[int]] = None
+        self, user_id: int, org_ids: List[int], admin_org_ids: Optional[List[int]] = None, limit: Optional[int] = None
     ) -> List[WorkspaceModel]:
         """
         Finds workspaces that are either:
@@ -394,7 +396,11 @@ class WorkspaceRepository(BaseRepository[Workspace, WorkspaceModel]):
                 selectinload(self.model.organization),
                 noload(self.model.members)
             )
+            .distinct()
         )
+
+        if limit:
+            stmt = stmt.limit(limit)
 
         result = await self.db.execute(stmt)
         

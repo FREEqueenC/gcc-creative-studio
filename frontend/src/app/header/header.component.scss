@@ -144,3 +144,144 @@
     }
   }
 }
+
+::ng-deep .profile-menu-panel.mat-mdc-menu-panel,
+.profile-menu-container {
+  // Glassmorphism background
+  background: rgba(40, 40, 40, 0.6) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border-radius: 16px !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  margin-left: 1rem;
+  /* Adjust as needed for spacing */
+  margin-top: 0;
+  /* Shift menu up */
+  overflow: hidden;
+  padding: 0 !important;
+
+  .profile-menu-content {
+    padding: 16px;
+    color: #e0e0e0;
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      margin-bottom: 16px;
+
+      .user-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        margin-right: 12px;
+        object-fit: cover;
+        background-color: rgba(255, 255, 255, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .user-details {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+
+        .user-name {
+          font-weight: 500;
+          font-size: 1rem;
+          color: #ffffff;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .user-email {
+          font-size: 0.8rem;
+          color: #b0b0b0;
+          // Allow full email to display
+          white-space: normal;
+          word-break: break-all;
+        }
+      }
+    }
+
+    .menu-section {
+      margin-bottom: 8px;
+
+      button.mat-mdc-menu-item {
+        width: 100%;
+        justify-content: flex-start;
+        font-size: 0.9rem;
+        color: #e0e0e0;
+
+        mat-icon {
+          margin-right: 12px;
+          color: #b0b0b0;
+        }
+      }
+    }
+
+    .credits-section {
+      display: flex;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 12px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+
+      mat-icon {
+        color: #fbbc04;
+        margin-right: 8px;
+      }
+
+      span {
+        flex-grow: 1;
+        font-weight: 500;
+      }
+
+      .upgrade-button {
+        margin-left: 12px;
+        height: 28px;
+        line-height: 28px;
+        font-size: 0.8rem;
+      }
+    }
+
+    .actions-section {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+
+      button.mat-mdc-menu-item {
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.12) !important;
+        }
+      }
+    }
+
+    .support-section {
+      button.mat-mdc-menu-item {
+        mat-icon {
+          font-size: 20px;
+          width: 20px;
+          height: 20px;
+        }
+      }
+    }
+
+    .sign-out-button {
+      margin-top: 8px;
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    mat-divider {
+      margin: 8px 0;
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+  }
+}

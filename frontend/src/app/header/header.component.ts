@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import {Component, OnDestroy, Inject, PLATFORM_ID} from '@angular/core';
+import {Component, OnDestroy, Inject, PLATFORM_ID, ViewChild} from '@angular/core';
+import {MatMenuTrigger} from '@angular/material/menu';
 import {DomSanitizer, SafeResourceUrl} from '@angular/platform-browser';
 import {MatIconRegistry} from '@angular/material/icon';
 import {Router} from '@angular/router';
@@ -62,8 +63,11 @@ export class HeaderComponent implements OnDestroy {
   isDesktop = false;
   private readonly destroy$ = new Subject<void>();
   toolsMenuHovered = false;
-  private menuTimeout: any;
+  profileMenuHovered = false;
+  private toolsMenuTimeout: any;
+  private profileMenuTimeout: any;
   isBrowser: boolean;
+  @ViewChild('menuTrigger') menuTrigger!: MatMenuTrigger;
 
   constructor(
     private sanitizer: DomSanitizer,
@@ -155,8 +159,8 @@ export class HeaderComponent implements OnDestroy {
 
   onToolsEnter() {
     // If we enter the area, cancel any pending close action
-    if (this.menuTimeout) {
-      clearTimeout(this.menuTimeout);
+    if (this.toolsMenuTimeout) {
+      clearTimeout(this.toolsMenuTimeout);
     }
     this.toolsMenuHovered = true;
   }
@@ -165,8 +169,51 @@ export class HeaderComponent implements OnDestroy {
     // When leaving, wait 200ms before actually closing.
     // If the user enters the menu during this time, onToolsEnter()
     // will cancel this timer, keeping the menu open.
-    this.menuTimeout = setTimeout(() => {
+    this.toolsMenuTimeout = setTimeout(() => {
       this.toolsMenuHovered = false;
+    }, 200);
+  }
+
+  openFeedbackForm(): void {
+    if (this.isBrowser) {
+        window.open(
+        'https://docs.google.com/forms/d/e/1FAIpQLSceWvu7G354h-dTbOGvNGEraEjcUAgPE300WNY5qr-WJbh3Eg/viewform',
+        '_blank',
+        );
+    }
+  }
+
+  openProfileMenu() {
+    if (this.profileMenuTimeout) {
+      clearTimeout(this.profileMenuTimeout);
+      this.profileMenuTimeout = null;
+    }
+    if (this.menuTrigger && !this.menuTrigger.menuOpen) {
+      this.menuTrigger.openMenu();
+    }
+  }
+
+  closeProfileMenu() {
+    if (!this.profileMenuTimeout) {
+      this.profileMenuTimeout = setTimeout(() => {
+        if (this.menuTrigger) {
+          this.menuTrigger.closeMenu();
+        }
+        this.profileMenuTimeout = null;
+      }, 200);
+    }
+  }
+
+  onProfileEnter() {
+    if (this.profileMenuTimeout) {
+      clearTimeout(this.profileMenuTimeout);
+    }
+    this.profileMenuHovered = true;
+  }
+
+  onProfileLeave() {
+    this.profileMenuTimeout = setTimeout(() => {
+      this.profileMenuHovered = false;
     }, 200);
   }
 }

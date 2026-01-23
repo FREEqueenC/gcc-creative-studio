@@ -13,3 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+:host {
+  display: block;
+}
+
+::ng-deep .workspace-menu-panel {
+  max-width: 400px !important;
+
+  .mat-mdc-menu-item {
+    font-family: 'Google Sans', sans-serif !important;
+
+    .mat-icon {
+      font-family: 'Material Icons' !important; // Restore icon font
+    }
+  }
+}

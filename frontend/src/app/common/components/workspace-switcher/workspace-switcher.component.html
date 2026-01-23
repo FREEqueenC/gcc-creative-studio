@@ -16,24 +16,25 @@
 <div class="top-left-container fixed z-[101]">
   <ng-container *ngIf="activeWorkspace">
     <div
-      class="workspace-container bg-gradient-to-b from-zinc-500/50 to-neutral-700/20 rounded-[48px] shadow-[2px_2px_12px_0px_rgba(0,0,0,0.10)] outline outline-1 outline-offset-[-1px] outline-stone-300/80 backdrop-blur-[10px] z-[1000] flex items-center gap-2 px-4 py-2 cursor-pointer hover:bg-zinc-500/60 transition-colors"
+      class="workspace-container bg-gradient-to-b from-zinc-500/50 to-neutral-700/20 rounded-[48px] shadow-[2px_2px_12px_0px_rgba(0,0,0,0.10)] outline outline-1 outline-offset-[-1px] outline-stone-300/80 backdrop-blur-[10px] z-[1000]"
       [matMenuTriggerFor]="workspaceMenu"
       [matTooltip]="
-        'Organization: ' + (activeWorkspace.organizationName || 'Global') + '\n' +
-        'Workspace: ' + activeWorkspace.name
+        'You are on a ' +
+        activeWorkspace.scope +
+        ' workspace. Click to switch workspaces!'
       "
     >
-      <mat-icon class="text-sm !w-5 !h-5 leading-5">{{
+      <mat-icon>{{
         activeWorkspace.scope === WorkspaceScope.PUBLIC ? 'public' : 'lock'
       }}</mat-icon>
-      <span class="workspace-name text-sm font-medium">{{
+      <span class="workspace-name">{{
         activeWorkspace.name || 'Undefined'
       }}</span>
-<mat-icon class="text-white/70 ml-1">unfold_more</mat-icon>
+      <mat-icon>unfold_more</mat-icon>
     </div>
 
     <mat-menu #workspaceMenu="matMenu" xPosition="after" class="workspace-menu-panel">
-      <!-- Search Bar (Only for Admins) -->
+      <!-- Search Bar -->
       <div *ngIf="isAdmin || currentUser?.canAccessAdminPanel" class="px-4 py-2" (click)="$event.stopPropagation()">
         <mat-form-field appearance="outline" class="w-full text-sm dense-form-field">
           <mat-icon matPrefix>search</mat-icon>
@@ -48,50 +49,39 @@
         (click)="setActiveWorkspace(workspace.id)"
         class="!h-auto !py-2"
       >
-        <div class="flex items-center gap-3 w-full">
-          <!-- Check Icon -->
-          <mat-icon
-            class="!mr-0"
-            [style.visibility]="
-              activeWorkspaceId === workspace.id ? 'visible' : 'hidden'
-            "
-            >check</mat-icon
-          >
-          <!-- Workspace Info -->
-          <div class="flex flex-col">
-            <div class="flex items-center gap-2">
-              <mat-icon class="!w-4 !h-4 !text-[16px] leading-4 text-zinc-400">{{
-                workspace.scope === WorkspaceScope.PUBLIC ? 'public' : 'lock'
-                }}</mat-icon>
-              <span class="font-medium">{{ workspace.name }}</span>
-              </div>
-              <!-- Organization Context -->
-              <div class="flex items-center gap-1 ml-6" *ngIf="workspace.organizationName">
-                <mat-icon class="!w-3 !h-3 !text-[12px] leading-3 text-zinc-500">business</mat-icon>
-                <span class="text-xs text-zinc-500">{{ workspace.organizationName }}</span>
-              </div>
-              </div>
-              </div>
+        <mat-icon
+          [style.visibility]="
+            activeWorkspaceId === workspace.id ? 'visible' : 'hidden'
+          "
+          >check</mat-icon
+        >
+        <mat-icon>{{
+          workspace.scope === WorkspaceScope.PUBLIC ? 'public' : 'lock'
+        }}</mat-icon>
+        
+        <div class="flex flex-col leading-tight ml-2">
+            <span class="font-medium">{{ workspace.name }}</span>
+            <div class="flex items-center gap-2 mt-0.5">
+                <span class="text-xs text-zinc-500" *ngIf="workspace.organizationName">{{ workspace.organizationName }}</span>
+                <div 
+                    class="px-1.5 py-0.5 rounded border text-[9px] font-bold uppercase tracking-wider"
+                    [ngClass]="getRoleBadgeClass(workspace.members[0]?.role || '')"
+                    *ngIf="workspace.members && workspace.members.length > 0"
+                >
+                    {{ workspace.members[0].role }}
+                </div>
+            </div>
+        </div>
       </button>
       <mat-divider></mat-divider>
       <button mat-menu-item (click)="openCreateWorkspaceDialog()">
         <mat-icon>add</mat-icon>
         <span>Create New Private Workspace</span>
       </button>
-      <!-- <button
-        mat-menu-item
-        (click)="openInviteDialog($event)"
-        *ngIf="canInvite"
-        matTooltipPosition="right"
-        matTooltip="Invite users to this workspace"
-      >
-        <mat-icon>person_add</mat-icon>
-        <span>Invite Users</span>
-      </button> -->
       <button
         mat-menu-item
-        *ngIf="canAccessBrandGuidelines"
         [disabled]="
+          !canAccessBrandGuidelines ||
           (brandGuidelineService.activeBrandGuidelineJob$ | async)?.status ===
             JobStatus.PROCESSING
         "

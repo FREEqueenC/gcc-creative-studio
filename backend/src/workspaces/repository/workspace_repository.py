@@ -17,7 +17,7 @@ from typing import List, Optional
 from fastapi import Depends
 from sqlalchemy import select, exists
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import selectinload, noload
 
 from src.common.base_repository import BaseRepository
 from src.database import get_db
@@ -319,15 +319,35 @@ class WorkspaceRepository(BaseRepository[Workspace, WorkspaceModel]):
         from sqlalchemy import or_
         combined_condition = or_(*conditions)
 
-        result = await self.db.execute(
-            select(self.model)
+        stmt = (
+            select(self.model, WorkspaceMemberAssociation)
+            .outerjoin(WorkspaceMemberAssociation, 
+                (WorkspaceMemberAssociation.workspace_id == self.model.id) & 
+                (WorkspaceMemberAssociation.user_id == user_id)
+            )
             .where(combined_condition)
-            .options(selectinload(self.model.organization))
+            .options(
+                selectinload(self.model.organization),
+                noload(self.model.members)
+            )
         )
-        workspaces = result.scalars().all()
-        return [self._map_to_schema(w) for w in workspaces]
 
-    def _map_to_schema(self, workspace: Workspace) -> WorkspaceModel:
+        result = await self.db.execute(stmt)
+        
+        results = []
+        for row in result:
+            workspace = row[0]
+            member_assoc = row[1]
+            results.append(self._map_to_schema(workspace, current_user_id=user_id, member_assoc=member_assoc))
+            
+        return results
+
+    def _map_to_schema(
+        self, 
+        workspace: Workspace, 
+        current_user_id: Optional[int] = None, 
+        member_assoc: Optional[WorkspaceMemberAssociation] = None
+    ) -> WorkspaceModel:
         """Helper to map SQLAlchemy Workspace to Pydantic WorkspaceModel."""
         # Create the Pydantic model
         workspace_dict = {
@@ -345,8 +365,18 @@ class WorkspaceRepository(BaseRepository[Workspace, WorkspaceModel]):
             workspace_dict["organization_name"] = workspace.organization.name
             
         # Map members
-        if workspace.members:
+        if member_assoc:
+            # Optimized path: Use the provided association
             workspace_dict["members"] = [
+                {
+                    "user_id": member_assoc.user_id,
+                    "email": member_assoc.email,
+                    "role": member_assoc.role
+                }
+            ]
+        elif workspace.members:
+            # Legacy/Full path: Use loaded members
+            all_members = [
                 {
                     "user_id": m.user_id,
                     "email": m.email, # Uses the property on Association
@@ -354,7 +384,18 @@ class WorkspaceRepository(BaseRepository[Workspace, WorkspaceModel]):
                 }
                 for m in workspace.members
             ]
-        
+            
+            if current_user_id:
+                # Filter members to only include current user
+                user_member = next((m for m in all_members if m["user_id"] == current_user_id), None)
+                if user_member:
+                    workspace_dict["members"] = [user_member]
+                else:
+                    # User might be an admin viewing a workspace they are not a member of
+                    workspace_dict["members"] = []
+            else:
+                workspace_dict["members"] = all_members
+
         return self.schema.model_validate(workspace_dict)
         
     async def delete_with_members(self, workspace_id: int) -> bool:

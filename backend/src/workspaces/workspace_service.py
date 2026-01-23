@@ -261,7 +261,7 @@ class WorkspaceService:
         """
         # Check if user is Super Admin
         if user.is_super_admin:
-            workspaces = await self.workspace_repo.get_all_workspaces()
+            workspaces = await self.workspace_repo.get_all_workspaces(current_user_id=user.id)
         else:
             # Get user's organizations
             user_orgs = await self.organization_service.get_user_organizations(user.id)
@@ -560,7 +560,7 @@ class WorkspaceService:
                 # If no specific org, we must filter by ALL admin orgs.
                 search_dto.organization_ids = admin_org_ids
         
-        return await self.workspace_repo.query(search_dto)
+        return await self.workspace_repo.query_basic(search_dto)
 
     async def ensure_default_workspaces(self, user: UserModel, org: OrganizationModel):
         """

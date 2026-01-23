@@ -69,14 +69,28 @@ class WorkspaceRepository(BaseRepository[Workspace, WorkspaceModel]):
             return None
         return self._map_to_schema(workspace)
 
-    async def get_all_workspaces(self) -> List[WorkspaceModel]:
+    async def get_all_workspaces(self, current_user_id: int) -> List[WorkspaceModel]:
         """Finds all workspaces in the system (for Super Admins)."""
-        result = await self.db.execute(
-            select(self.model)
-            .options(selectinload(self.model.organization))
+        stmt = (
+            select(self.model, WorkspaceMemberAssociation)
+            .outerjoin(WorkspaceMemberAssociation, 
+                (WorkspaceMemberAssociation.workspace_id == self.model.id) & 
+                (WorkspaceMemberAssociation.user_id == current_user_id)
+            )
+            .options(
+                selectinload(self.model.organization),
+                noload(self.model.members)
+            )
         )
-        workspaces = result.scalars().all()
-        return [self._map_to_schema(w) for w in workspaces]
+        result = await self.db.execute(stmt)
+        
+        results = []
+        for row in result:
+            workspace = row[0]
+            member_assoc = row[1]
+            results.append(self._map_to_schema(workspace, current_user_id=current_user_id, member_assoc=member_assoc))
+            
+        return results
 
     async def search(
         self, query: str, limit: int = 10, organization_ids: Optional[List[int]] = None
@@ -132,6 +146,56 @@ class WorkspaceRepository(BaseRepository[Workspace, WorkspaceModel]):
         workspaces = result.scalars().all()
         
         data = [self._map_to_schema(w) for w in workspaces]
+
+        # 5. Response
+        page = (search_dto.offset // search_dto.limit) + 1
+        page_size = search_dto.limit
+        total_pages = (total_count + page_size - 1) // page_size
+
+        return PaginationResponseDto[WorkspaceModel](
+            count=total_count,
+            page=page,
+            page_size=page_size,
+            total_pages=total_pages,
+            data=data,
+        )
+
+    async def query_basic(self, search_dto: "WorkspaceSearchDto") -> "PaginationResponseDto[WorkspaceModel]":
+        """
+        Performs a paginated query for workspaces, excluding member details.
+        """
+        from src.workspaces.dto.workspace_search_dto import WorkspaceSearchDto
+        from src.common.dto.pagination_response_dto import PaginationResponseDto
+        from sqlalchemy import func
+
+        # 1. Build Query
+        query = select(self.model).options(selectinload(self.model.organization))
+
+        if search_dto.name:
+            query = query.where(self.model.name.ilike(f"%{search_dto.name}%"))
+        
+        if search_dto.organization_id:
+            query = query.where(self.model.organization_id == search_dto.organization_id)
+        elif search_dto.organization_ids:
+            query = query.where(self.model.organization_id.in_(search_dto.organization_ids))
+
+        if search_dto.ids:
+            query = query.where(self.model.id.in_(search_dto.ids))
+
+        # 2. Count
+        count_query = select(func.count()).select_from(query.subquery())
+        count_result = await self.db.execute(count_query)
+        total_count = count_result.scalar_one()
+
+        # 3. Pagination & Ordering
+        query = query.order_by(self.model.name.asc())
+        query = query.offset(search_dto.offset).limit(search_dto.limit)
+
+        # 4. Execute
+        result = await self.db.execute(query)
+        workspaces = result.scalars().all()
+        
+        data = [self._map_to_schema(w, include_members=False) for w in workspaces]
 
         # 5. Response
         page = (search_dto.offset // search_dto.limit) + 1
@@ -346,7 +410,8 @@ class WorkspaceRepository(BaseRepository[Workspace, WorkspaceModel]):
         self, 
         workspace: Workspace, 
         current_user_id: Optional[int] = None, 
-        member_assoc: Optional[WorkspaceMemberAssociation] = None
+        member_assoc: Optional[WorkspaceMemberAssociation] = None,
+        include_members: bool = True
     ) -> WorkspaceModel:
         """Helper to map SQLAlchemy Workspace to Pydantic WorkspaceModel."""
         # Create the Pydantic model
@@ -365,36 +430,39 @@ class WorkspaceRepository(BaseRepository[Workspace, WorkspaceModel]):
             workspace_dict["organization_name"] = workspace.organization.name
             
         # Map members
-        if member_assoc:
-            # Optimized path: Use the provided association
-            workspace_dict["members"] = [
-                {
-                    "user_id": member_assoc.user_id,
-                    "email": member_assoc.email,
-                    "role": member_assoc.role
-                }
-            ]
-        elif workspace.members:
-            # Legacy/Full path: Use loaded members
-            all_members = [
-                {
-                    "user_id": m.user_id,
-                    "email": m.email, # Uses the property on Association
-                    "role": m.role
-                }
-                for m in workspace.members
-            ]
-            
-            if current_user_id:
-                # Filter members to only include current user
-                user_member = next((m for m in all_members if m["user_id"] == current_user_id), None)
-                if user_member:
-                    workspace_dict["members"] = [user_member]
+        if include_members:
+            if member_assoc:
+                # Optimized path: Use the provided association
+                workspace_dict["members"] = [
+                    {
+                        "user_id": member_assoc.user_id,
+                        "email": member_assoc.email,
+                        "role": member_assoc.role
+                    }
+                ]
+            elif workspace.members:
+                # Legacy/Full path: Use loaded members
+                all_members = [
+                    {
+                        "user_id": m.user_id,
+                        "email": m.email, # Uses the property on Association
+                        "role": m.role
+                    }
+                    for m in workspace.members
+                ]
+                
+                if current_user_id:
+                    # Filter members to only include current user
+                    user_member = next((m for m in all_members if m["user_id"] == current_user_id), None)
+                    if user_member:
+                        workspace_dict["members"] = [user_member]
+                    else:
+                        # User might be an admin viewing a workspace they are not a member of
+                        workspace_dict["members"] = []
                 else:
-                    # User might be an admin viewing a workspace they are not a member of
-                    workspace_dict["members"] = []
-            else:
-                workspace_dict["members"] = all_members
+                    workspace_dict["members"] = all_members
+        else:
+            workspace_dict["members"] = []
 
         return self.schema.model_validate(workspace_dict)
         

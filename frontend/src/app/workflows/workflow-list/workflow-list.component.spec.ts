@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Google LLC
+ * Copyright 2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,47 +15,27 @@
  */
 
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import {ComponentFixture, TestBed} from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
+import { WorkflowListComponent } from './workflow-list.component';
+import { MaterialModule } from '../../common/material.module';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
-
-import { FunTemplatesComponent } from './fun-templates.component';
-
-import { MatIconModule } from '@angular/material/icon';
-
-import { MatIconTestingModule } from '@angular/material/icon/testing';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-
-
-describe('FunTemplatesComponent', () => {
-
-  let component: FunTemplatesComponent;
-
-  let fixture: ComponentFixture<FunTemplatesComponent>;
-
-
+describe('WorkflowListComponent', () => {
+  let component: WorkflowListComponent;
+  let fixture: ComponentFixture<WorkflowListComponent>;
 
   beforeEach(async () => {
-
     await TestBed.configureTestingModule({
+      declarations: [WorkflowListComponent],
+      imports: [HttpClientTestingModule, MaterialModule, NoopAnimationsModule]
+    })
+    .compileComponents();
 
-      declarations: [FunTemplatesComponent],
-
-      imports: [HttpClientTestingModule, MatIconModule, MatIconTestingModule, MatProgressSpinnerModule],
-
-    }).compileComponents();
-
-
-
-    fixture = TestBed.createComponent(FunTemplatesComponent);
-
+    fixture = TestBed.createComponent(WorkflowListComponent);
     component = fixture.componentInstance;
-
     fixture.detectChanges();
-
   });
-
-
 
   it('should create', () => {
     expect(component).toBeTruthy();

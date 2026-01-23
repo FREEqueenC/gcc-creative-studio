@@ -23,9 +23,9 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
-import { MatMenuModule } from '@angular/material/menu';
+import { MatMenuModule, MatMenu } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSelectModule } from '@angular/material/select';
+import { MatSelectModule, MatOption, MatSelect } from '@angular/material/select';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -53,7 +53,7 @@ import {
 import { AngularFireAuthModule } from '@angular/fire/compat/auth';
 import { AngularFireDatabaseModule } from '@angular/fire/compat/database';
 import { AngularFirestoreModule } from '@angular/fire/compat/firestore';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { ReactiveFormsModule } from '@angular/forms';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -79,6 +79,7 @@ import { FlowPromptBoxComponent } from "./common/components/flow-prompt-box/flow
 import { ImageCropperDialogComponent } from './common/components/image-cropper-dialog/image-cropper-dialog.component';
 import { ImageSelectorComponent } from './common/components/image-selector/image-selector.component';
 import { MediaLightboxComponent } from './common/components/media-lightbox/media-lightbox.component';
+
 import { SourceAssetGalleryComponent } from './common/components/source-asset-gallery/source-asset-gallery.component';
 import { SharedModule } from './common/shared.module';
 import { AddVoiceDialogComponent } from './components/add-voice-dialog/add-voice-dialog.component';
@@ -118,7 +119,6 @@ import { WorkflowStatusPipe } from './workflows/workflow-status.pipe';
     ArenaComponent,
     MediaGalleryComponent,
     MediaDetailComponent,
-    MediaLightboxComponent,
     VtoComponent,
     ImageSelectorComponent,
     SourceAssetGalleryComponent,
@@ -142,44 +142,44 @@ import { WorkflowStatusPipe } from './workflows/workflow-status.pipe';
   imports: [
     BrowserModule,
     AppRoutingModule,
-    NgOptimizedImage,
-    MatTooltipModule,
-    MatToolbarModule,
-    MatDividerModule,
-    MatButtonModule,
-    MatChipsModule,
-    MatRadioModule,
-    MatIconModule,
-    MatStepperModule,
-    MatFormFieldModule,
-    MatInputModule,
-    ReactiveFormsModule,
     BrowserAnimationsModule,
-    MatSelectModule,
-    MatProgressSpinnerModule,
-    MatMenuModule,
-    MatCheckboxModule,
-    MatCardModule,
-    MatTableModule,
-    FormsModule,
+    NgOptimizedImage,
+    ReactiveFormsModule,
+    ClipboardModule,
+    DragDropModule,
     ScrollingModule,
-    MatProgressBarModule,
-    MatExpansionModule,
-    MatTabsModule,
-    MatDialogModule,
-    SharedModule,
-    MatSlideToggleModule,
-    MatButtonToggleModule,
     ImageCropperComponent,
-    MatButtonToggleModule,
-    MatSliderModule,
     NotificationContainerComponent,
     FlowPromptBoxComponent,
-    DragDropModule,
+    SharedModule,
+    MediaLightboxComponent,
+
+    // Explicitly listing all relevant Angular Material modules
+    MatButtonModule,
+    MatChipsModule,
+    MatDividerModule,
+    MatExpansionModule,
+    MatIconModule,
+    MatMenuModule,
+    MatProgressSpinnerModule,
+    MatSelectModule,
+    MatTabsModule,
+    MatToolbarModule,
+    MatTooltipModule,
+    MatButtonToggleModule,
+    MatCardModule,
+    MatCheckboxModule,
+    MatDialogModule,
+    MatFormFieldModule,
+    MatInputModule,
     MatPaginatorModule,
-    ClipboardModule,
-    WorkflowStatusPipe
-  ],
+    MatProgressBarModule,
+    MatRadioModule,
+    MatSlideToggleModule,
+    MatSliderModule,
+    MatStepperModule,
+    MatTableModule,
+],
   providers: [
     provideClientHydration(),
     provideHttpClient(withInterceptorsFromDi()),

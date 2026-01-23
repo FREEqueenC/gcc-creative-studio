@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
+import { MatIconModule } from '@angular/material/icon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { FormsModule } from '@angular/forms';
 import { WorkbenchComponent } from './workbench.component';
+import { MatIconTestingModule } from '@angular/material/icon/testing';
 
 describe('WorkbenchComponent', () => {
   let component: WorkbenchComponent;
@@ -24,7 +26,8 @@ describe('WorkbenchComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [WorkbenchComponent]
+      declarations: [WorkbenchComponent],
+      imports: [MatIconModule, MatIconTestingModule, FormsModule]
     })
     .compileComponents();
 

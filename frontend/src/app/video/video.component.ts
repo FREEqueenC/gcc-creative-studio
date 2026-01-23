@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { NotificationService } from '../common/services/notification.service';
 import { HttpClient } from '@angular/common/http';
 import {
   AfterViewInit,
@@ -25,7 +26,6 @@ import {
 import { MatChipInputEvent } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconRegistry } from '@angular/material/icon';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { finalize, Observable } from 'rxjs';
@@ -56,7 +56,6 @@ import {
 } from '../services/search/search.service';
 import { VideoStateService } from '../services/video-state.service';
 import { WorkspaceStateService } from '../services/workspace/workspace-state.service';
-import { handleErrorSnackbar, handleInfoSnackbar, handleSuccessSnackbar } from '../utils/handleMessageSnackbar';
 
 @Component({
   selector: 'app-video',
@@ -69,7 +68,7 @@ export class VideoComponent implements OnInit, AfterViewInit {
   public readonly JobStatus = JobStatus; // Expose enum to the template
 
   @HostListener('window:keydown.control.enter', ['$event'])
-  handleCtrlEnter(event: KeyboardEvent) {
+  handleCtrlEnter(event: Event) {
     if (!this.isLoading) {
       event.preventDefault();
       this.searchTerm();
@@ -190,7 +189,7 @@ export class VideoComponent implements OnInit, AfterViewInit {
     public matIconRegistry: MatIconRegistry,
     public service: SearchService,
     public router: Router,
-    private _snackBar: MatSnackBar,
+    private notificationService: NotificationService,
     public dialog: MatDialog,
     private http: HttpClient,
     private workspaceStateService: WorkspaceStateService,
@@ -505,7 +504,7 @@ export class VideoComponent implements OnInit, AfterViewInit {
 
     if (this.isConcatenateMode) {
       if (!activeWorkspaceId) {
-        handleErrorSnackbar(this._snackBar, { message: 'Workspace ID is missing' }, 'Concatenate videos');
+        this.notificationService.show('Workspace ID is missing', 'error', 'cross-in-circle-white', undefined, 20000);
         return;
       }
       const inputs: ConcatenationInput[] = [];
@@ -531,10 +530,12 @@ export class VideoComponent implements OnInit, AfterViewInit {
       }
 
       if (inputs.length < 2) {
-        this._snackBar.open(
+        this.notificationService.show(
           'Please select at least two videos to concatenate.',
-          'OK',
-          { duration: 5000 },
+          'info',
+          undefined,
+          'info',
+          5000,
         );
         return;
       }
@@ -552,12 +553,12 @@ export class VideoComponent implements OnInit, AfterViewInit {
         .pipe(finalize(() => (this.isLoading = false)))
         .subscribe({
           error: err =>
-            handleErrorSnackbar(this._snackBar, err, 'Concatenate videos'),
+            this.notificationService.show(err.message || err, 'error', 'cross-in-circle-white', undefined, 20000),
         });
       return;
     }
     if (!this.searchRequest.prompt && !this.isExtensionMode) {
-      handleInfoSnackbar(this._snackBar, 'Please enter a prompt to generate a video.');
+      this.notificationService.show('Please enter a prompt to generate a video.', 'info', undefined, 'info', 10000);
       return;
     }
     this.showErrorOverlay = true;
@@ -580,7 +581,7 @@ export class VideoComponent implements OnInit, AfterViewInit {
       );
       if (veo31Model) {
         this.selectModel(veo31Model);
-        handleSuccessSnackbar(this._snackBar, "Veo 3 doesn't support images as input, so we've switched to Veo 3.1 for you.");
+        this.notificationService.show("Veo 3 doesn't support images as input, so we've switched to Veo 3.1 for you.", 'success', undefined, 'check_small', undefined);
         return;
       }
     }
@@ -660,7 +661,7 @@ export class VideoComponent implements OnInit, AfterViewInit {
         error: error => {
           // This block will now execute correctly if the POST request fails.
           console.error('Search error:', error);
-          handleErrorSnackbar(this._snackBar, error, 'Search');
+          this.notificationService.show(error.message || error, 'error', 'cross-in-circle-white', undefined, 20000);
         },
       });
   }
@@ -683,7 +684,7 @@ export class VideoComponent implements OnInit, AfterViewInit {
           this.saveState();
         },
         error: error => {
-          handleErrorSnackbar(this._snackBar, error, 'Rewrite prompt');
+          this.notificationService.show(error.message || error, 'error', 'cross-in-circle-white', undefined, 20000);
         },
       });
   }
@@ -700,7 +701,7 @@ export class VideoComponent implements OnInit, AfterViewInit {
           this.saveState();
         },
         error: error => {
-          handleErrorSnackbar(this._snackBar, error, 'Get random prompt');
+          this.notificationService.show(error.message || error, 'error', 'cross-in-circle-white', undefined, 20000);
         },
       });
   }
@@ -838,9 +839,12 @@ export class VideoComponent implements OnInit, AfterViewInit {
         );
         if (veo31Model) {
           this.selectModel(veo31Model);
-          handleSuccessSnackbar(
-            this._snackBar,
+          this.notificationService.show(
             "Veo 3.0 doesn't support video as input, so we've switched to Veo 3.1 for you.",
+            'success',
+            undefined,
+            'check_small',
+            undefined,
           );
         }
       }
@@ -911,10 +915,12 @@ export class VideoComponent implements OnInit, AfterViewInit {
       // If it's a video, upload directly
       this.uploadVideoDirectly(file, imageNumber);
     } else {
-      handleErrorSnackbar(
-        this._snackBar,
-        { message: 'Unsupported file type.' },
-        'File Upload',
+      this.notificationService.show(
+        'Unsupported file type.',
+        'error',
+        'cross-in-circle-white',
+        undefined,
+        20000,
       );
     }
   }
@@ -950,7 +956,7 @@ export class VideoComponent implements OnInit, AfterViewInit {
           this.clearOtherImage(imageNumber);
         },
         error: error => {
-          handleErrorSnackbar(this._snackBar, error, 'File upload');
+          this.notificationService.show(error.message || error, 'error', 'cross-in-circle-white', undefined, 20000);
         },
       });
   }
@@ -966,10 +972,12 @@ export class VideoComponent implements OnInit, AfterViewInit {
         // If it's a VIDEO, upload it directly
         this.uploadVideoDirectly(file, imageNumber);
       } else {
-        handleErrorSnackbar(
-          this._snackBar,
-          { message: 'Unsupported file type.' },
-          'File Upload',
+        this.notificationService.show(
+          'Unsupported file type.',
+          'error',
+          'cross-in-circle-white',
+          undefined,
+          20000,
         );
       }
     }
@@ -1052,7 +1060,7 @@ export class VideoComponent implements OnInit, AfterViewInit {
         this.sourceMediaItems[1] = null;
       }
 
-      handleSuccessSnackbar(this._snackBar, "Veo 3 doesn't support 2 images as input, so we've cleared the other one for you.");
+      this.notificationService.show("Veo 3 doesn't support 2 images as input, so we've cleared the other one for you.", 'info', undefined, 'info', 5000);
     }
   }
 
@@ -1112,7 +1120,7 @@ export class VideoComponent implements OnInit, AfterViewInit {
         'Concatenate Mode: The prompt is disabled. Click "Concatenate" to join the videos.';
     }
 
-    handleInfoSnackbar(this._snackBar, message);
+    this.notificationService.show(message, 'info', undefined, 'info', 10000);
   }
 
   private getMimeTypeForSelector():
@@ -1342,9 +1350,9 @@ export class VideoComponent implements OnInit, AfterViewInit {
         this.image2Preview = null;
         this._input2IsVideo = false;
         this.sourceMediaItems[1] = null;
-        this.updateModeAndNotify();
-        this._snackBar.open(snackbarMessage, 'OK', { duration: 5000 });
-      }
+              this.updateModeAndNotify();
+              this.notificationService.show(snackbarMessage, 'info', undefined, 'info', 5000);
+      } // Correctly close the if block
 
       this._switchToReferenceImageModel();
     }
@@ -1359,9 +1367,12 @@ export class VideoComponent implements OnInit, AfterViewInit {
       this.searchRequest.generationModel !== veo31Model.value
     ) {
       this.selectModel(veo31Model);
-      handleSuccessSnackbar(
-        this._snackBar,
+      this.notificationService.show(
         "We've switched to the Veo 3.1 model for you, as this one supports reference images.",
+        'success',
+        undefined,
+        'check_small',
+        undefined,
       );
     }
   }
@@ -1497,3 +1508,5 @@ export class VideoComponent implements OnInit, AfterViewInit {
     // this.promptText.set(this.promptText() + ' ' + preset);
   }
 }
+
+

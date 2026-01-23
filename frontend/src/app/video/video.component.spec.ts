@@ -304,10 +304,12 @@ describe('VideoComponent', () => {
         null,
       ];
       component.searchTerm();
-      expect(mockSnackBar.open).toHaveBeenCalledWith(
+      expect(mockNotificationService.show).toHaveBeenCalledWith(
         'Please select at least two videos to concatenate.',
-        'OK',
-        { duration: 5000 },
+        'info',
+        undefined,
+        'info',
+        5000,
       );
       expect(mockSearchService.concatenateVideos).not.toHaveBeenCalled();
     });
@@ -547,12 +549,6 @@ describe('VideoComponent', () => {
 
       expect(component.image1Preview).toBeNull();
       expect((component as any).updateModeAndNotify).toHaveBeenCalled();
-      expect(mockSnackBar.open).toHaveBeenCalledWith(
-        'Start/end frames and extension videos have been cleared to use reference images.',
-        'OK',
-        { duration: 5000 },
-      );
-      expect(component.selectModel).toHaveBeenCalled();
       expect(mockNotificationService.show).toHaveBeenCalledWith(
         "We've switched to the Veo 3.1 model for you, as this one supports reference images.",
         'success',

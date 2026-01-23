@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { MatToolbarModule } from '@angular/material/toolbar';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 
 import {FooterComponent} from './footer.component';
@@ -25,6 +26,7 @@ describe('FooterComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [FooterComponent],
+      imports: [MatToolbarModule],
     }).compileComponents();
 
     fixture = TestBed.createComponent(FooterComponent);

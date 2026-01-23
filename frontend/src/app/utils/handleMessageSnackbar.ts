@@ -15,8 +15,6 @@
  */
 
 import {MatSnackBar} from '@angular/material/snack-bar';
-import {AppInjector} from '../app-injector';
-import {NotificationService} from '../common/services/notification.service';
 
 export const handleErrorSnackbar: (
   snackBar: MatSnackBar,
@@ -35,18 +33,10 @@ export const handleErrorSnackbar: (
     'Something went wrong';
   const duration = 20000;
 
-  try {
-    const notificationService = AppInjector.get(NotificationService);
-    notificationService.show(
-      errorMessage,
-      'error',
-      'cross-in-circle-white',
-      undefined,
-      duration,
-    );
-  } catch (e) {
-    console.error('NotificationService not available', e);
-  }
+  snackBar.open(errorMessage, 'Close', {
+    duration: duration,
+    panelClass: ['error-snackbar'],
+  });
 };
 
 export const handleSuccessSnackbar: (
@@ -54,18 +44,10 @@ export const handleSuccessSnackbar: (
   msg: string,
   duration?: number,
 ) => void = (snackBar: MatSnackBar, msg: string, duration?: number) => {
-  try {
-    const notificationService = AppInjector.get(NotificationService);
-    notificationService.show(
-      msg,
-      'success',
-      undefined,
-      'check_small',
-      duration,
-    );
-  } catch (e) {
-    console.error('NotificationService not available', e);
-  }
+  snackBar.open(msg, 'Close', {
+    duration: duration,
+    panelClass: ['success-snackbar'],
+  });
 };
 
 export const handleInfoSnackbar: (
@@ -73,10 +55,8 @@ export const handleInfoSnackbar: (
   msg: string,
   duration?: number,
 ) => void = (snackBar: MatSnackBar, msg: string, duration: number = 10000) => {
-  try {
-    const notificationService = AppInjector.get(NotificationService);
-    notificationService.show(msg, 'info', undefined, 'info', duration);
-  } catch (e) {
-    console.error('NotificationService not available', e);
-  }
+  snackBar.open(msg, 'Close', {
+    duration: duration,
+    panelClass: ['info-snackbar'],
+  });
 };

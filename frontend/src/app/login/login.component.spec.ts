@@ -21,7 +21,7 @@ import {
   tick,
 } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
-import { of, throwError } from 'rxjs';
+import { of, throwError, NEVER } from 'rxjs';
 import { LoginComponent } from './login.component';
 import { AuthService } from './../common/services/auth.service';
 import { UserModel } from './../common/models/user.model';
@@ -36,27 +36,31 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { AppInjector, setAppInjector } from '../app-injector';
 import { NotificationService } from '../common/services/notification.service';
 
+// Define a MockAuthService class
+class MockAuthService {
+  signInWithGoogleFirebase = jasmine.createSpy('signInWithGoogleFirebase');
+  signInForGoogleIdentityPlatform = jasmine.createSpy('signInForGoogleIdentityPlatform');
+  // Add any other methods from AuthService that are called in LoginComponent
+}
+
 describe('LoginComponent', () => {
   let component: LoginComponent;
   let fixture: ComponentFixture<LoginComponent>;
-  let authService: jasmine.SpyObj<AuthService>;
+  let authService: MockAuthService; // Use the mocked service
   let router: Router;
   let ngZone: NgZone;
   let snackBar: jasmine.SpyObj<MatSnackBar>;
   let notificationService: jasmine.SpyObj<NotificationService>;
+  let consoleErrorSpy: jasmine.Spy;
 
   const mockUser: UserModel = {
     id: '123',
     name: 'Test User',
     email: 'test@example.com',
-    picture: 'http://example.com/avatar.png',
+    picture: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
   };
 
   beforeEach(async () => {
-    const authServiceSpy = jasmine.createSpyObj('AuthService', [
-      'signInWithGoogleFirebase',
-      'signInForGoogleIdentityPlatform',
-    ]);
     const snackBarSpy = jasmine.createSpyObj('MatSnackBar', ['open']);
     const notificationServiceSpy = jasmine.createSpyObj('NotificationService', [
       'show',
@@ -74,7 +78,7 @@ describe('LoginComponent', () => {
       ],
       declarations: [LoginComponent],
       providers: [
-        { provide: AuthService, useValue: authServiceSpy },
+        { provide: AuthService, useClass: MockAuthService }, // Use useClass for the mock
         { provide: MatSnackBar, useValue: snackBarSpy },
         { provide: NotificationService, useValue: notificationServiceSpy },
       ],
@@ -84,7 +88,9 @@ describe('LoginComponent', () => {
 
     fixture = TestBed.createComponent(LoginComponent);
     component = fixture.componentInstance;
-    authService = TestBed.inject(AuthService) as jasmine.SpyObj<AuthService>;
+    // fixture.detectChanges(); // No longer needed with autoDetectChanges
+    fixture.autoDetectChanges(true); // Enable auto-detection of changes
+    authService = TestBed.inject(AuthService) as unknown as MockAuthService; // Inject the mock instance
     router = TestBed.inject(Router);
     ngZone = TestBed.inject(NgZone);
     snackBar = TestBed.inject(MatSnackBar) as jasmine.SpyObj<MatSnackBar>;
@@ -98,20 +104,26 @@ describe('LoginComponent', () => {
   });
 
   describe('loginWithGoogle', () => {
-    it('should show loader and reset error flags', () => {
-      authService.signInWithGoogleFirebase.and.returnValue(of(''));
-      authService.signInForGoogleIdentityPlatform.and.returnValue(of(''));
-      component.loader = false;
-      component.invalidLogin = true;
-      component.errorMessage = 'Old error';
-
-      component.loginWithGoogle();
-
-      expect(component.loader).toBeTrue();
-      expect(component.invalidLogin).toBeFalse();
-      expect(component.errorMessage).toBe('');
+    beforeEach(() => {
+      consoleErrorSpy = spyOn(console, 'error');
     });
-
+          it('should show loader and reset error flags', fakeAsync(() => {
+            authService.signInWithGoogleFirebase.and.returnValue(NEVER); // Use NEVER to prevent completion or error
+            authService.signInForGoogleIdentityPlatform.and.returnValue(NEVER); // Use NEVER
+            component.loader = false;
+            component.invalidLogin = true;
+            component.errorMessage = 'Old error';
+    
+            component.loginWithGoogle();
+            // fixture.detectChanges(); // autoDetectChanges is true
+    
+            expect(component.loader).toBeTrue();
+            expect(component.invalidLogin).toBeFalse();
+            expect(component.errorMessage).toBe('');
+    
+            // No tick() here, as NEVER never completes
+            // expect(component.loader).toBeFalse(); // This expectation should now be removed or moved to other tests
+          }));
     describe('in local environment', () => {
       beforeEach(() => {
         (environment as any).isLocal = true;
@@ -222,6 +234,9 @@ describe('LoginComponent', () => {
   });
 
   describe('handleLoginError', () => {
+    beforeEach(() => {
+      consoleErrorSpy = spyOn(console, 'error');
+    });
     it('should hide loader and show snackbar', () => {
       component.loader = true;
       const errorMessage = {message: 'Test error message'};

@@ -18,6 +18,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { MatIconTestingModule } from '@angular/material/icon/testing';
 import {
   GenerationModelConfig,
   MODEL_CONFIGS,
@@ -87,6 +88,7 @@ describe('HomeComponent', () => {
         HttpClientTestingModule,
         NoopAnimationsModule,
         MatIconModule,
+        MatIconTestingModule,
         MatProgressSpinnerModule,
         MatButtonModule,
         MatMenuModule,
@@ -163,7 +165,7 @@ describe('HomeComponent', () => {
         aspectRatio: '16:9',
         negativePrompt: 'blurry',
         sourceAssetIds: [123],
-        previewUrls: ['http://example.com/image.png']
+        previewUrls: ['data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=']
       };
       mockRouter.getCurrentNavigation.and.returnValue({ extras: { state: { remixState } } } as any);
       component.applyRemixState(remixState);

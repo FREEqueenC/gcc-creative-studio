@@ -14,6 +14,18 @@
  * limitations under the License.
  */
 
+//import { HttpClient } from '@angular/common/http';
+// import {
+//   AfterViewInit,
+//   ChangeDetectorRef,
+//   Component,
+//   OnInit,
+//   ViewChild
+// } from '@angular/core';
+// import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+// import { MatDialog } from '@angular/material/dialog';
+// import { MatIconRegistry } from '@angular/material/icon';
+import { NotificationService } from '../common/services/notification.service';
 import { HttpClient } from '@angular/common/http';
 import {
   AfterViewInit,
@@ -25,7 +37,6 @@ import {
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconRegistry } from '@angular/material/icon';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatStepper } from '@angular/material/stepper';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { NavigationExtras, Router } from '@angular/router';
@@ -47,7 +58,6 @@ import {
 import { SearchService } from '../services/search/search.service';
 import { VtoStateService } from '../services/vto-state.service';
 import { WorkspaceStateService } from '../services/workspace/workspace-state.service';
-import { handleErrorSnackbar } from '../utils/handleMessageSnackbar';
 import { VtoInputLink, VtoRequest, VtoSourceMediaItemLink } from './vto.model';
 
 interface Garment {
@@ -135,7 +145,7 @@ export class VtoComponent implements OnInit, AfterViewInit {
     private readonly _formBuilder: FormBuilder,
     private readonly http: HttpClient,
     public dialog: MatDialog,
-    private _snackBar: MatSnackBar,
+    private notificationService: NotificationService,
     private router: Router,
     private cdr: ChangeDetectorRef,
     private sanitizer: DomSanitizer,
@@ -146,10 +156,7 @@ export class VtoComponent implements OnInit, AfterViewInit {
     private vtoStateService: VtoStateService,
   ) {
     this.activeVtoJob$ = this.searchService.activeVtoJob$;
-    this.matIconRegistry.addSvgIcon(
-      'mobile-white-gemini-spark-icon',
-      this.setPath(`${this.path}/mobile-white-gemini-spark-icon.svg`),
-    );
+    
 
     this.firstFormGroup = this._formBuilder.group({
       modelType: ['female', Validators.required],
@@ -188,7 +195,7 @@ export class VtoComponent implements OnInit, AfterViewInit {
       this.selectedTop = top;
       if (top) {
         if (this.secondFormGroup.get('dress')?.value) {
-          handleErrorSnackbar(this._snackBar, { message: 'A dress cannot be worn with a top. The dress has been unselected.' }, 'Garment Conflict');
+          this.notificationService.show('A dress cannot be worn with a top. The dress has been unselected.', 'error', 'cross-in-circle-white', undefined, 20000);
         }
         this.selectedDress = null;
         this.secondFormGroup.get('dress')?.reset(null, { emitEvent: false });
@@ -198,7 +205,7 @@ export class VtoComponent implements OnInit, AfterViewInit {
       this.selectedBottom = bottom;
       if (bottom) {
         if (this.secondFormGroup.get('dress')?.value) {
-          handleErrorSnackbar(this._snackBar, { message: 'A dress cannot be worn with a bottom. The dress has been unselected.' }, 'Garment Conflict');
+          this.notificationService.show('A dress cannot be worn with a bottom. The dress has been unselected.', 'error', 'cross-in-circle-white', undefined, 20000);
         }
         this.selectedDress = null;
         this.secondFormGroup.get('dress')?.reset(null, { emitEvent: false });
@@ -222,7 +229,7 @@ export class VtoComponent implements OnInit, AfterViewInit {
             'A bottom cannot be worn with a dress. The bottom has been unselected.';
         }
         if (message) {
-          handleErrorSnackbar(this._snackBar, { message: message }, 'Garment Conflict');
+          this.notificationService.show(message, 'error', 'cross-in-circle-white', undefined, 20000);
         }
         this.selectedTop = null;
         this.selectedBottom = null;
@@ -240,7 +247,7 @@ export class VtoComponent implements OnInit, AfterViewInit {
     this.restoreVtoState();
 
     // Subscribe to activeVtoJob$ to keep imagenDocuments in sync
-    this.activeVtoJob$.subscribe(vtoJob => {
+    this.activeVtoJob$.subscribe((vtoJob: MediaItem | null) => {
       if (vtoJob && vtoJob.status === JobStatus.COMPLETED) {
         this.previousResult = this.imagenDocuments;
         this.imagenDocuments = vtoJob;
@@ -264,11 +271,7 @@ export class VtoComponent implements OnInit, AfterViewInit {
     }
   }
 
-  private path = '../../assets/images';
-
-  private setPath(url: string): SafeResourceUrl {
-    return this.sanitizer.bypassSecurityTrustResourceUrl(url);
-  }
+  
 
   private loadVtoAssets(): void {
     this.isLoading = true;
@@ -305,7 +308,7 @@ export class VtoComponent implements OnInit, AfterViewInit {
               : this.maleModels;
         },
         error: err => {
-          handleErrorSnackbar(this._snackBar, err, 'Load VTO assets');
+          this.notificationService.show(err.message || err, 'error', 'cross-in-circle-white', undefined, 20000);
         },
       });
   }
@@ -389,7 +392,7 @@ export class VtoComponent implements OnInit, AfterViewInit {
       this.uploadAsset(file)
         .pipe(finalize(() => (this.isLoading = false)))
         .subscribe({
-          next: asset => {
+          next: (asset: { originalFilename: any; presignedUrl: any; id: any; }) => {
             const uploadedModel: Model = {
               id: 'uploaded',
               name: asset.originalFilename,
@@ -399,8 +402,8 @@ export class VtoComponent implements OnInit, AfterViewInit {
             };
             this.firstFormGroup.get('model')?.setValue(uploadedModel);
           },
-          error: error => {
-            handleErrorSnackbar(this._snackBar, error, 'Image upload');
+          error: (error: { message: any; }) => {
+            this.notificationService.show(error.message || error, 'error', 'cross-in-circle-white', undefined, 20000);
           },
         });
     }
@@ -433,7 +436,7 @@ export class VtoComponent implements OnInit, AfterViewInit {
       !this.selectedDress &&
       !this.selectedShoes
     ) {
-      handleErrorSnackbar(this._snackBar, { message: 'You need to select at least 1 garment!' }, 'Virtual Try-On');
+      this.notificationService.show('You need to select at least 1 garment!', 'error', 'cross-in-circle-white', undefined, 20000);
       return;
     }
 
@@ -445,7 +448,7 @@ export class VtoComponent implements OnInit, AfterViewInit {
     const workspaceId = this.workspaceStateService.getActiveWorkspaceId();
 
     if (!workspaceId) {
-      handleErrorSnackbar(this._snackBar, { message: 'Workspace ID is missing' }, 'Virtual Try-On');
+      this.notificationService.show('Workspace ID is missing', 'error', 'cross-in-circle-white', undefined, 20000);
       return;
     }
 
@@ -470,7 +473,7 @@ export class VtoComponent implements OnInit, AfterViewInit {
           // UI will update via activeVtoJob$ observable
         },
         error: err => {
-          handleErrorSnackbar(this._snackBar, err, 'Virtual Try-On');
+          this.notificationService.show(err.message || err, 'error', 'cross-in-circle-white', undefined, 20000);
         },
       });
   }

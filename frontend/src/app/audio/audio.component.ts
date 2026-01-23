@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
+//import { Component, ElementRef, ViewChild } from '@angular/core';
+//import { AudioService, CreateAudioDto, GenerationModelEnum } from '../services/audio/audio.service';
+import { NotificationService } from '../common/services/notification.service';
 import { Component, ElementRef, ViewChild } from '@angular/core';
 import { AudioService, CreateAudioDto, GenerationModelEnum } from '../services/audio/audio.service';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSelectChange } from '@angular/material/select';
 import { finalize } from 'rxjs';
@@ -26,7 +28,6 @@ import { MediaItem } from '../common/models/media-item.model';
 import { AddVoiceDialogComponent } from '../components/add-voice-dialog/add-voice-dialog.component';
 import { MatIconRegistry } from '@angular/material/icon';
 import {LanguageEnum, VoiceEnum} from './audio.constants';
-import { handleErrorSnackbar, handleSuccessSnackbar } from '../utils/handleMessageSnackbar';
 
 // UI Helper type
 type UiModelType = 'lyria' | 'chirp' | 'gemini-tts';
@@ -157,7 +158,7 @@ export class AudioComponent {
 
   constructor(
     private audioService: AudioService,
-    private snackBar: MatSnackBar,
+    private notificationService: NotificationService,
     private workspaceStateService: WorkspaceStateService,
     private dialog: MatDialog,
     private sanitizer: DomSanitizer,
@@ -199,69 +200,68 @@ export class AudioComponent {
         };
         this.voices = [newVoice, ...this.voices];
         this.selectedVoice = newVoice.id;
-        handleSuccessSnackbar(this.snackBar, 'Voice cloned successfully!');
+        this.notificationService.show('Voice cloned successfully!', 'success', undefined, 'check_small', undefined);
       }
     });
   }
 
   generate() {
-    this.isLoading = true;
-    this.mediaItem = null; // Clear previous result
-
     const activeWorkspaceId = this.workspaceStateService.getActiveWorkspaceId();
     if (!activeWorkspaceId) {
-      handleErrorSnackbar(this.snackBar, { message: 'Please select a workspace first.' }, 'Workspace');
-      return;
-    }
-
-    // 1. Determine specific backend model based on UI selection
-    let backendModel: GenerationModelEnum;
-
-    if (this.selectedModel === 'lyria') {
-      backendModel = GenerationModelEnum.LYRIA_002;
-    } else if (this.selectedModel === 'chirp') {
-      backendModel = GenerationModelEnum.CHIRP_3;
+      this.notificationService.show('Please select a workspace first.', 'error', 'cross-in-circle-white', undefined, 20000);
+      this.isLoading = false;
     } else {
-      // Default to Flash TTS for Gemini selection
-      backendModel = GenerationModelEnum.GEMINI_2_5_FLASH_TTS;
+      this.isLoading = true;
+      this.mediaItem = null; // Clear previous result
+
+      // 1. Determine specific backend model based on UI selection
+      let backendModel: GenerationModelEnum;
+
+      if (this.selectedModel === 'lyria') {
+        backendModel = GenerationModelEnum.LYRIA_002;
+      } else if (this.selectedModel === 'chirp') {
+        backendModel = GenerationModelEnum.CHIRP_3;
+      } else {
+        // Default to Flash TTS for Gemini selection
+        backendModel = GenerationModelEnum.GEMINI_2_5_FLASH_TTS;
+      }
+
+      // 2. Construct the generic DTO
+      const request: CreateAudioDto = {
+        model: backendModel,
+        prompt: this.prompt,
+        workspaceId: activeWorkspaceId,
+        // Optional fields (backend ignores them if not relevant to the specific model)
+        negativePrompt:
+          this.selectedModel === 'lyria' ? this.negativePrompt : undefined,
+        seed: this.selectedModel === 'lyria' ? this.seed : undefined,
+        sampleCount: this.sampleCount,
+        languageCode:
+          this.selectedModel !== 'lyria'
+            ? (this.selectedLanguage as LanguageEnum)
+            : undefined,
+        voiceName:
+          this.selectedModel !== 'lyria'
+            ? (this.selectedVoice as VoiceEnum)
+            : undefined,
+      };
+
+      this.audioUrl = null;
+
+      this.audioService
+        .generateAudio(request)
+        .pipe(finalize(() => (this.isLoading = false)))
+        .subscribe({
+          next: (response: MediaItem) => {
+            this.mediaItem = response;
+            // The Lightbox will handle displaying the first item automatically via inputs
+          },
+          error: (error: any) => {
+            this.notificationService.show(error.message || error, 'error', 'cross-in-circle-white', undefined, 20000);
+            console.error('Generation failed:', error);
+          },
+        });
     }
-
-    // 2. Construct the generic DTO
-    const request: CreateAudioDto = {
-      model: backendModel,
-      prompt: this.prompt,
-      workspaceId: activeWorkspaceId,
-      // Optional fields (backend ignores them if not relevant to the specific model)
-      negativePrompt:
-        this.selectedModel === 'lyria' ? this.negativePrompt : undefined,
-      seed: this.selectedModel === 'lyria' ? this.seed : undefined,
-      sampleCount: this.sampleCount,
-      languageCode:
-        this.selectedModel !== 'lyria'
-          ? (this.selectedLanguage as LanguageEnum)
-          : undefined,
-      voiceName:
-        this.selectedModel !== 'lyria'
-          ? (this.selectedVoice as VoiceEnum)
-          : undefined,
-    };
-
-    this.isLoading = true;
-    this.audioUrl = null;
-
-    this.audioService
-      .generateAudio(request)
-      .pipe(finalize(() => (this.isLoading = false)))
-      .subscribe({
-        next: (response: MediaItem) => {
-          this.mediaItem = response;
-          // The Lightbox will handle displaying the first item automatically via inputs
-        },
-        error: (error: any) => {
-          handleErrorSnackbar(this.snackBar, error, 'Generation');
-          console.error('Generation failed:', error);
-        },
-      });
   }
 
   // --- Player Logic ---

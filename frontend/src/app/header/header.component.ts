@@ -60,6 +60,7 @@ export class HeaderComponent implements OnDestroy {
   toolsMenuHovered = false;
   private menuTimeout: any;
   isBrowser: boolean;
+  isLinkActive: any;
 
   constructor(
     private sanitizer: DomSanitizer,
@@ -101,6 +102,10 @@ export class HeaderComponent implements OnDestroy {
       });
   }
 
+  get isAdmin(): boolean {
+    return this.authService.isUserAdmin();
+  }
+
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
@@ -118,6 +123,10 @@ export class HeaderComponent implements OnDestroy {
 
   navigate() {
     void this.router.navigateByUrl('/');
+  }
+
+  navigateToAdmin() {
+    void this.router.navigateByUrl('/admin');
   }
 
   toggleMenu() {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Google LLC
+ * Copyright 2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,48 +14,33 @@
  * limitations under the License.
  */
 
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { ReactiveFormsModule } from '@angular/forms';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import {ComponentFixture, TestBed} from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MaterialModule } from '../../../common/material.module';
 
+import { AddStepModalComponent } from './add-step-modal.component';
 
-
-import { FunTemplatesComponent } from './fun-templates.component';
-
-import { MatIconModule } from '@angular/material/icon';
-
-import { MatIconTestingModule } from '@angular/material/icon/testing';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-
-
-describe('FunTemplatesComponent', () => {
-
-  let component: FunTemplatesComponent;
-
-  let fixture: ComponentFixture<FunTemplatesComponent>;
-
-
+describe('AddStepModalComponent', () => {
+  let component: AddStepModalComponent;
+  let fixture: ComponentFixture<AddStepModalComponent>;
 
   beforeEach(async () => {
-
     await TestBed.configureTestingModule({
+      declarations: [AddStepModalComponent],
+      imports: [ReactiveFormsModule, HttpClientTestingModule, MaterialModule],
+      providers: [
+        { provide: MatDialogRef, useValue: {} },
+        { provide: MAT_DIALOG_DATA, useValue: {} }
+      ]
+    })
+    .compileComponents();
 
-      declarations: [FunTemplatesComponent],
-
-      imports: [HttpClientTestingModule, MatIconModule, MatIconTestingModule, MatProgressSpinnerModule],
-
-    }).compileComponents();
-
-
-
-    fixture = TestBed.createComponent(FunTemplatesComponent);
-
+    fixture = TestBed.createComponent(AddStepModalComponent);
     component = fixture.componentInstance;
-
     fixture.detectChanges();
-
   });
-
-
 
   it('should create', () => {
     expect(component).toBeTruthy();

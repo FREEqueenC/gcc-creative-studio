@@ -59,4 +59,5 @@ export interface Workspace {
   organizationId?: number;
   organizationName?: string;
   permissions?: WorkspacePermissions;
+  myWsRole?: string;
 }

@@ -184,3 +184,8 @@ class WorkspaceModel(BaseDocument):
         default=[],
         description="List of members in this workspace."
     )
+    
+    my_ws_role: Optional[WorkspaceRoleEnum] = Field(
+        default=None,
+        description="The current user's highest effective role on this workspace."
+    )

@@ -283,6 +283,8 @@ class WorkspaceService:
         for ws in workspaces:
             perms = await self.permission_service.get_permissions_for_workspace(user.id, ws.id)
             ws.permissions = perms
+            effective_role = await self.permission_service.get_effective_workspace_role(user.id, ws.id)
+            ws.my_ws_role = effective_role
             
         return workspaces
 

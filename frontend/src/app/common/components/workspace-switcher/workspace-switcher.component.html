@@ -66,29 +66,26 @@
                 
                 <!-- Badge Logic -->
                 <ng-container *ngIf="currentUser?.isSuperAdmin">
-                  <div *ngIf="workspace.members && workspace.members.length > 0; else superadminBadge">
-                    <div 
-                        class="px-1.5 pt-0.5 rounded border text-[9px] font-bold uppercase tracking-wider"
-                        [ngClass]="getRoleBadgeClass(workspace.members[0]?.role || '')"
-                    >
-                        {{ workspace.members[0].role }}
-                    </div>
+                  <div 
+                      class="px-1.5 pt-0.5 rounded border text-[9px] font-bold uppercase tracking-wider bg-yellow-300 text-yellow-900 border-yellow-400 superadmin-badge"
+                  >
+                      Superadmin
                   </div>
-                  <ng-template #superadminBadge>
-                    <div 
-                        class="px-1.5 pt-0.5 rounded border text-[9px] font-bold uppercase tracking-wider bg-yellow-300 text-yellow-900 border-yellow-400 superadmin-badge"
-                    >
-                        Superadmin
-                    </div>
-                  </ng-template>
+                  <div 
+                      class="px-1.5 pt-0.5 rounded border text-[9px] font-bold uppercase tracking-wider"
+                      [ngClass]="getRoleBadgeClass('owner')"
+                      *ngIf="workspace.myWsRole === 'owner'"
+                  >
+                      Owner
+                  </div>
                 </ng-container>
 
                 <div 
                     class="px-1.5 pt-0.5 rounded border text-[9px] font-bold uppercase tracking-wider"
-                    [ngClass]="getRoleBadgeClass(workspace.members[0]?.role || '')"
-                    *ngIf="!currentUser?.isSuperAdmin && workspace.members && workspace.members.length > 0"
+                    [ngClass]="getRoleBadgeClass(workspace.myWsRole || '')"
+                    *ngIf="!currentUser?.isSuperAdmin && workspace.myWsRole"
                 >
-                    {{ workspace.members[0].role }}
+                    {{ workspace.myWsRole }}
                 </div>
             </div>
         </div>

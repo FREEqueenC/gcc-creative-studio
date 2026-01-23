@@ -3,10 +3,10 @@
 This module provides a service to efficiently calculate batch permissions for
 UI elements (buttons, tabs, menus). It queries OpenFGA in parallel to determine
 what actions the current user can perform on a given resource (Workspace/Org).
-"""
+""" 
 
 import asyncio
-from typing import List, Dict, Any, Type, TypeVar
+from typing import Dict, Any, TypeVar, Optional
 from openfga_sdk import OpenFgaClient
 from openfga_sdk.client.models import ClientCheckRequest
 from src.core.fga import fga_client
@@ -152,3 +152,24 @@ class PermissionService:
         except Exception as e:
             logger.error(f"FGA Single Check Failed: {e}")
             return False
+
+    async def get_effective_workspace_role(self, user_id: int, workspace_id: int) -> Optional[str]:
+        """
+        Determines the highest effective role a user has on a workspace.
+        Checks in order: owner, admin, editor, viewer.
+        """
+        from src.workspaces.schema.workspace_model import WorkspaceRoleEnum
+
+        async def _check_role(relation: str) -> bool:
+            return await self.has_permission(user_id, "workspace", str(workspace_id), relation)
+
+        if await _check_role(WorkspaceRoleEnum.OWNER.value):
+            return WorkspaceRoleEnum.OWNER.value
+        if await _check_role(WorkspaceRoleEnum.ADMIN.value):
+            return WorkspaceRoleEnum.ADMIN.value
+        if await _check_role(WorkspaceRoleEnum.EDITOR.value):
+            return WorkspaceRoleEnum.EDITOR.value
+        if await _check_role(WorkspaceRoleEnum.VIEWER.value):
+            return WorkspaceRoleEnum.VIEWER.value
+        
+        return None

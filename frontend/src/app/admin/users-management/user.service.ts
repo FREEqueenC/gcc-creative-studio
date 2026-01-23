@@ -130,25 +130,7 @@ export class UserService {
 
   // Basic error handling
   private handleError(error: HttpErrorResponse) {
-    let errorMessage = 'An unknown error occurred!';
-    if (error.error instanceof HttpErrorResponse) {
-      // A client-side or network error occurred. Handle it accordingly.
-      errorMessage = `Error: ${error.error.message}`;
-    } else {
-      // The backend returned an unsuccessful response code.
-      // The response body may contain clues as to what went wrong.
-      errorMessage = `Error Code: ${error.status}\nMessage: ${error.message}`;
-      if (
-        error.error &&
-        typeof error.error === 'object' &&
-        error.error.detail
-      ) {
-        errorMessage += `\nDetails: ${error.error.detail}`;
-      } else if (error.error) {
-        errorMessage += `\nBackend Error: ${JSON.stringify(error.error)}`;
-      }
-    }
-    console.error(errorMessage);
-    return throwError(() => new Error(errorMessage));
+    // Pass the raw error to the component so handleMessageSnackbar can parse it
+    return throwError(() => error);
   }
 }

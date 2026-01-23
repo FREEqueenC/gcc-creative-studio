@@ -7,6 +7,12 @@ from src.workspaces.workspace_service import WorkspaceService
 from src.auth.session import get_session_user
 from src.core.fga import check_permission
 
+"""Authentication API Endpoints.
+
+This module defines the API routes for authentication-related operations,
+including retrieving the current user profile and checking permissions.
+"""
+
 router = APIRouter()
 
 @router.get("/api/me")

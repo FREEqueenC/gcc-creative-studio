@@ -1,3 +1,11 @@
+"""Dual-Write Consistency Service.
+
+This module handles the consistency between the primary database (PostgreSQL)
+and the authorization engine (OpenFGA). It implements a 'Dual-Write' Strategy, 
+the 'Compensating Transaction' pattern to rollback database changes if the 
+corresponding FGA write fails.
+"""
+
 import logging
 from typing import Callable, Awaitable, TypeVar, Any
 from fastapi import HTTPException, status

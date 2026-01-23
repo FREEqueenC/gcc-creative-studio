@@ -12,6 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""IAM Credentials Signing Service.
+
+This module provides a custom credentials class for signing bytes and generating
+presigned URLs (GET and PUT) for Google Cloud Storage using the IAM Credentials API.
+It allows separating the permission to grant access from the backend's identity.
+"""
+
 import datetime
 import logging
 from os import getenv

@@ -1,3 +1,10 @@
+"""OpenFGA Store & Model Initialization.
+
+This module is responsible for bootstrapping the OpenFGA environment.
+It ensures the OpenFGA store exists and writes the latest authorization model
+(ReBAC schema) to the store on application startup.
+"""
+
 import logging
 import os
 from openfga_sdk import OpenFgaClient

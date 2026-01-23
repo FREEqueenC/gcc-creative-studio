@@ -1,3 +1,10 @@
+"""OpenFGA Client Configuration & Wrapper.
+
+This module initializes the OpenFGA client and provides a wrapper class to handle
+client lifecycle and error handling. It also defines the core `check_permission`
+function used throughout the application for authorization checks.
+"""
+
 import os
 import logging
 from typing import List, Optional, Dict, Any, Union

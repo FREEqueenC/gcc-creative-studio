@@ -1,3 +1,10 @@
+"""UI Permission Calculation Service.
+
+This module provides a service to efficiently calculate batch permissions for
+UI elements (buttons, tabs, menus). It queries OpenFGA in parallel to determine
+what actions the current user can perform on a given resource (Workspace/Org).
+"""
+
 import asyncio
 from typing import List, Dict, Any, Type, TypeVar
 from openfga_sdk import OpenFgaClient

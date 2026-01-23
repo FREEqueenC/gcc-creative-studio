@@ -1,3 +1,10 @@
+"""FastAPI Permission Dependencies.
+
+This module defines reusable FastAPI dependencies (guards) for route protection.
+It uses the OpenFGA client to enforce fine-grained access control checks,
+such as requiring Super Admin status or specific organization roles.
+"""
+
 from fastapi import Depends, HTTPException, status
 from src.auth.auth_service import get_current_user
 from src.users.user_model import UserModel

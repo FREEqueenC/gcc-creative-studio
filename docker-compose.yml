@@ -26,7 +26,7 @@ services:
       - postgres
 
     env_file:
-      - ./backend/docker.env
+      - ./backend/.docker.env
 
     # Override the Dockerfile's CMD to enable --reload.
     # Using 1 worker is better for a dev/reload environment.

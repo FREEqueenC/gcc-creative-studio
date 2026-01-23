@@ -350,7 +350,7 @@ class OrganizationService:
             return updated_org
 
         # 4. Define FGA Operation
-        async def fga_op():
+        async def fga_op(updated_org: OrganizationModel):
             # If transferring ownership, we need to update the previous owner's FGA tuple too
             if is_transferring_ownership and previous_owner_id and previous_owner_id != user_id:
                 # Demote previous owner to ADMIN in FGA
@@ -444,7 +444,7 @@ class OrganizationService:
             )
 
         # 5. Define Rollback Operation
-        async def rollback_op():
+        async def rollback_op(updated_org: OrganizationModel):
             print(f"Reverting DB role change for user {user_id} in org {org_id} to {old_role_enum}")
             await self.repo.update_member_role(org_id, user_id, old_role_enum)
             

@@ -174,6 +174,7 @@ class WorkspaceModel(BaseDocument):
     )
     organization_id: Optional[int] = None
     organization_name: Optional[str] = None
+    organization_logo: Optional[str] = None
     
     permissions: Optional[WorkspacePermissions] = Field(
         default=None,

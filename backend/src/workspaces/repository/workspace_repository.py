@@ -431,9 +431,10 @@ class WorkspaceRepository(BaseRepository[Workspace, WorkspaceModel]):
             "updated_at": workspace.updated_at
         }
         
-        # Map organization name if available
+        # Map organization name and logo if available
         if workspace.organization:
             workspace_dict["organization_name"] = workspace.organization.name
+            workspace_dict["organization_logo"] = workspace.organization.logo
             
         # Map members
         if include_members:

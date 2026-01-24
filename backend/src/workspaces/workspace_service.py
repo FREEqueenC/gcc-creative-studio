@@ -42,6 +42,8 @@ from src.workspaces.schema.workspace_model import WorkspacePermissions
 from src.common.consistency_service import ConsistencyService
 from src.common.permissions import WorkspacePermissionEnum
 
+from src.auth.iam_signer_credentials_service import IamSignerCredentials
+
 class WorkspaceService:
     """
     Handles the business logic for workspace management.
@@ -61,6 +63,12 @@ class WorkspaceService:
         self.organization_service = organization_service
         self.permission_service = PermissionService()
         self.consistency_service = consistency_service
+        self.signer = IamSignerCredentials()
+
+    def _sign_logo(self, workspace: WorkspaceModel):
+        """Generates a presigned URL for the organization logo if it exists."""
+        if workspace.organization_logo and workspace.organization_logo.startswith("gs://"):
+            workspace.organization_logo = self.signer.generate_presigned_url(workspace.organization_logo)
 
     async def create_workspace(
         self, user: UserModel, create_dto: CreateWorkspaceDto, is_internal_call: bool = False
@@ -286,6 +294,7 @@ class WorkspaceService:
             ws.permissions = perms
             effective_role = await self.permission_service.get_effective_workspace_role(user.id, ws.id)
             ws.my_ws_role = effective_role
+            self._sign_logo(ws)
             
         return workspaces
 
@@ -563,7 +572,12 @@ class WorkspaceService:
                 # If no specific org, we must filter by ALL admin orgs.
                 search_dto.organization_ids = admin_org_ids
         
-        return await self.workspace_repo.query_basic(search_dto)
+                search_dto.organization_ids = admin_org_ids
+        
+        result = await self.workspace_repo.query_basic(search_dto)
+        for ws in result.data:
+            self._sign_logo(ws)
+        return result
 
     async def ensure_default_workspaces(self, user: UserModel, org: OrganizationModel):
         """

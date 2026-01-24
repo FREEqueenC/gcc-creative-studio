@@ -233,7 +233,9 @@
       margin-bottom: 12px;
 
       mat-icon {
-        color: #fbbc04;
+        background: linear-gradient(to right, #3b82f6, #8b5cf6, #f87171);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
         margin-right: 8px;
       }
 
@@ -258,9 +260,17 @@
       button.mat-mdc-menu-item {
         background: rgba(255, 255, 255, 0.08);
         border-radius: 8px;
+        transition: all 0.2s ease;
 
         &:hover {
           background: rgba(255, 255, 255, 0.12) !important;
+          mat-icon,
+            .mdc-list-item__primary-text {
+              background: linear-gradient(to right, #3b82f6, #8b5cf6, #f87171);
+              -webkit-background-clip: text;
+              -webkit-text-fill-color: transparent;
+              color: transparent; // Needed for some browsers/elements to show the background
+            }
         }
       }
     }
@@ -279,6 +289,18 @@
       margin-top: 8px;
       width: 100%;
       justify-content: space-between;
+      transition: all 0.2s ease;
+      
+        &:hover {
+      
+          mat-icon,
+          .mdc-list-item__primary-text {
+            background: linear-gradient(to right, #3b82f6, #8b5cf6, #f87171);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: transparent;
+          }
+        }
     }
 
     mat-divider {

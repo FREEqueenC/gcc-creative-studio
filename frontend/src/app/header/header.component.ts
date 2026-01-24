@@ -55,7 +55,7 @@ import {WorkspaceStateService} from '../services/workspace/workspace-state.servi
 })
 export class HeaderComponent implements OnDestroy {
   currentUser: UserModel | null;
-  menuFixed = false;
+  menuFixed = true;
   menuIsHovered = false;
   isAdmin$: Observable<boolean>;
   canViewWorkflows$: Observable<boolean>;

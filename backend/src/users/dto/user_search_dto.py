@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from typing import Optional
-
+from fastapi import Query
 from src.common.dto.base_search_dto import BaseSearchDto
 
 
@@ -28,3 +28,4 @@ class UserSearchDto(BaseSearchDto):
     organization_id: Optional[int] = None
     organization_ids: Optional[list[int]] = None
     workspace_id: Optional[int] = None
+    include_deleted: Optional[bool] = Query(False, alias="include_deleted")

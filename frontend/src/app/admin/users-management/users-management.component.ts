@@ -34,6 +34,7 @@ import {UserFormComponent} from './user-form.component';
 import {MatSnackBar} from '@angular/material/snack-bar';
 import {UserModel, UserRolesEnum} from '../../common/models/user.model';
 import { handleErrorSnackbar, handleSuccessSnackbar } from '../../utils/handleMessageSnackbar';
+import { ConfirmationDialogComponent } from '../../common/components/confirmation-dialog/confirmation-dialog.component';
 import { OrganizationService } from '../../services/organization/organization.service';
 import { WorkspaceService } from '../../services/workspace/workspace.service';
 import { Organization } from '../../common/models/organization.model';
@@ -52,6 +53,7 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
     'picture',
     'name',
     'email',
+    'status',
     'roles',
     'createdAt',
     'updatedAt',
@@ -72,6 +74,7 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
   private filterSubject = new Subject<string>();
   private destroy$ = new Subject<void>();
   currentFilter = '';
+  includeDeleted = false;
   
   // Filters
   selectedOrganizationId: number | null = null;
@@ -217,7 +220,8 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
           this.currentFilter,
           offset,
           this.selectedOrganizationId || undefined,
-          this.selectedWorkspaceId || undefined
+          this.selectedWorkspaceId || undefined,
+          this.includeDeleted
         ),
       );
 
@@ -243,6 +247,11 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
       this.paginator.pageIndex = 0;
     }
     this.fetchPage(0);
+  }
+
+  toggleIncludeDeleted(checked: boolean): void {
+    this.includeDeleted = checked;
+    this.resetPaginationAndFetch();
   }
 
   openUserForm(user: UserModel): void {
@@ -279,20 +288,59 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Simple confirmation, consider using a MatDialog for a better UX
-    if (confirm(`Are you sure you want to delete user with ID: ${userId}?`)) {
-      this.isLoading = true;
-      try {
-        await firstValueFrom(this.userService.deleteUser(userId));
-        handleSuccessSnackbar(this._snackBar, 'User deleted successfully!');
-        this.resetPaginationAndFetch();
-      } catch (err) {
-        console.error(`Error deleting user ${userId}:`, err);
-        handleErrorSnackbar(this._snackBar, err, 'Delete user');
-      } finally {
-        this.isLoading = false;
+    const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
+      data: {
+        title: 'Confirm Deletion',
+        message: `Are you sure you want to delete user with ID: ${userId}? This action cannot be undone.`,
+        confirmText: 'Delete',
+        cancelText: 'Cancel',
+        confirmColor: 'warn'
       }
-    }
+    });
+
+    dialogRef.afterClosed().subscribe(async (result) => {
+      if (result) {
+        this.isLoading = true;
+        try {
+          await firstValueFrom(this.userService.deleteUser(userId));
+          handleSuccessSnackbar(this._snackBar, 'User soft deleted successfully!');
+          this.resetPaginationAndFetch();
+        } catch (err) {
+          console.error(`Error deleting user ${userId}:`, err);
+          handleErrorSnackbar(this._snackBar, err, 'Delete user');
+        } finally {
+          this.isLoading = false;
+        }
+      }
+    });
+  }
+
+  async recoverUser(userId: string): Promise<void> {
+    const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
+      data: {
+        title: 'Confirm Recovery',
+        message: `Are you sure you want to recover user with ID: ${userId}?`,
+        confirmText: 'Recover',
+        cancelText: 'Cancel',
+        confirmColor: 'primary'
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(async (result) => {
+      if (result) {
+        this.isLoading = true;
+        try {
+          await firstValueFrom(this.userService.recoverUser(userId));
+          handleSuccessSnackbar(this._snackBar, 'User recovered successfully!');
+          this.resetPaginationAndFetch();
+        } catch (err) {
+          console.error(`Error recovering user ${userId}:`, err);
+          handleErrorSnackbar(this._snackBar, err, 'Recover user');
+        } finally {
+          this.isLoading = false;
+        }
+      }
+    });
   }
 
   public getRoleChipClass(role: string): string {

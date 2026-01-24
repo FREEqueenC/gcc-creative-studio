@@ -129,16 +129,111 @@ class UserService:
         return await self.user_repo.update(user_id, {"roles": roles_as_strings})
 
     async def delete_user_by_id(self, user_id: int, current_user: Optional[UserModel] = None) -> bool:
-        """Deletes a user from the system."""
+        """Soft deletes a user from the system with permission checks."""
+        import datetime
         from fastapi import HTTPException, status
-        
-        if current_user and current_user.id == user_id:
+        from src.core.fga import check_permission
+
+        if not current_user:
+             raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Authentication required."
+            )
+
+        if current_user.id == user_id:
              raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You cannot delete your own account."
             )
-            
-        return await self.user_repo.delete(user_id)
+
+        target_user = await self.user_repo.get_by_id(user_id)
+        if not target_user or target_user.deleted_at:
+            return False # User not found or already soft-deleted
+
+        # --- Permission Checks ---
+        if target_user.is_super_admin:
+            if not current_user.is_super_admin:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Only Super Admins can delete other Super Admins."
+                )
+        elif not current_user.is_super_admin:
+            can_delete = False
+            target_org_ids = [org.id for org in target_user.organizations]
+            if target_org_ids:
+                for org_id in target_org_ids:
+                    is_org_admin = await check_permission(
+                        user_id=current_user.id,
+                        relation="admin",
+                        object_type="organization",
+                        object_id=str(org_id)
+                    )
+                    if is_org_admin:
+                        can_delete = True
+                        break
+            if not can_delete:
+                 raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="You do not have permission to delete this user."
+                )
+
+        # --- Soft Delete Operation ---
+        updated = await self.user_repo.update(user_id, {"deleted_at": datetime.datetime.utcnow()})
+        return updated is not None
+
+    async def recover_user_by_id(self, user_id: int, current_user: Optional[UserModel] = None) -> bool:
+        """Recovers a soft-deleted user."""
+        from fastapi import HTTPException, status
+        from src.core.fga import check_permission
+
+        if not current_user:
+             raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Authentication required."
+            )
+
+        # We need to find the user even if they are deleted.
+        # get_by_id in repository filters out deleted users by default now.
+        # So we use the specific method to include deleted ones.
+        target_user = await self.user_repo.get_user_including_deleted(user_id)
+        
+        if not target_user:
+            return False
+
+        if not target_user.deleted_at:
+            # User is not deleted, nothing to do
+            return True
+
+        # --- Permission Checks (Same as delete) ---
+        if target_user.is_super_admin:
+            if not current_user.is_super_admin:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Only Super Admins can recover other Super Admins."
+                )
+        elif not current_user.is_super_admin:
+            can_recover = False
+            target_org_ids = [org.id for org in target_user.organizations]
+            if target_org_ids:
+                for org_id in target_org_ids:
+                    is_org_admin = await check_permission(
+                        user_id=current_user.id,
+                        relation="admin",
+                        object_type="organization",
+                        object_id=str(org_id)
+                    )
+                    if is_org_admin:
+                        can_recover = True
+                        break
+            if not can_recover:
+                 raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="You do not have permission to recover this user."
+                )
+
+        # --- Recover Operation ---
+        updated = await self.user_repo.restore(user_id)
+        return updated is not None
 
     async def update_super_admin_status(self, user_id: int, is_super_admin: bool) -> UserModel:
         """

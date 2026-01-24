@@ -19,7 +19,7 @@ from typing import List, Optional, Any
 from pydantic import Field, field_validator, BaseModel
 from sqlalchemy import String, func, DateTime
 from sqlalchemy.dialects.postgresql import ARRAY
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship, Session, with_loader_criteria
 
 from src.common.base_repository import BaseDocument
 from src.database import Base
@@ -54,6 +54,7 @@ class User(Base):
         onupdate=func.now(),
         server_default=func.now()
     )
+    deleted_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
 
     # Relationships
     organizations: Mapped[List["UserOrganization"]] = relationship(
@@ -102,6 +103,7 @@ class UserModel(BaseDocument):
     can_access_admin_panel: bool = False
     organizations: List[UserOrganizationSummary] = Field(default_factory=list)
     workspaces: List[UserWorkspaceSummary] = Field(default_factory=list)
+    deleted_at: Optional[datetime.datetime] = None
 
     @field_validator("roles", mode="after")
     @classmethod
@@ -166,3 +168,35 @@ class UserModel(BaseDocument):
                     role=wm.role
                 ))
         return summaries
+
+
+# --- Event Listener for Soft Deletes ---
+from sqlalchemy import event
+import logging
+
+logger = logging.getLogger(__name__)
+
+@event.listens_for(Session, "do_orm_execute")
+def _add_user_soft_delete_criteria(execute_state):
+    """
+    Event listener to automatically filter out soft-deleted Users.
+    """
+    # Check if we should skip the filter based on execution options
+    include_deleted = execute_state.execution_options.get("include_deleted", False)
+    
+    # Only apply to SELECT statements
+    if not execute_state.is_select:
+        return
+
+    if include_deleted:
+        return
+
+    # Apply the filter using with_loader_criteria, targeting ONLY the User class
+    execute_state.statement = execute_state.statement.options(
+        with_loader_criteria(
+            User,
+            lambda cls: cls.deleted_at.is_(None),
+            include_aliases=True,
+            propagate_to_loaders=True
+        )
+    )

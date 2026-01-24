@@ -52,6 +52,7 @@ export class UserService {
     offset?: number,
     organizationId?: number,
     workspaceId?: number,
+    includeDeleted?: boolean
   ): Observable<PaginatedResponse<UserModel>> {
     let params = new HttpParams()
       .set('limit', limit.toString())
@@ -60,6 +61,7 @@ export class UserService {
     if (offset !== undefined) params = params.set('offset', offset.toString());
     if (organizationId !== undefined && organizationId !== null) params = params.set('organizationId', organizationId.toString());
     if (workspaceId !== undefined && workspaceId !== null) params = params.set('workspaceId', workspaceId.toString());
+    if (includeDeleted) params = params.set('include_deleted', 'true');
 
     return this.http
       .get<PaginatedResponse<UserModel>>(this.usersApiUrl, {params, ...this.httpOptions})
@@ -98,6 +100,14 @@ export class UserService {
     const url = `${this.usersApiUrl}/${id}`;
     return this.http
       .delete<UserModel>(url, this.httpOptions)
+      .pipe(catchError(this.handleError));
+  }
+
+  // POST: Recover a deleted user
+  recoverUser(id: number | string): Observable<any> {
+    const url = `${this.usersApiUrl}/${id}/recover`;
+    return this.http
+      .post(url, {}, this.httpOptions)
       .pipe(catchError(this.handleError));
   }
 

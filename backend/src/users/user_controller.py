@@ -97,7 +97,7 @@ async def get_user_by_id(user_id: int, user_service: UserService = Depends()):
     "/{user_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete a User (Admin Only)",
-    dependencies=[Depends(require_super_admin)],
+    dependencies=[Depends(require_admin_access)],
 )
 async def delete_user(
     user_id: int, 
@@ -111,6 +111,26 @@ async def delete_user(
     if not await user_service.delete_user_by_id(user_id, current_user):
         raise HTTPException(status_code=404, detail="User not found")
     return
+
+
+@router.post(
+    "/{user_id}/recover",
+    status_code=status.HTTP_200_OK,
+    summary="Recover a Deleted User (Admin Only)",
+    dependencies=[Depends(require_admin_access)],
+)
+async def recover_user(
+    user_id: int, 
+    user_service: UserService = Depends(),
+    current_user: UserModel = Depends(get_current_user)
+):
+    """
+    Recovers a soft-deleted user.
+    This functionality is restricted to administrators.
+    """
+    if not await user_service.recover_user_by_id(user_id, current_user):
+        raise HTTPException(status_code=404, detail="User not found or could not be recovered")
+    return {"message": "User recovered successfully"}
 
 
 @router.put(

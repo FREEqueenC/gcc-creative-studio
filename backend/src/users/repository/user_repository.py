@@ -17,7 +17,6 @@ from typing import Optional
 from fastapi import Depends
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from sqlalchemy.orm import selectinload
 
 from src.common.base_repository import BaseRepository
@@ -70,6 +69,24 @@ class UserRepository(BaseRepository[User, UserModel]):
             return None
         return self.schema.model_validate(item)
 
+    async def get_user_including_deleted(self, item_id: int) -> Optional[UserModel]:
+        """
+        Retrieves a single user by their ID, including soft-deleted ones.
+        """
+        result = await self.db.execute(
+            select(self.model)
+            .where(self.model.id == item_id)
+            .options(
+                selectinload(self.model.organizations).selectinload(UserOrganization.organization),
+                selectinload(self.model.workspaces).selectinload(WorkspaceMemberAssociation.workspace)
+            )
+            .execution_options(include_deleted=True)
+        )
+        item = result.scalar_one_or_none()
+        if not item:
+            return None
+        return self.schema.model_validate(item)
+
     async def update(self, item_id: int, update_data: Union[BaseModel, Dict[str, Any]]) -> Optional[UserModel]:
         """
         Updates a user and ensures organizations are loaded to prevent MissingGreenlet error.
@@ -108,7 +125,34 @@ class UserRepository(BaseRepository[User, UserModel]):
         
         # 6. Re-fetch to ensure clean state and loaded relationships
         # We could use refresh(db_item) but that might unload relationships depending on session state.
-        # Calling get_by_id is safest.
+        # Calling get_by_id is safest, but we use get_user_including_deleted to handle soft-deletes.
+        return await self.get_user_including_deleted(item_id)
+
+    async def restore(self, item_id: int) -> Optional[UserModel]:
+        """
+        Restores a soft-deleted user.
+        """
+        # 1. Fetch DB item including deleted
+        result = await self.db.execute(
+            select(self.model)
+            .where(self.model.id == item_id)
+            .options(
+                selectinload(self.model.organizations).selectinload(UserOrganization.organization),
+                selectinload(self.model.workspaces).selectinload(WorkspaceMemberAssociation.workspace)
+            )
+            .execution_options(include_deleted=True)
+        )
+        db_item = result.scalar_one_or_none()
+        if not db_item:
+            return None
+
+        # 2. Restore
+        db_item.deleted_at = None
+        
+        # 3. Commit
+        await self.db.commit()
+        
+        # 4. Return
         return await self.get_by_id(item_id)
 
     async def create(self, schema: Union[BaseModel, Dict[str, Any]]) -> UserModel:
@@ -144,6 +188,10 @@ class UserRepository(BaseRepository[User, UserModel]):
             selectinload(self.model.organizations).selectinload(UserOrganization.organization),
             selectinload(self.model.workspaces).selectinload(WorkspaceMemberAssociation.workspace)
         )
+
+        # Apply soft-delete filter using execution options if requested
+        if search_dto.include_deleted:
+            query = query.execution_options(include_deleted=True)
         
         if search_dto.email:
             query = query.where(self.model.email == search_dto.email)

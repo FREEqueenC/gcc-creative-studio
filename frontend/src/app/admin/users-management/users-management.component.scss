@@ -15,10 +15,8 @@
  */
 
 // Styles for the sticky search input in mat-select
-::ng-deep .workspace-select-panel {
-  // Ensure the sticky header has a solid background
-  // The 'sticky' class in HTML handles position, but we double check here if needed
-  // .sticky { ... } 
+::ng-deep label.mdc-label {
+  color: #ffffff;
 }
 
 .dense-form-field {

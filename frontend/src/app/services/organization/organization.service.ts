@@ -33,4 +33,8 @@ export class OrganizationService {
   getOrganization(id: number): Observable<Organization> {
     return this.http.get<Organization>(`${this.apiUrl}/${id}`);
   }
+
+  updateOrganization(id: number, data: Partial<Organization>): Observable<Organization> {
+    return this.http.put<Organization>(`${this.apiUrl}/${id}`, data);
+  }
 }

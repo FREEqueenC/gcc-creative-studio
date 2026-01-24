@@ -40,6 +40,7 @@ from src.common.permission_service import PermissionService
 from src.workspaces.schema.workspace_model import WorkspacePermissions
 
 from src.common.consistency_service import ConsistencyService
+from src.common.permissions import WorkspacePermissionEnum
 
 class WorkspaceService:
     """
@@ -302,7 +303,7 @@ class WorkspaceService:
         # 1. Verify Permissions
         # Check if user is Workspace Admin or Owner
         is_ws_admin = await self.permission_service.has_permission(
-            current_user, "workspace", str(workspace_id), "admin"
+            current_user, "workspace", str(workspace_id), WorkspacePermissionEnum.ADMIN.value
         )
         
         if not is_ws_admin:

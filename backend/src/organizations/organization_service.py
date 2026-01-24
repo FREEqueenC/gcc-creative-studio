@@ -22,6 +22,8 @@ from src.organizations.organization_model import OrganizationModel, Organization
 from src.organizations.repository.organization_repository import OrganizationRepository
 from src.users.user_model import UserModel
 from src.users.repository.user_repository import UserRepository
+from src.organizations.dto.update_organization_dto import UpdateOrganizationDto
+from src.common.permissions import OrganizationPermissionEnum
 
 GENERIC_DOMAINS = {
     "gmail.com",
@@ -40,6 +42,7 @@ from openfga_sdk.client.models import ClientWriteRequest, ClientTuple
 
 from src.common.permission_service import PermissionService
 from src.common.consistency_service import ConsistencyService
+from src.auth.iam_signer_credentials_service import IamSignerCredentials
 
 class OrganizationService:
     """
@@ -57,6 +60,12 @@ class OrganizationService:
         self.user_repo = UserRepository(db)
         self.permission_service = PermissionService()
         self.consistency_service = consistency_service
+        self.signer = IamSignerCredentials()
+
+    def _sign_logo(self, org: OrganizationModel):
+        """Generates a presigned URL for the organization logo if it exists."""
+        if org.logo and org.logo.startswith("gs://"):
+            org.logo = self.signer.generate_presigned_url(org.logo)
 
     async def get_user_organizations(self, user_id: int) -> List[OrganizationModel]:
         """Finds all organizations a user belongs to."""
@@ -67,6 +76,7 @@ class OrganizationService:
         for org in orgs:
             perms = await self.permission_service.get_permissions_for_organization(user_id, org.id)
             org.permissions = perms
+            self._sign_logo(org)
             
         return orgs
 
@@ -89,6 +99,7 @@ class OrganizationService:
         # Populate permissions
         perms = await self.permission_service.get_permissions_for_organization(user_id, org.id)
         org.permissions = perms
+        self._sign_logo(org)
         
         return org
 
@@ -135,6 +146,7 @@ class OrganizationService:
 
         # Populate permissions for the new org (Owner/Admin)
         created_org.permissions = OrganizationPermissions(
+            can_edit_organization=True,
             can_assign_org_roles=True,
             can_edit_org_brand_guidelines=True,
             can_view_org_brand_guidelines=True,
@@ -151,8 +163,52 @@ class OrganizationService:
             can_view_vto=True,
             can_generate_vto=True,
         )
+        self._sign_logo(created_org)
 
         return created_org
+
+    async def update_organization(
+        self, org_id: int, update_data: UpdateOrganizationDto, user: UserModel
+    ) -> OrganizationModel:
+        """
+        Updates an organization's details (name, description, logo).
+        - Verifies 'can_edit_organization' permission.
+        - Ignores 'domain' changes (enforced by DTO).
+        """
+        from fastapi import HTTPException, status
+        
+        # 1. Verify Permissions
+        if not user.is_super_admin:
+            can_edit = await self.permission_service.has_permission(
+                user, "organization", str(org_id), OrganizationPermissionEnum.CAN_EDIT_ORGANIZATION.value
+            )
+            if not can_edit:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Insufficient permissions to edit organization."
+                )
+
+        # 2. Update DB
+        # We explicitly exclude 'domain' to be absolutely sure it's never updated,
+        # even if the DTO somehow contained it.
+        update_dict = update_data.model_dump(exclude_unset=True)
+        if "domain" in update_dict:
+            del update_dict["domain"]
+            
+        updated_org = await self.repo.update(org_id, update_dict)
+        
+        if not updated_org:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Organization not found."
+            )
+            
+        # 3. Populate permissions
+        perms = await self.permission_service.get_permissions_for_organization(user.id, org_id)
+        updated_org.permissions = perms
+        self._sign_logo(updated_org)
+        
+        return updated_org
 
     async def ensure_user_organization(self, user: UserModel) -> OrganizationModel:
         """
@@ -285,7 +341,10 @@ class OrganizationService:
             else:
                 search_dto.ids = admin_org_ids
 
-        return await self.repo.query(search_dto)
+        result = await self.repo.query(search_dto)
+        for org in result.data:
+            self._sign_logo(org)
+        return result
 
     async def update_member_role(
         self, org_id: int, user_id: int, role: OrganizationRoleEnum, current_user: UserModel
@@ -310,7 +369,7 @@ class OrganizationService:
         if not current_user.is_super_admin:
             # Check if Org Admin
             is_org_admin = await self.permission_service.has_permission(
-                current_user, "organization", str(org_id), "admin"
+                current_user, "organization", str(org_id), OrganizationPermissionEnum.ADMIN.value
             )
             if not is_org_admin:
                 raise HTTPException(

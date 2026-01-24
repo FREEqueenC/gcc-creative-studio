@@ -36,6 +36,7 @@ import { PaginatedResponse } from '../../common/models/pagination.model';
 })
 export class OrganizationsManagementComponent implements OnInit, OnDestroy {
   displayedColumns: string[] = [
+    'logo',
     'name',
     'domain',
     'createdAt',

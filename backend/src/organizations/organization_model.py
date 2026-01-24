@@ -86,6 +86,9 @@ class OrganizationPermissions(BaseModel):
     """
     Computed permissions for the current user on this organization.
     """
+    # --- Organization Management ---
+    can_edit_organization: bool = False
+    
     # --- Organization Member Management ---
     can_access_admin_panel: bool = False
     can_assign_org_roles: bool = False

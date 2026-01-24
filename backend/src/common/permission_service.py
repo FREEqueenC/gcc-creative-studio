@@ -72,6 +72,9 @@ class PermissionService:
         """
         checks = {
             # --- Org Management ---
+            "can_edit_organization": "can_edit_organization",
+            
+            # --- Org Member Management ---
             "can_add_org_members": "can_add_org_members",
             "can_remove_org_members": "can_remove_org_members",
             "can_assign_org_roles": "can_assign_org_roles",

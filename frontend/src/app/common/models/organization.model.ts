@@ -25,6 +25,7 @@ export interface OrganizationPermissions {
 
   // --- Organization Brand Guidelines Management ---
   canEditOrgBrandGuidelines: boolean;
+  canEditOrganization: boolean;
   canViewOrgBrandGuidelines: boolean;
 
   // --- Custom Dynamic Permission ---

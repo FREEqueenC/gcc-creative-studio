@@ -37,7 +37,10 @@ class OrganizationPermissionEnum(StrEnum):
     ADMIN = "admin"
     MEMBER = "member"
     OWNER = "owner"
-
+    
+    # Organization Management
+    CAN_EDIT_ORGANIZATION = "can_edit_organization"
+    
     # Member Management
     CAN_INVITE_ORG_MEMBERS = "can_invite_org_members"
     CAN_ADD_ORG_MEMBERS = "can_add_org_members"

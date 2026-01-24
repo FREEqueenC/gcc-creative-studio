@@ -19,6 +19,7 @@ from src.users.user_model import UserModel
 from src.common.dto.pagination_response_dto import PaginationResponseDto
 from src.organizations.dto.organization_search_dto import OrganizationSearchDto
 from src.organizations.dto.update_organization_role_dto import UpdateOrganizationRoleDto
+from src.organizations.dto.update_organization_dto import UpdateOrganizationDto
 from src.organizations.organization_model import OrganizationModel
 from src.organizations.organization_service import OrganizationService
 
@@ -81,4 +82,24 @@ async def update_member_role(
     """
     return await organization_service.update_member_role(
         org_id, user_id, body.role, current_user
+    )
+
+@router.put(
+    "/{org_id}",
+    response_model=OrganizationModel,
+    summary="Update Organization",
+)
+async def update_organization(
+    org_id: int,
+    body: UpdateOrganizationDto,
+    organization_service: OrganizationService = Depends(),
+    current_user: UserModel = Depends(get_current_user),
+):
+    """
+    Updates an organization's details (name, description, logo).
+    - Requires 'can_edit_organization' permission (Admin/Owner).
+    - Domain cannot be changed.
+    """
+    return await organization_service.update_organization(
+        org_id, body, current_user
     )

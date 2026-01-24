@@ -104,6 +104,9 @@ async def setup_fga(client: OpenFgaClient):
                     }
                 },
                 
+                # --- ORGANIZATION MANAGEMENT ---
+                "can_edit_organization": {"computedUserset": {"object": "", "relation": "admin"}},
+                
                 # --- MEMBER MANAGEMENT (Granular) ---
                 "can_invite_org_members": {"computedUserset": {"object": "", "relation": "admin"}},
                 "can_add_org_members": {"computedUserset": {"object": "", "relation": "admin"}},
@@ -125,6 +128,8 @@ async def setup_fga(client: OpenFgaClient):
                     "owner": {"directly_related_user_types": [{"type": "user"}]},
                     "admin": {"directly_related_user_types": [{"type": "user"}]},
                     "member": {"directly_related_user_types": [{"type": "user"}]},
+                    
+                    "can_edit_organization": {"directly_related_user_types": []},
                     
                     "can_invite_org_members": {"directly_related_user_types": []},
                     "can_add_org_members": {"directly_related_user_types": []},

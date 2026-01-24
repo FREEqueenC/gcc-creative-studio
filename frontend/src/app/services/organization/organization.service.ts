@@ -29,4 +29,8 @@ export class OrganizationService {
 
     return this.http.get<PaginatedResponse<Organization>>(this.apiUrl, { params });
   }
+
+  getOrganization(id: number): Observable<Organization> {
+    return this.http.get<Organization>(`${this.apiUrl}/${id}`);
+  }
 }

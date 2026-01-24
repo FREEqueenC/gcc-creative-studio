@@ -102,6 +102,7 @@ import { GenericStepComponent } from './workflows/workflow-editor/step-component
 import { WorkflowEditorComponent } from './workflows/workflow-editor/workflow-editor.component';
 import { WorkflowListComponent } from './workflows/workflow-list/workflow-list.component';
 import { WorkflowStatusPipe } from './workflows/workflow-status.pipe';
+import { OrganizationComponent } from './organization/organization.component';
 
 @NgModule({
   declarations: [
@@ -135,6 +136,7 @@ import { WorkflowStatusPipe } from './workflows/workflow-status.pipe';
     ExecutionDetailsModalComponent,
     StepExecutionDetailsComponent,
     BatchExecutionModalComponent,
+    OrganizationComponent,
   ],
   imports: [
     BrowserModule,

@@ -34,6 +34,8 @@ export interface OrganizationPermissions {
 export interface Organization {
   id: number;
   name: string;
+  description?: string;
+  logo?: string;
   domain?: string;
   role?: string;
   permissions?: OrganizationPermissions;

@@ -31,6 +31,7 @@ import { ExecutionHistoryComponent } from './workflows/execution-history/executi
 import { WorkflowEditorComponent } from './workflows/workflow-editor/workflow-editor.component';
 import { WorkflowListComponent } from './workflows/workflow-list/workflow-list.component';
 import { WorkbenchComponent } from './workbench/workbench.component';
+import { OrganizationComponent } from './organization/organization.component';
 
 const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -45,6 +46,11 @@ const routes: Routes = [
   {path: 'vto', component: VtoComponent, canActivate: [AuthGuardService]},
   {path: 'audio', component: AudioComponent, canActivate: [AuthGuardService]},
   {path: 'workbench', component:WorkbenchComponent, canActivate: [AuthGuardService]},
+  {
+    path: 'organizations/:id',
+    component: OrganizationComponent,
+    canActivate: [AuthGuardService],
+  },
   // When a user goes to '/gallery', show the main feed.
   {
     path: 'gallery',

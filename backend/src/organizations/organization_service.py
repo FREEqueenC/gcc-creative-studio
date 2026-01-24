@@ -70,6 +70,28 @@ class OrganizationService:
             
         return orgs
 
+    async def get_organization_by_id(self, org_id: int, user_id: int) -> Optional[OrganizationModel]:
+        """
+        Retrieves an organization by ID, ensuring the user is a member.
+        """
+        org = await self.repo.get_by_id(org_id)
+        if not org:
+            return None
+            
+        # Check membership
+        user_orgs = await self.repo.get_user_organizations(user_id)
+        is_member = any(o.id == org_id for o in user_orgs)
+        
+        if not is_member:
+            # Alternatively, we could raise 403, but returning None (404) is safer for enumeration
+            return None
+            
+        # Populate permissions
+        perms = await self.permission_service.get_permissions_for_organization(user_id, org.id)
+        org.permissions = perms
+        
+        return org
+
     async def create_organization(self, schema: OrganizationModel, user_id: int) -> OrganizationModel:
         """Creates a new organization, writes FGA tuples, and seeds default data."""
         

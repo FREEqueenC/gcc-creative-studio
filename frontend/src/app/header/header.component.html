@@ -69,6 +69,7 @@
         <!-- Actions -->
         <div class="menu-section actions-section">
           <button mat-menu-item *ngIf="isAdmin$ | async" routerLink="/admin"><mat-icon>admin_panel_settings</mat-icon> Admin Center</button>
+          <button mat-menu-item (click)="navigateToOrganization()"><mat-icon>business</mat-icon> Organization</button>
         </div>
 
         <mat-divider *ngIf="isAdmin$ | async"></mat-divider>

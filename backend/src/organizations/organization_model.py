@@ -42,6 +42,8 @@ class Organization(Base):
     # For "Personal" orgs we just use "gmail.com" etc.
     domain: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
     owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    logo: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     
     created_at: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True),
@@ -109,6 +111,8 @@ class OrganizationModel(BaseDocument):
     id: int
     name: str
     owner_id: int
+    description: Optional[str] = None
+    logo: Optional[str] = None
     domain: Optional[str] = None
     role: Optional[OrganizationRoleEnum] = Field(
         default=None, 

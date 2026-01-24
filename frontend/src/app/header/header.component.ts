@@ -146,6 +146,15 @@ export class HeaderComponent implements OnDestroy {
     void this.router.navigateByUrl('/');
   }
 
+  navigateToOrganization() {
+    const workspace = this.workspaceStateService.getActiveWorkspace();
+    if (workspace?.organizationId !== undefined && workspace?.organizationId !== null) {
+      void this.router.navigate(['/organizations', workspace.organizationId]);
+    } else {
+      console.warn('No active organization found');
+    }
+  }
+
   toggleMenu() {
     this.menuFixed = !this.menuFixed;
     localStorage.setItem('menuFixed', String(this.menuFixed));

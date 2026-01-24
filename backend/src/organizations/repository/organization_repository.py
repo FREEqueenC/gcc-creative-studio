@@ -166,6 +166,8 @@ class OrganizationRepository(BaseRepository[Organization, OrganizationModel]):
             "name": org.name,
             "owner_id": org.owner_id,
             "domain": org.domain,
+            "description": org.description,
+            "logo": org.logo,
         }
         return self.schema.model_validate(org_dict)
 

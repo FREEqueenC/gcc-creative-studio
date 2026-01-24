@@ -43,6 +43,25 @@ async def list_organizations(
     - Org Admins: Can see only organizations they administer.
     """
     return await organization_service.get_organizations_for_admin(current_user, search_params)
+    
+@router.get(
+    "/{org_id}",
+    response_model=OrganizationModel,
+    summary="Get Organization by ID",
+)
+async def get_organization(
+    org_id: int,
+    organization_service: OrganizationService = Depends(),
+    current_user: UserModel = Depends(get_current_user),
+):
+    """
+    Retrieves a single organization by ID.
+    - User must be a member of the organization.
+    """
+    org = await organization_service.get_organization_by_id(org_id, current_user.id)
+    if not org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+    return org
 
 @router.put(
     "/{org_id}/users/{user_id}/role",

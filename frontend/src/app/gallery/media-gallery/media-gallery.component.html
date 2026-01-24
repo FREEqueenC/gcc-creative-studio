@@ -267,15 +267,17 @@
             </ng-container>
 
             <ng-container *ngIf="media.mimeType?.startsWith('audio/')">
+              <!-- TODO: Fix audio preview as it's not working triggering multiple times non stopped audio -->
               <div class="audio-card-preview">
 
-                <mat-icon *ngIf="hoveredAudioId !== media.id">graphic_eq</mat-icon>
+                <!-- <mat-icon *ngIf="hoveredAudioId !== media.id">graphic_eq</mat-icon> -->
+                <mat-icon>graphic_eq</mat-icon>
 
-                <ng-container *ngIf="hoveredAudioId === media.id">
+                <!-- <ng-container *ngIf="hoveredAudioId === media.id">
                     <mat-icon class="playing-icon">volume_up</mat-icon>
 
                     <audio autoplay oncanplay="this.play()" [src]="getCurrentImageUrl(media)" (ended)="stopAudio()"></audio>
-                </ng-container>
+                </ng-container> -->
 
               </div>
 

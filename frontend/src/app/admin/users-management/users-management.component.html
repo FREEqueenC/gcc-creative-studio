@@ -199,6 +199,16 @@
           >
             <mat-icon>delete</mat-icon>
           </button>
+          <!-- Add Credits Button -->
+          <button
+            mat-icon-button
+            color="accent"
+            (click)="openAssignCreditsDialog(user)"
+            matTooltip="Add Credits"
+            *ngIf="!user.deletedAt"
+          >
+            <mat-icon>monetization_on</mat-icon>
+          </button>
         </td>
       </ng-container>
 

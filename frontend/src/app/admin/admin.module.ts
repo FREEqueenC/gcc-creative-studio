@@ -54,6 +54,7 @@ import {SourceAssetUploadFormComponent} from './source-assets-management/source-
 import {OrganizationsManagementComponent} from './organizations-management/organizations-management.component';
 import {WorkspacesManagementComponent} from './workspaces-management/workspaces-management.component';
 import {SharedModule} from '../common/shared.module';
+import {CreditsAnalyticsModule} from './credits-analytics/credits-analytics.module';
 
 @NgModule({
   declarations: [
@@ -72,6 +73,7 @@ import {SharedModule} from '../common/shared.module';
     CommonModule,
     SharedModule,
     AdminRoutingModule,
+    CreditsAnalyticsModule,
     MatSidenavModule,
     MatListModule,
     MatPaginatorModule,

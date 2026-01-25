@@ -16,13 +16,13 @@
 import logging
 
 from fastapi import APIRouter, Depends, File, UploadFile
+from src.credits.credit_guards import check_and_log_credits
 from google.cloud import speech
-
+from src.users.user_model import UserModel
 from src.audios.audio_service import AudioService
 from src.audios.dto.create_audio_dto import CreateAudioDto
 from src.auth.auth_service import get_current_user
 from src.galleries.dto.gallery_response_dto import MediaItemResponse
-from src.users.user_model import UserModel
 
 from src.workspaces.repository.workspace_repository import WorkspaceRepository
 from src.workspaces.workspace_auth_guard import workspace_auth_service
@@ -43,6 +43,7 @@ async def generate_audio(
     current_user: UserModel = Depends(get_current_user),
     audio_service: AudioService = Depends(),
     workspace_repo: WorkspaceRepository = Depends(),
+    _credits: None = Depends(check_and_log_credits(CreateAudioDto)),
 ):
     """
     Generates audio based on the selected model (Lyria for music, Chirp/Gemini for speech).

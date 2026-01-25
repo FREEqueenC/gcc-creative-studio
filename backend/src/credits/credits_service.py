@@ -1,18 +1,44 @@
 import datetime
-from typing import Optional
+from typing import Optional, List, Dict, Type
 from fastapi import Depends, HTTPException
-from sqlalchemy import select
+from sqlalchemy import select, func, case, delete, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+import logging
+from decimal import Decimal
 
 from src.database import get_db
 from src.config.config_service import config_service
-from src.credits.credit_model import UserWallet, OrganizationWallet, CreditLog, PriceCatalog
+from src.credits.credit_model import CreditLog, UserWallet, OrganizationWallet, PriceCatalog
 from src.credits.dto.assign_credits_dto import AssignCreditsDto
 from src.users.user_model import UserModel
+from src.common.base_dto import BaseDto
+from src.images.dto.create_imagen_dto import CreateImagenDto
+from src.audios.dto.create_audio_dto import CreateAudioDto
+from src.videos.dto.create_veo_dto import CreateVeoDto
+from src.credits.dto.price_catalog_dto import CreatePriceCatalogDto, UpdatePriceCatalogDto
+
+from src.credits.cost_strategies import (
+    CostCalculationStrategy,
+    ImageCostStrategy,
+    AudioCostStrategy,
+    VideoCostStrategy,
+    DefaultCostStrategy,
+)
 
 class CreditsService:
     def __init__(self, db: AsyncSession = Depends(get_db)):
         self.db = db
+        self.strategies: Dict[Type[BaseDto], CostCalculationStrategy] = {
+            CreateImagenDto: ImageCostStrategy(db),
+            CreateAudioDto: AudioCostStrategy(db),
+            CreateVeoDto: VideoCostStrategy(db),
+        }
+        self.default_strategy = DefaultCostStrategy(db)
+
+    def _get_strategy(self, dto: BaseDto) -> CostCalculationStrategy:
+        dto_type = type(dto)
+        return self.strategies.get(dto_type, self.default_strategy)
 
     async def assign_credits(self, dto: AssignCreditsDto, performed_by: UserModel):
         """
@@ -73,10 +99,9 @@ class CreditsService:
         await self.db.refresh(target_wallet)
         return target_wallet
 
-    async def get_price(self, model_id: str) -> Optional[PriceCatalog]:
-        stmt = select(PriceCatalog).where(PriceCatalog.model_id == model_id)
-        result = await self.db.execute(stmt)
-        return result.scalar_one_or_none()
+    async def calculate_cost(self, dto: BaseDto) -> float:
+        strategy = self._get_strategy(dto)
+        return await strategy.calculate(dto)
 
     async def check_balance(self, user_id: int, cost: float, org_id: Optional[int] = None) -> bool:
         """
@@ -175,3 +200,53 @@ class CreditsService:
         )
         self.db.add(log)
         await self.db.commit()
+    async def get_wallet_balance(self, user_id: Optional[int] = None, org_id: Optional[int] = None) -> float:
+        if user_id:
+            stmt = select(UserWallet).where(UserWallet.user_id == user_id)
+            result = await self.db.execute(stmt)
+            wallet = result.scalar_one_or_none()
+            return wallet.balance if wallet else 0.0
+        elif org_id:
+            stmt = select(OrganizationWallet).where(OrganizationWallet.organization_id == org_id)
+            result = await self.db.execute(stmt)
+            wallet = result.scalar_one_or_none()
+            return wallet.balance if wallet else 0.0
+        return 0.0
+
+    # Price Catalog Methods
+    async def get_all_prices(self) -> List[PriceCatalog]:
+        stmt = select(PriceCatalog).order_by(PriceCatalog.category, PriceCatalog.model_id)
+        result = await self.db.execute(stmt)
+        return result.scalars().all()
+
+    async def create_price(self, dto: CreatePriceCatalogDto) -> PriceCatalog:
+        existing = await self.db.get(PriceCatalog, dto.model_id)
+        if existing:
+            raise HTTPException(status_code=400, detail=f"Price for model_id '{dto.model_id}' already exists.")
+        new_price = PriceCatalog(**dto.model_dump())
+        self.db.add(new_price)
+        await self.db.commit()
+        await self.db.refresh(new_price)
+        return new_price
+
+    async def update_price(self, model_id: str, dto: UpdatePriceCatalogDto) -> PriceCatalog:
+        price_entry = await self.db.get(PriceCatalog, model_id)
+        if not price_entry:
+            raise HTTPException(status_code=404, detail=f"Price for model_id '{model_id}' not found.")
+        
+        update_data = dto.model_dump(exclude_unset=True)
+        for key, value in update_data.items():
+            setattr(price_entry, key, value)
+            
+        await self.db.commit()
+        await self.db.refresh(price_entry)
+        return price_entry
+
+    async def delete_price(self, model_id: str) -> None:
+        price_entry = await self.db.get(PriceCatalog, model_id)
+        if not price_entry:
+            raise HTTPException(status_code=404, detail=f"Price for model_id '{model_id}' not found.")
+        
+        await self.db.delete(price_entry)
+        await self.db.commit()
+

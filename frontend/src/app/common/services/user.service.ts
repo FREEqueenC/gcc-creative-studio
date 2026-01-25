@@ -40,6 +40,10 @@ export class UserService {
     return this.http.delete<void>(`${environment.backendURL}/users/${id}`);
   }
 
+  searchUsers(query: string): Observable<UserModel[]> {
+    return this.http.get<UserModel[]>(`${environment.backendURL}/users`, { params: { filter: query } });
+  }
+
   // Deprecated: Use AuthService.getUser() or AuthService.getCurrentUserValue()
   // Keeping for compatibility if needed, but better to refactor consumers
   getUserDetails(): UserModel | null {

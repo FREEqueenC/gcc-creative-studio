@@ -14,20 +14,23 @@
 
 import datetime
 from typing import Optional, List
-from sqlalchemy import String, func, DateTime, ForeignKey, Numeric, Integer
+from sqlalchemy import String, func, DateTime, ForeignKey, Numeric, Integer, Enum as SQLAlchemyEnum, PrimaryKeyConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.database import Base
+from src.credits.dto.price_catalog_dto import ModelCategoryEnum
 
 class PriceCatalog(Base):
     """
-    Catalog of prices for different models/services.
+    Catalog of prices for different models/services and categories.
     """
     __tablename__ = "price_catalog"
 
-    model_id: Mapped[str] = mapped_column(String, primary_key=True)
-    category: Mapped[str] = mapped_column(String, nullable=False, index=True) # e.g., "Google", "Youtube", "Waymo"
+    model_id: Mapped[str] = mapped_column(String, nullable=False)
+    category: Mapped[ModelCategoryEnum] = mapped_column(SQLAlchemyEnum(ModelCategoryEnum), nullable=False, index=True)
     cost: Mapped[float] = mapped_column(Numeric(10, 4), nullable=False)
+
+    __table_args__ = (PrimaryKeyConstraint('model_id', 'category'),)
     
     created_at: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True),

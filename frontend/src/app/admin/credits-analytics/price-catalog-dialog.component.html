@@ -1,0 +1,23 @@
+<h2 mat-dialog-title>{{ isEditMode ? 'Edit Price' : 'Add New Price' }}</h2>
+<mat-dialog-content>
+  <form [formGroup]="priceForm" class="flex flex-col gap-4">
+    <mat-form-field appearance="outline">
+      <mat-label>Model ID</mat-label>
+      <input matInput formControlName="model_id" required>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Category</mat-label>
+      <input matInput formControlName="category" required>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Cost (USD)</mat-label>
+      <input matInput type="number" formControlName="cost" min="0" required>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">Cancel</button>
+  <button mat-raised-button color="primary" (click)="onSave()" [disabled]="priceForm.invalid">{{ isEditMode ? 'Update' : 'Create' }}</button>
+</mat-dialog-actions>

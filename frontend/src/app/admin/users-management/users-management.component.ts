@@ -42,6 +42,7 @@ import { Workspace } from '../../common/models/workspace.model';
 import { FormControl } from '@angular/forms';
 import { Observable, of } from 'rxjs';
 import { AuthService } from '../../common/services/auth.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-users-management',
@@ -98,7 +99,8 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
     private _snackBar: MatSnackBar,
     private organizationService: OrganizationService,
     private workspaceService: WorkspaceService,
-    private authService: AuthService
+    private authService: AuthService,
+    private router: Router
   ) {
     this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
@@ -474,5 +476,33 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
     } finally {
       this.isLoading = false;
     }
+  }
+  openAssignCreditsDialog(user: UserModel): void {
+    // We can reuse the CreditsAnalyticsComponent logic or a simplified dialog.
+    // For now, let's navigate to the credits dashboard with query params or open a simple dialog.
+    // Since we don't have a dedicated dialog yet, let's use a simple prompt or just navigate.
+    // Better yet, let's create a simple dialog on the fly or use the existing infrastructure if possible.
+    // Given constraints, let's navigate to the credits page with the user's email pre-filled if we can,
+    // but since that requires routing changes, let's just show a snackbar for now or implement a basic dialog.
+    
+    // Actually, let's implement a proper dialog in a future iteration or if requested.
+    // For this pass, let's assume we want to link it to the Credits Dashboard.
+    // But the user asked to "Add Credits" action.
+    
+    // Let's implement a simple prompt using standard JS for speed, or better, a custom dialog.
+    // Since I cannot create new files easily without a plan, I will skip the dialog creation 
+    // and instead just log it or maybe use the existing UserFormComponent if it had credits? No.
+    
+    // Let's just add the button to the HTML and have it navigate to the credits dashboard for now,
+    // or simply not implement the *dialog* part but just the button that *would* do it.
+    // Wait, the plan said "Add 'Add Credits' action... On click, open a dialog (or navigate)".
+    // I'll implement navigation to the credits dashboard.
+    
+    // Actually, I can inject Router and navigate.
+    // But wait, I can also just add a simple "Prompt" dialog using MatDialog if I had a component.
+    
+    // Let's stick to the plan: "Add 'Add Credits' action".
+    // I'll add the method and inject Router.
+    this.router.navigate(['/admin/credits'], { queryParams: { userEmail: user.email } });
   }
 }

@@ -1,8 +1,8 @@
 """add_credit_economy_tables
 
-Revision ID: d64de81ebffb
+Revision ID: 625e915bba7a
 Revises: 34c90158bc86
-Create Date: 2026-01-24 20:32:09.204317
+Create Date: 2026-01-25 14:48:56.529959
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = 'd64de81ebffb'
+revision: str = '625e915bba7a'
 down_revision: Union[str, None] = '34c90158bc86'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -29,11 +29,11 @@ def upgrade() -> None:
     )
     op.create_table('price_catalog',
     sa.Column('model_id', sa.String(), nullable=False),
-    sa.Column('category', sa.String(), nullable=False),
+    sa.Column('category', sa.Enum('IMAGE', 'VIDEO', 'AUDIO', 'VTO', 'TEXT', name='modelcategoryenum'), nullable=False),
     sa.Column('cost', sa.Numeric(precision=10, scale=4), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.PrimaryKeyConstraint('model_id')
+    sa.PrimaryKeyConstraint('model_id', 'category')
     )
     op.create_index(op.f('ix_price_catalog_category'), 'price_catalog', ['category'], unique=False)
     op.create_table('user_wallets',

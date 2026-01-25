@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from src.credits.dependencies import check_and_log_credits
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi import status as Status
 
@@ -27,6 +26,7 @@ from src.users.user_model import UserModel
 from src.workspaces.workspace_auth_guard import workspace_auth_service
 from src.workspaces.repository.workspace_repository import WorkspaceRepository
 from src.common.permissions import WorkspacePermissionEnum
+from src.credits.credit_guards import check_and_log_credits
 
 router = APIRouter(
     prefix="/api/images",
@@ -42,7 +42,7 @@ async def generate_images(
     service: ImagenService = Depends(),
     current_user: UserModel = Depends(get_current_user),
     workspace_repo: WorkspaceRepository = Depends(),
-    _credits: None = Depends(check_and_log_credits("imagen-3.0-generate-001")),
+    _credits: None = Depends(check_and_log_credits(CreateImagenDto)),
 ) -> MediaItemResponse | None:
     try:
         # Use our centralized dependency to authorize the user for the workspace
@@ -81,6 +81,7 @@ async def generate_images_vto(
     service: ImagenService = Depends(),
     current_user: UserModel = Depends(get_current_user),
     workspace_repo: WorkspaceRepository = Depends(),
+    _credits: None = Depends(check_and_log_credits(VtoDto)),
 ) -> MediaItemResponse | None:
     """Start an async VTO generation job. Returns immediately with a placeholder."""
     try:
@@ -118,6 +119,7 @@ async def generate_images_vto(
 async def upscale_image(
     image_request: UpscaleImagenDto,
     service: ImagenService = Depends(),
+    _credits: None = Depends(check_and_log_credits(UpscaleImagenDto)),
 ) -> ImageGenerationResult | None:
     try:
         return await service.upscale_image(request_dto=image_request)

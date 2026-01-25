@@ -40,7 +40,7 @@ from src.source_assets.repository.source_asset_repository import SourceAssetRepo
 from src.workspaces.repository.workspace_repository import WorkspaceRepository
 from src.auth.iam_signer_credentials_service import IamSignerCredentials
 from src.common.permission_service import PermissionService
-from src.scripts.seed_credits import seed_credit_data
+from seed_credits import seed_credit_data
 from src.common.consistency_service import ConsistencyService
 from src.common.email_service import EmailService
 from src.auth import auth_service
@@ -510,16 +510,14 @@ async def main():
                 await workspace_service.ensure_default_workspaces(admin_user_model, admin_org)
                 
                 # Seed System Data (Assets, Templates)
+                logger.info("Seeding VTO assets...")
                 await seed_vto_assets(db, admin_user)
+                
+                logger.info("Seeding media templates...")
                 await seed_media_templates(db, admin_user)
-
-                # Seed Credit Economy Data
-                try:
-                    logger.info("Seeding credit economy data...")
-                    await seed_credit_data(db)
-                    logger.info("Credit economy data seeded.")
-                except Exception as e:
-                    logger.error(f"Failed to seed credit data: {e}", exc_info=True)
+                
+                logger.info("Seeding credit economy data...")
+                await seed_credit_data(db)
             else:
                 logger.warning("No admin user found. Skipping organization seeding.")
 

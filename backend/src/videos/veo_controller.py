@@ -14,6 +14,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi import status as Status
+from src.credits.credit_guards import check_and_log_credits
 
 from src.auth.auth_service import get_current_user
 from src.galleries.dto.gallery_response_dto import MediaItemResponse
@@ -39,6 +40,7 @@ async def generate_videos(
     current_user: UserModel = Depends(get_current_user),
     service: VeoService = Depends(),
     workspace_repo: WorkspaceRepository = Depends(),
+    _credits: None = Depends(check_and_log_credits(CreateVeoDto)),
 ) -> MediaItemResponse | None:
     try:
         # Use our centralized dependency to authorize the user for the workspace

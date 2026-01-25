@@ -1,6 +1,121 @@
 <div class="credits-analytics-container p-4">
   <h2 class="text-2xl font-bold mb-4">Credits & Analytics Dashboard</h2>
 
+  <!-- Credit Assignment Section -->
+  <section class="mb-8 bg-white dark:bg-[#1E1F22] p-6 rounded-lg shadow">
+    <h3 class="text-xl font-semibold mb-4">Assign Credits</h3>
+    <form [formGroup]="assignForm" (ngSubmit)="assignCredits()" class="flex flex-col gap-4">
+      
+      <!-- Target Type Selection -->
+      <mat-radio-group formControlName="targetType" class="flex gap-4">
+        <mat-radio-button value="user">User</mat-radio-button>
+        <mat-radio-button value="org">Organization</mat-radio-button>
+      </mat-radio-group>
+
+      <!-- User Search -->
+      <mat-form-field *ngIf="assignForm.get('targetType')?.value === 'user'" appearance="outline">
+        <mat-label>Search User</mat-label>
+        <input type="text" matInput [formControl]="userSearchCtrl" [matAutocomplete]="autoUser">
+        <mat-autocomplete #autoUser="matAutocomplete" [displayWith]="displayUserFn" (optionSelected)="onUserSelected($event)">
+          <mat-option *ngIf="isLoadingUsers" class="is-loading">Loading...</mat-option>
+          <mat-option *ngFor="let user of filteredUsers$ | async" [value]="user">
+            {{ user.email }} ({{ user.name }})
+          </mat-option>
+        </mat-autocomplete>
+      </mat-form-field>
+
+      <!-- Organization Select -->
+      <mat-form-field *ngIf="assignForm.get('targetType')?.value === 'org'" appearance="outline">
+        <mat-label>Select Organization</mat-label>
+        <mat-select formControlName="targetOrg">
+          <mat-option *ngFor="let org of organizations$ | async" [value]="org">
+            {{ org.name }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Amount -->
+      <mat-form-field appearance="outline">
+        <mat-label>Amount (USD)</mat-label>
+        <input matInput type="number" formControlName="amount" min="1">
+      </mat-form-field>
+
+      <!-- Expiration Date -->
+      <mat-form-field appearance="outline">
+        <mat-label>Expiration Date (Optional)</mat-label>
+        <input matInput [matDatepicker]="picker" formControlName="expirationDate">
+        <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+        <mat-datepicker #picker></mat-datepicker>
+      </mat-form-field>
+
+      <button mat-raised-button color="primary" type="submit" [disabled]="assignForm.invalid">
+        Assign Credits
+      </button>
+    </form>
+  </section>
+
+  <!-- Balance Checker Section -->
+  <section class="mb-8 bg-white dark:bg-[#1E1F22] p-6 rounded-lg shadow">
+    <h3 class="text-xl font-semibold mb-4">Check Balance</h3>
+    <div class="flex gap-4 items-center">
+      <mat-form-field appearance="outline" class="flex-grow">
+        <mat-label>User Email or Org ID</mat-label>
+        <input matInput [formControl]="checkBalanceCtrl" placeholder="Enter email to check balance">
+      </mat-form-field>
+      <button mat-raised-button (click)="checkBalance()" [disabled]="!checkBalanceCtrl.value">
+        Check
+      </button>
+    </div>
+    <div *ngIf="balanceResult !== null" class="mt-4 p-4 bg-gray-100 dark:bg-[#2A2B2F] rounded">
+      <p class="text-lg">Current Balance: <strong>${{ balanceResult | number:'1.2-2' }}</strong></p>
+    </div>
+  </section>
+
+  <!-- Price Catalog Section -->
+  <section class="mb-8 bg-white dark:bg-[#1E1F22] p-6 rounded-lg shadow" *ngIf="isSuperAdmin">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-xl font-semibold">Price Catalog</h3>
+      <button mat-stroked-button color="primary" (click)="addNewPrice()">Add New Price</button>
+    </div>
+    <table mat-table [dataSource]="(priceCatalog$ | async) || []" class="mat-elevation-z8 w-full">
+
+      <ng-container matColumnDef="model_id">
+        <th mat-header-cell *matHeaderCellDef>Model ID</th>
+        <td mat-cell *matCellDef="let element"> {{element.model_id}} </td>
+      </ng-container>
+
+      <ng-container matColumnDef="category">
+        <th mat-header-cell *matHeaderCellDef>Category</th>
+        <td mat-cell *matCellDef="let element"> {{element.category}} </td>
+      </ng-container>
+
+      <ng-container matColumnDef="cost">
+        <th mat-header-cell *matHeaderCellDef>Cost (USD)</th>
+        <td mat-cell *matCellDef="let element"> {{element.cost | number:'1.2-4'}} </td>
+      </ng-container>
+
+      <ng-container matColumnDef="updated_at">
+        <th mat-header-cell *matHeaderCellDef>Last Updated</th>
+        <td mat-cell *matCellDef="let element"> {{element.updated_at | date:'short'}} </td>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>Actions</th>
+        <td mat-cell *matCellDef="let element">
+          <button mat-icon-button color="primary" (click)="editPrice(element)" aria-label="Edit price">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button color="warn" (click)="deletePrice(element)" aria-label="Delete price">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="priceCatalogColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: priceCatalogColumns;"></tr>
+    </table>
+  </section>
+
   <section class="mb-8">
     <h3 class="text-xl font-semibold mb-2">Token Usage</h3>
     <div *ngIf="tokenUsage$ | async as usage; else loadingUsage">

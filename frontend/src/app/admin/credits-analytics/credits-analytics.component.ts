@@ -236,10 +236,9 @@ export class CreditsAnalyticsComponent implements OnInit {
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
         const dto: UpdatePriceCatalogDto = {
-          category: result.category,
           cost: result.cost
         };
-        this.creditsService.updatePrice(price.model_id, dto).subscribe({
+        this.creditsService.updatePrice(price.model_id, price.category, dto).subscribe({
           next: () => {
             this.snackBar.open('Price updated successfully', 'Close', { duration: 3000 });
             this.loadPriceCatalog();
@@ -262,7 +261,7 @@ export class CreditsAnalyticsComponent implements OnInit {
     });
 
     dialogRef.afterClosed().pipe(filter(result => result)).subscribe(() => {
-      this.creditsService.deletePrice(price.model_id).subscribe({
+      this.creditsService.deletePrice(price.model_id, price.category).subscribe({
         next: () => {
           this.snackBar.open('Price deleted successfully', 'Close', { duration: 3000 });
           this.loadPriceCatalog();

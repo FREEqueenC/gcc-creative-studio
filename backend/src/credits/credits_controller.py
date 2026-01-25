@@ -5,7 +5,7 @@ from src.credits.dto.assign_credits_dto import AssignCreditsDto
 from src.auth.auth_service import get_current_user
 from src.credits.dto.price_catalog_dto import PriceCatalogDto, CreatePriceCatalogDto, UpdatePriceCatalogDto
 from src.credits.credit_model import PriceCatalog
-from typing import List
+from typing import List, Dict, Any
 router = APIRouter(prefix="/api/credits", tags=["Credits"])
 
 @router.post("/assign")
@@ -88,3 +88,49 @@ async def delete_price(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
     await service.delete_price(model_id)
     return None
+
+# Admin Dashboard Endpoints
+@router.get("/admin/overview-stats", response_model=Dict[str, Any])
+async def get_admin_overview_stats(
+    current_user: UserModel = Depends(get_current_user),
+    service: CreditsService = Depends()
+):
+    if not current_user.is_super_admin:
+        # TODO: Scope for Org Admin
+        pass
+    # Placeholder data
+    return {
+        "totalUsers": 100,
+        "totalOrganizations": 10,
+        "imagesGenerated": 1500,
+        "videosGenerated": 200,
+        "audiosGenerated": 500
+    }
+
+@router.get("/admin/usage-over-time", response_model=List[Dict[str, Any]])
+async def get_admin_usage_over_time(
+    current_user: UserModel = Depends(get_current_user),
+    service: CreditsService = Depends()
+):
+    if not current_user.is_super_admin:
+        # TODO: Scope for Org Admin
+        pass
+    # Placeholder data
+    return [
+        {"date": "2024-09-01", "IMAGE": 10, "VIDEO": 2, "AUDIO": 5},
+        {"date": "2024-09-02", "IMAGE": 12, "VIDEO": 3, "AUDIO": 6},
+    ]
+
+@router.get("/admin/organization-budgets", response_model=List[Dict[str, Any]])
+async def get_admin_organization_budgets(
+    current_user: UserModel = Depends(get_current_user),
+    service: CreditsService = Depends()
+):
+    if not current_user.is_super_admin:
+        # TODO: Scope for Org Admin
+        pass
+    # Placeholder data
+    return [
+        {"orgName": "Google", "balance": 5000.00, "budget": 10000.00},
+        {"orgName": "YouTube", "balance": 2500.00, "budget": 8000.00},
+    ]

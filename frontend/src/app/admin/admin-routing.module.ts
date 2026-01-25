@@ -23,13 +23,15 @@ import {SourceAssetsManagementComponent} from './source-assets-management/source
 import {OrganizationsManagementComponent} from './organizations-management/organizations-management.component';
 import {WorkspacesManagementComponent} from './workspaces-management/workspaces-management.component';
 import {CreditsAnalyticsComponent} from './credits-analytics/credits-analytics.component';
+import { AdminHomeComponent } from './admin-home/admin-home.component';
 
 const routes: Routes = [
   {
     path: '', // This will be '/admin' because of the main app routing
     component: AdminLayoutComponent,
     children: [
-      {path: '', redirectTo: 'users', pathMatch: 'full'}, // Default child route
+      {path: '', redirectTo: 'home', pathMatch: 'full'}, // Default child route
+      {path: 'home', component: AdminHomeComponent},
       {path: 'users', component: UsersManagementComponent},
       {path: 'source-assets', component: SourceAssetsManagementComponent},
       {path: 'media-templates', component: MediaTemplatesManagementComponent},

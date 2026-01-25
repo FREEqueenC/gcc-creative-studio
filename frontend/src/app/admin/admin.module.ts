@@ -55,6 +55,7 @@ import {OrganizationsManagementComponent} from './organizations-management/organ
 import {WorkspacesManagementComponent} from './workspaces-management/workspaces-management.component';
 import {SharedModule} from '../common/shared.module';
 import {CreditsAnalyticsModule} from './credits-analytics/credits-analytics.module';
+import { AdminHomeComponent } from './admin-home/admin-home.component';
 
 @NgModule({
   declarations: [
@@ -68,6 +69,7 @@ import {CreditsAnalyticsModule} from './credits-analytics/credits-analytics.modu
     SourceAssetUploadFormComponent,
     OrganizationsManagementComponent,
     WorkspacesManagementComponent,
+    AdminHomeComponent,
   ],
   imports: [
     CommonModule,

@@ -1,5 +1,5 @@
 <div class="credits-analytics-container p-4">
-  <h2 class="text-2xl font-bold mb-4">Credits & Analytics Dashboard</h2>
+  <h1 class="text-3xl font-semibold mb-4">Credits & Analytics Dashboard</h1>
 
   <!-- Credit Assignment Section -->
   <section class="mb-8 bg-white dark:bg-[#1E1F22] p-6 rounded-lg shadow">
@@ -114,39 +114,6 @@
       <tr mat-header-row *matHeaderRowDef="priceCatalogColumns"></tr>
       <tr mat-row *matRowDef="let row; columns: priceCatalogColumns;"></tr>
     </table>
-  </section>
-
-  <section class="mb-8">
-    <h3 class="text-xl font-semibold mb-2">Token Usage</h3>
-    <div *ngIf="tokenUsage$ | async as usage; else loadingUsage">
-      <!-- TODO: Render TokenUsage data, e.g., a chart or table -->
-      <pre>{{ usage | json }}</pre>
-    </div>
-    <ng-template #loadingUsage>
-      <p>Loading Token Usage...</p>
-    </ng-template>
-  </section>
-
-  <section class="mb-8">
-    <h3 class="text-xl font-semibold mb-2">Token Budgets</h3>
-    <div *ngIf="tokenBudgets$ | async as budgets; else loadingBudgets">
-      <!-- TODO: Render TokenBudgets data -->
-      <pre>{{ budgets | json }}</pre>
-    </div>
-    <ng-template #loadingBudgets>
-      <p>Loading Token Budgets...</p>
-    </ng-template>
-  </section>
-
-  <section class="mb-8">
-    <h3 class="text-xl font-semibold mb-2">Active Roles</h3>
-    <div *ngIf="activeRoles$ | async as roles; else loadingRoles">
-      <!-- TODO: Render ActiveRoles data -->
-      <pre>{{ roles | json }}</pre>
-    </div>
-    <ng-template #loadingRoles>
-      <p>Loading Active Roles...</p>
-    </ng-template>
   </section>
 
   <!-- TODO: Add sections for Organization/User specific usage based on isSuperAdmin$ -->

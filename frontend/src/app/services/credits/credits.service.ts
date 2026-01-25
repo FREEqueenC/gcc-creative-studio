@@ -39,12 +39,25 @@ export class CreditsService {
     return this.http.post<PriceCatalogDto>(`${this.apiUrl}/prices`, dto);
   }
 
-  updatePrice(modelId: string, dto: UpdatePriceCatalogDto): Observable<PriceCatalogDto> {
-    return this.http.put<PriceCatalogDto>(`${this.apiUrl}/prices/${modelId}`, dto);
+  updatePrice(modelId: string, category: string, dto: UpdatePriceCatalogDto): Observable<PriceCatalogDto> {
+    return this.http.put<PriceCatalogDto>(`${this.apiUrl}/prices/${modelId}?category=${category}`, dto);
   }
 
-  deletePrice(modelId: string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/prices/${modelId}`);
+  deletePrice(modelId: string, category: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/prices/${modelId}?category=${category}`);
+  }
+
+  // Admin Dashboard Methods
+  getAdminOverviewStats(): Observable<AdminOverviewStats> {
+    return this.http.get<AdminOverviewStats>(`${this.apiUrl}/admin/overview-stats`);
+  }
+
+  getAdminUsageOverTime(): Observable<AdminUsageOverTime[]> {
+    return this.http.get<AdminUsageOverTime[]>(`${this.apiUrl}/admin/usage-over-time`);
+  }
+
+  getAdminOrganizationBudgets(): Observable<AdminOrganizationBudget[]> {
+    return this.http.get<AdminOrganizationBudget[]>(`${this.apiUrl}/admin/organization-budgets`);
   }
 }
 
@@ -64,6 +77,25 @@ export interface CreatePriceCatalogDto {
 }
 
 export interface UpdatePriceCatalogDto {
-  category?: string;
   cost?: number;
+}
+
+// Interfaces for Admin Dashboard
+export interface AdminOverviewStats {
+  totalUsers: number;
+  totalOrganizations: number;
+  imagesGenerated: number;
+  videosGenerated: number;
+  audiosGenerated: number;
+}
+
+export interface AdminUsageOverTime {
+  date: string;
+  [key: string]: number | string; // Category: spent
+}
+
+export interface AdminOrganizationBudget {
+  orgName: string;
+  balance: number;
+  budget: number;
 }

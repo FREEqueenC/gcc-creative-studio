@@ -134,3 +134,13 @@ async def get_admin_organization_budgets(
         {"orgName": "Google", "balance": 5000.00, "budget": 10000.00},
         {"orgName": "YouTube", "balance": 2500.00, "budget": 8000.00},
     ]
+
+@router.get("/admin/active-roles", response_model=List[Dict[str, Any]])
+async def get_admin_active_roles(
+    current_user: UserModel = Depends(get_current_user),
+    service: CreditsService = Depends()
+):
+    if not current_user.is_super_admin:
+        # TODO: Scope for Org Admin
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+    return await service.get_admin_active_roles(current_user)

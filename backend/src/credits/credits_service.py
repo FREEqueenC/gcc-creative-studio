@@ -307,13 +307,28 @@ class CreditsService:
             for row in rows:
                 date_str = row.date.isoformat()
                 category = row.category.name
-                spent = row.total_spent
+                spent = float(row.total_spent)
 
                 if date_str not in data_map:
                     data_map[date_str] = {"date": date_str}
                 
-                data_map[date_str][category] = float(spent)
+                data_map[date_str][category] = spent
 
+            # Calculate Totals for each date
+            for date_str in data_map:
+                total_spent = sum(value for key, value in data_map[date_str].items() if key != 'date')
+                data_map[date_str]['Total'] = total_spent
+
+            if not data_map:
+                # Mock data if empty
+                mock_data = [
+                    {"date": "2024-07-01", "IMAGE": 10, "VIDEO": 5, "AUDIO": 2, "Total": 17},
+                    {"date": "2024-07-02", "IMAGE": 12, "VIDEO": 6, "AUDIO": 3, "Total": 21},
+                    {"date": "2024-07-03", "IMAGE": 8, "VIDEO": 4, "AUDIO": 1, "Total": 13},
+                    {"date": "2024-07-04", "IMAGE": 15, "VIDEO": 7, "AUDIO": 4, "Total": 26},
+                    {"date": "2024-07-05", "IMAGE": 11, "VIDEO": 5, "AUDIO": 2, "Total": 18},
+                ]
+                return mock_data
             return list(data_map.values())
         else:
             # TODO: Implement for Org Admin
@@ -342,3 +357,16 @@ class CreditsService:
         else:
             # TODO: Implement for Org Admin (show only their org)
             raise HTTPException(status_code=501, detail="Org Admin organization budgets not yet implemented")
+
+    async def get_admin_active_roles(self, current_user: UserModel) -> List[Dict[str, Any]]:
+        if current_user.is_super_admin:
+            # TODO: Replace with actual data from OpenFGA or database
+            return [
+                {"role": "Super Admin", "count": 2},
+                {"role": "Org Admin", "count": 15},
+                {"role": "User", "count": 83},
+                {"role": "Workspace Admin", "count": 25},
+                {"role": "Workspace Member", "count": 60},
+            ]
+        else:
+            raise HTTPException(status_code=501, detail="Org Admin active roles not yet implemented")

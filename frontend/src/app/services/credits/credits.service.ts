@@ -3,6 +3,50 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
+// Interfaces for Price Catalog
+export interface PriceCatalogDto {
+  model_id: string;
+  category: string;
+  cost: number;
+  created_at: Date;
+  updated_at: Date;
+}
+
+export interface CreatePriceCatalogDto {
+  model_id: string;
+  category: string;
+  cost: number;
+}
+
+export interface UpdatePriceCatalogDto {
+  cost?: number;
+}
+
+// Interfaces for Admin Dashboard
+export interface AdminOverviewStats {
+  totalUsers: number;
+  totalOrganizations: number;
+  imagesGenerated: number;
+  videosGenerated: number;
+  audiosGenerated: number;
+}
+
+export interface AdminUsageOverTime {
+  date: string;
+  [key: string]: number | string; // Category: spent
+}
+
+export interface AdminOrganizationBudget {
+  orgName: string;
+  balance: number;
+  budget: number;
+}
+
+export interface AdminActiveRole {
+  role: string;
+  count: number;
+}
+
 export interface AssignCreditsDto {
   target_user_id?: number;
   target_org_id?: number;
@@ -59,43 +103,8 @@ export class CreditsService {
   getAdminOrganizationBudgets(): Observable<AdminOrganizationBudget[]> {
     return this.http.get<AdminOrganizationBudget[]>(`${this.apiUrl}/admin/organization-budgets`);
   }
-}
 
-// Interfaces for Price Catalog
-export interface PriceCatalogDto {
-  model_id: string;
-  category: string;
-  cost: number;
-  created_at: Date;
-  updated_at: Date;
-}
-
-export interface CreatePriceCatalogDto {
-  model_id: string;
-  category: string;
-  cost: number;
-}
-
-export interface UpdatePriceCatalogDto {
-  cost?: number;
-}
-
-// Interfaces for Admin Dashboard
-export interface AdminOverviewStats {
-  totalUsers: number;
-  totalOrganizations: number;
-  imagesGenerated: number;
-  videosGenerated: number;
-  audiosGenerated: number;
-}
-
-export interface AdminUsageOverTime {
-  date: string;
-  [key: string]: number | string; // Category: spent
-}
-
-export interface AdminOrganizationBudget {
-  orgName: string;
-  balance: number;
-  budget: number;
+  getAdminActiveRoles(): Observable<AdminActiveRole[]> {
+    return this.http.get<AdminActiveRole[]>(`${this.apiUrl}/admin/active-roles`);
+  }
 }

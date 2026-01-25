@@ -1,75 +1,72 @@
-<div class="p-4 dark:text-gray-100 min-h-screen">
+<div class="py-4 px-0 dark:text-gray-100 min-h-screen">
   <h1 class="text-3xl font-semibold mb-6">Admin Dashboard</h1>
   <div *ngIf="isSuperAdmin$ | async; else orgAdminView">
     <!-- Super Admin View -->
-    <section class="mb-8 bg-white dark:bg-[#1E1F22] p-6 rounded-lg shadow">
-      <h3 class="text-2xl font-semibold mb-4">
-        Platform Overview
-      </h3>
-      <div *ngIf="overviewStats$ | async as stats; else loadingStats">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-          <div
-            class="bg-gray-800 dark:bg-[#2A2B2F] p-4 rounded-lg shadow-md flex flex-col items-center justify-center"
-          >
-            <span class="text-4xl font-bold">{{
-              stats.totalUsers
-            }}</span>
-            <span class="text-gray-400 mt-2">Total Users</span>
-          </div>
-          <div
-            class="bg-gray-800 dark:bg-[#2A2B2F] p-4 rounded-lg shadow-md flex flex-col items-center justify-center"
-          >
-            <span class="text-4xl font-bold text-purple-400">{{
-              stats.totalOrganizations
-            }}</span>
-            <span class="text-gray-400 mt-2">Total Organizations</span>
-          </div>
-          <div
-            class="bg-gray-800 dark:bg-[#2A2B2F] p-4 rounded-lg shadow-md flex flex-col items-center justify-center"
-          >
-            <span class="text-4xl font-bold text-red-400">{{
-              stats.imagesGenerated
-            }}</span>
-            <span class="text-gray-400 mt-2">Images Generated</span>
-          </div>
-          <div
-            class="bg-gray-800 dark:bg-[#2A2B2F] p-4 rounded-lg shadow-md flex flex-col items-center justify-center"
-          >
-            <span class="text-4xl font-bold">{{
-              stats.videosGenerated
-            }}</span>
-            <span class="text-gray-400 mt-2">Videos Generated</span>
-          </div>
-          <div
-            class="bg-gray-800 dark:bg-[#2A2B2F] p-4 rounded-lg shadow-md flex flex-col items-center justify-center"
-          >
-            <span class="text-4xl font-bold text-purple-300">{{
-              stats.audiosGenerated
-            }}</span>
-            <span class="text-gray-400 mt-2">Audios Generated</span>
+    <div class="grid grid-cols-1 lg:grid-cols-6 gap-6">
+      <!-- Overview Stats -->
+      <div class="lg:col-span-6 bg-white dark:bg-[#1E1F22] p-6 rounded-lg shadow">
+        <h3 class="text-2xl font-semibold mb-4">Platform Overview</h3>
+        <div *ngIf="overviewStats$ | async as stats; else loadingStats">
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            <div class="dark:bg-[#2A2B2F] p-4 rounded-lg shadow-md flex flex-col items-center justify-center">
+              <mat-icon class="text-blue-400 mb-2">group</mat-icon>
+              <span class="text-3xl font-bold">{{ stats.totalUsers }}</span>
+              <span class="text-gray-400 mt-1">Total Users</span>
+            </div>
+            <div class="dark:bg-[#2A2B2F] p-4 rounded-lg shadow-md flex flex-col items-center justify-center">
+              <mat-icon class="text-purple-400 mb-2">business</mat-icon>
+              <span class="text-3xl font-bold">{{ stats.totalOrganizations }}</span>
+              <span class="text-gray-400 mt-1">Total Orgs</span>
+            </div>
+            <div class="dark:bg-[#2A2B2F] p-4 rounded-lg shadow-md flex flex-col items-center justify-center">
+              <mat-icon class="text-red-400 mb-2">image</mat-icon>
+              <span class="text-3xl font-bold">{{ stats.imagesGenerated }}</span>
+              <span class="text-gray-400 mt-1">Images Gen.</span>
+            </div>
+            <div class="dark:bg-[#2A2B2F] p-4 rounded-lg shadow-md flex flex-col items-center justify-center">
+              <mat-icon class="text-green-400 mb-2">movie</mat-icon>
+              <span class="text-3xl font-bold">{{ stats.videosGenerated }}</span>
+              <span class="text-gray-400 mt-1">Videos Gen.</span>
+            </div>
+            <div class="dark:bg-[#2A2B2F] p-4 rounded-lg shadow-md flex flex-col items-center justify-center">
+              <mat-icon class="text-yellow-400 mb-2">audiotrack</mat-icon>
+              <span class="text-3xl font-bold">{{ stats.audiosGenerated }}</span>
+              <span class="text-gray-400 mt-1">Audios Gen.</span>
+            </div>
           </div>
         </div>
+        <ng-template #loadingStats>
+          <div class="flex justify-center items-center h-24">
+            <span class="text-gray-500">Loading platform stats...</span>
+          </div>
+        </ng-template>
       </div>
-      <ng-template #loadingStats>
-        <div class="flex justify-center items-center h-24">
-          <span class="text-gray-500">Loading platform stats...</span>
-        </div>
-      </ng-template>
-    </section>
 
-    <section class="mb-8 bg-white dark:bg-[#1E1F22] p-6 rounded-lg shadow">
-      <h4 class="text-xl font-semibold mb-4">
-        Credit Usage Over Time
-      </h4>
-      <div #usageChart></div>
-    </section>
+      <!-- Credit Usage Over Time -->
+      <div class="lg:col-span-3 bg-white dark:bg-[#1E1F22] p-6 rounded-lg shadow">
+        <h4 class="text-xl font-semibold mb-4">Credit Usage Over Time</h4>
+        <div #usageChart></div>
+      </div>
 
-    <section class="mb-8 bg-white dark:bg-[#1E1F22] p-6 rounded-lg shadow">
-      <h4 class="text-xl font-semibold mb-4">
-        Organization Budgets
-      </h4>
-      <div #budgetsChart></div>
-    </section>
+      <!-- Organization Budgets -->
+      <div class="lg:col-span-3 bg-white dark:bg-[#1E1F22] p-6 rounded-lg shadow">
+        <h4 class="text-xl font-semibold mb-4">Organization Budgets</h4>
+        <div #budgetsChart></div>
+      </div>
+
+      <!-- Active Roles Distribution -->
+      <div class="lg:col-span-2 bg-white dark:bg-[#1E1F22] p-6 rounded-lg shadow">
+        <h4 class="text-xl font-semibold mb-4">Active Roles</h4>
+        <div #rolesChart></div>
+      </div>
+
+      <!-- Combined Media Generation (Placeholder) -->
+      <div class="lg:col-span-4 bg-white dark:bg-[#1E1F22] p-6 rounded-lg shadow">
+        <h4 class="text-xl font-semibold mb-4">Total Media Generated Over Time</h4>
+        <div #combinedMediaChart></div> <!-- New chart container -->
+      </div>
+
+    </div>
   </div>
   <ng-template #orgAdminView>
     <!-- Org Admin View -->

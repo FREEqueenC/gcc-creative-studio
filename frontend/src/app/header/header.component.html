@@ -62,12 +62,13 @@
         <!-- AI Credits -->
         <div class="menu-section credits-section">
           <mat-icon>stars</mat-icon>
-          <span class="flex-1">25000 AI Credits</span>
+          <span class="flex-1">{{ (currentUser?.wallet?.balance | number: '1.0-2') || 0 }} AI Credits</span>
         </div>
 
         <!-- Actions -->
         <div class="menu-section actions-section">
           <button mat-menu-item *ngIf="isAdmin$ | async" routerLink="/admin"><mat-icon>admin_panel_settings</mat-icon> Admin Center</button>
+          <button mat-menu-item routerLink="/profile"><mat-icon>account_circle</mat-icon> My Profile</button>
           <button mat-menu-item (click)="navigateToOrganization()"><mat-icon>business</mat-icon> Organization</button>
         </div>
 

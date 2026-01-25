@@ -1,0 +1,73 @@
+<div class="container mx-auto mt-[7rem] p-6 max-w-4xl" *ngIf="currentUser$ | async as user; else loadingUser">
+  <!-- Header Section -->
+  <div class="flex items-center gap-6 mb-10 p-6 rounded-2xl bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-800 dark:to-neutral-800/50 border border-neutral-200 dark:border-neutral-700 shadow-sm">
+    <div class="w-24 h-24 rounded-full bg-gray-200 dark:bg-neutral-700 flex items-center justify-center overflow-hidden shadow-inner shrink-0">
+      <img *ngIf="user.picture" [src]="user.picture" alt="User profile" class="w-full h-full object-cover">
+      <mat-icon *ngIf="!user.picture" class="text-5xl text-gray-400 dark:text-neutral-500 !w-16 !h-16">account_circle</mat-icon>
+    </div>
+    <div class="flex-1">
+      <h1 class="text-3xl font-bold text-neutral-800 dark:text-neutral-100">{{ user.name || 'User' }}</h1>
+      <p class="text-neutral-500 dark:text-neutral-400 mt-1 text-lg">{{ user.email }}</p>
+      <p class="text-neutral-400 dark:text-neutral-500 text-sm mt-2">Member since {{ user.createdAt | date: 'longDate' }}</p>
+    </div>
+  </div>
+
+  <!-- Wallet Section -->
+  <section class="mb-8">
+    <h2 class="text-2xl font-semibold mb-4 text-neutral-700 dark:text-neutral-200">My Wallet</h2>
+    <div *ngIf="user.wallet; else noWallet" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="p-6 rounded-2xl bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 shadow-sm flex flex-col justify-between">
+        <div>
+          <h4 class="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-2 flex items-center">
+            <mat-icon class="!text-base !w-4 !h-4 mr-1.5">account_balance_wallet</mat-icon>
+            Current Balance
+          </h4>
+          <p class="text-4xl font-bold text-neutral-800 dark:text-neutral-100">{{ user.wallet.balance | number: '1.0-0' }} <span class="text-2xl font-normal">Credits</span></p>
+        </div>
+        <p class="text-xs text-neutral-400 dark:text-neutral-500 mt-4">Expires: {{ user.wallet.expires_at ? (user.wallet.expires_at | date: 'mediumDate') : 'Never' }}</p>
+      </div>
+
+      <div class="p-6 rounded-2xl bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 shadow-sm">
+        <h4 class="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-2 flex items-center">
+          <mat-icon class="!text-base !w-4 !h-4 mr-1.5">history</mat-icon>
+          Lifetime Spend
+        </h4>
+        <p class="text-3xl font-bold text-neutral-800 dark:text-neutral-100">{{ user.wallet.cumulative_spend | number: '1.0-0' }} <span class="text-xl font-normal">Credits</span></p>
+        <p class="text-xs mt-2 {{ user.wallet.status === 'Active' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }}">
+          Status: {{ user.wallet.status }}
+        </p>
+      </div>
+    </div>
+    <ng-template #noWallet>
+      <div class="p-6 rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 shadow-sm">
+        <p class="text-neutral-500 dark:text-neutral-400">No wallet information available.</p>
+      </div>
+    </ng-template>
+  </section>
+
+  <!-- Usage Analytics Section -->
+  <section class="mb-8">
+    <h2 class="text-2xl font-semibold mb-4 text-neutral-700 dark:text-neutral-200">My Usage Analytics</h2>
+    <div *ngIf="userUsage$ | async as usage; else loadingUsage" class="p-6 rounded-2xl bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 shadow-sm">
+      <!-- TODO: Render UserUsage data as a chart or list -->
+      <h4 class="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-3">Spend History (Last 30 Days)</h4>
+      <div class="text-neutral-700 dark:text-neutral-300">
+        <pre class="bg-neutral-50 dark:bg-neutral-700/50 p-4 rounded-lg overflow-x-auto">{{ usage | json }}</pre>
+      </div>
+    </div>
+    <ng-template #loadingUsage>
+      <div class="p-6 rounded-2xl bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 shadow-sm">
+        <p class="text-neutral-500 dark:text-neutral-400">Loading Usage Analytics...</p>
+      </div>
+    </ng-template>
+  </section>
+
+  <!-- TODO: Add section for generated asset counts -->
+
+</div>
+
+<ng-template #loadingUser>
+  <div class="container mx-auto mt-[7rem] p-6 max-w-4xl flex justify-center items-center">
+    <mat-progress-spinner color="primary" mode="indeterminate"></mat-progress-spinner>
+  </div>
+</ng-template>

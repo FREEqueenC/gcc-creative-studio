@@ -99,6 +99,10 @@ class ConfigService(BaseSettings):
     )
     BACKEND_SERVICE_ACCOUNT_EMAIL: str = ""
 
+    # --- Credit Economy ---
+    CREDIT_SYSTEM_MODE: str = "AUDIT"  # Options: ENFORCED, AUDIT
+    DEFAULT_CREDIT_EXPIRATION_DAYS: int = 14
+
     @model_validator(mode="before")
     @classmethod
     def get_default_project_id(cls, values: Any) -> Any:

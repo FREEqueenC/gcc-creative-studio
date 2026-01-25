@@ -262,12 +262,7 @@ export class WorkspaceSwitcherComponent implements OnInit {
     if (this.activeWorkspace.permissions) {
         return this.activeWorkspace.permissions.canViewWsBrandGuidelines;
     }
-    
-    const isAdmin = !!this.currentUser.roles?.includes(UserRolesEnum.ADMIN);
-    const isOwnerOfPrivateWorkspace =
-      this.activeWorkspace.scope === WorkspaceScope.PRIVATE &&
-      this.currentUser.id === this.activeWorkspace.ownerId;
-    return isAdmin || isOwnerOfPrivateWorkspace;
+    return false;
   }
 
   get canPerformEditActionsOnBrandGuidelines(): boolean {

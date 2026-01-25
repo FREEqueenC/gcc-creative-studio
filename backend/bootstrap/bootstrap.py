@@ -38,6 +38,17 @@ from src.common.storage_service import GcsService
 from src.media_templates.repository.media_template_repository import MediaTemplateRepository
 from src.source_assets.repository.source_asset_repository import SourceAssetRepository
 from src.workspaces.repository.workspace_repository import WorkspaceRepository
+from src.auth.iam_signer_credentials_service import IamSignerCredentials
+from src.common.permission_service import PermissionService
+from src.scripts.seed_credits import seed_credit_data
+from src.common.consistency_service import ConsistencyService
+from src.common.email_service import EmailService
+from src.auth import auth_service
+from src.workspaces.workspace_service import WorkspaceService
+from src.media_templates.media_templates_service import MediaTemplateService
+from src.common.models import AspectRatioEnum, AssetScopeEnum, AssetTypeEnum
+from src.source_assets.source_asset_model import SourceAssetModel
+from src.core.fga import fga_config, fga_client, setup_fga
 from src.common.schema.media_item_model import AssetRoleEnum
 from src.source_assets.schema.source_asset_model import SourceAssetModel, AssetScopeEnum, AssetTypeEnum
 from src.common.email_service import EmailService
@@ -450,22 +461,32 @@ async def main():
             admin_user = await ensure_admin_user_exists(db)
             
             if admin_user:
-                # Ensure Admin Org exists and seed it
-                org_repo = OrganizationRepository(db)
-                org_service = OrganizationService(org_repo)
-                
-                # Instantiate dependencies for WorkspaceService
-                workspace_repo = WorkspaceRepository(db)
-                user_repo = UserRepository(db)
-                email_service = EmailService()
+                # Instantiate shared dependencies
+                iam_signer_credentials = IamSignerCredentials()
+                # permission_service = PermissionService()
                 consistency_service = ConsistencyService()
+                email_service = EmailService()
+                user_repo = UserRepository(db)
+                org_repo = OrganizationRepository(db)
+                workspace_repo = WorkspaceRepository(db)
+
+                # Ensure Admin Org exists and seed it
+                org_service = OrganizationService(
+                    repo=org_repo, 
+                    db=db, 
+                    consistency_service=consistency_service, 
+                    iam_signer_credentials=iam_signer_credentials,
+                    # permission_service=permission_service
+                )
                 
                 workspace_service = WorkspaceService(
                     workspace_repo=workspace_repo,
                     user_repo=user_repo,
                     email_service=email_service,
                     organization_service=org_service,
-                    consistency_service=consistency_service
+                    consistency_service=consistency_service,
+                    iam_signer_credentials=iam_signer_credentials,
+                    # permission_service=permission_service
                 )
                 
                 # We need to ensure the admin has an organization to seed
@@ -491,6 +512,14 @@ async def main():
                 # Seed System Data (Assets, Templates)
                 await seed_vto_assets(db, admin_user)
                 await seed_media_templates(db, admin_user)
+
+                # Seed Credit Economy Data
+                try:
+                    logger.info("Seeding credit economy data...")
+                    await seed_credit_data(db)
+                    logger.info("Credit economy data seeded.")
+                except Exception as e:
+                    logger.error(f"Failed to seed credit data: {e}", exc_info=True)
             else:
                 logger.warning("No admin user found. Skipping organization seeding.")
 

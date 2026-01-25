@@ -46,7 +46,8 @@ class UserRepository(BaseRepository[User, UserModel]):
             .where(self.model.email == email)
             .options(
                 selectinload(self.model.organizations).selectinload(UserOrganization.organization),
-                selectinload(self.model.workspaces).selectinload(WorkspaceMemberAssociation.workspace)
+                selectinload(self.model.workspaces).selectinload(WorkspaceMemberAssociation.workspace),
+                selectinload(self.model.wallet)
             )
         )
         user = result.scalar_one_or_none()
@@ -61,7 +62,8 @@ class UserRepository(BaseRepository[User, UserModel]):
             .where(self.model.id == item_id)
             .options(
                 selectinload(self.model.organizations).selectinload(UserOrganization.organization),
-                selectinload(self.model.workspaces).selectinload(WorkspaceMemberAssociation.workspace)
+                selectinload(self.model.workspaces).selectinload(WorkspaceMemberAssociation.workspace),
+                selectinload(self.model.wallet)
             )
         )
         item = result.scalar_one_or_none()
@@ -78,7 +80,8 @@ class UserRepository(BaseRepository[User, UserModel]):
             .where(self.model.id == item_id)
             .options(
                 selectinload(self.model.organizations).selectinload(UserOrganization.organization),
-                selectinload(self.model.workspaces).selectinload(WorkspaceMemberAssociation.workspace)
+                selectinload(self.model.workspaces).selectinload(WorkspaceMemberAssociation.workspace),
+                selectinload(self.model.wallet)
             )
             .execution_options(include_deleted=True)
         )
@@ -186,7 +189,8 @@ class UserRepository(BaseRepository[User, UserModel]):
         # 1. Build the base query        
         query = select(self.model).options(
             selectinload(self.model.organizations).selectinload(UserOrganization.organization),
-            selectinload(self.model.workspaces).selectinload(WorkspaceMemberAssociation.workspace)
+            selectinload(self.model.workspaces).selectinload(WorkspaceMemberAssociation.workspace),
+            selectinload(self.model.wallet)
         )
 
         # Apply soft-delete filter using execution options if requested

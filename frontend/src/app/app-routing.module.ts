@@ -32,6 +32,7 @@ import { WorkflowEditorComponent } from './workflows/workflow-editor/workflow-ed
 import { WorkflowListComponent } from './workflows/workflow-list/workflow-list.component';
 import { WorkbenchComponent } from './workbench/workbench.component';
 import { OrganizationComponent } from './organization/organization.component';
+import { UserProfileComponent } from './user/user-profile/user-profile.component';
 
 const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -84,6 +85,7 @@ const routes: Routes = [
       { path: ':id/executions', component: ExecutionHistoryComponent },
     ],
   },
+  { path: 'profile', component: UserProfileComponent, canActivate: [AuthGuardService] },
 ];
 
 @NgModule({

@@ -24,4 +24,4 @@ class UpdateOrganizationDto(BaseDto):
     """
     name: Optional[str] = Field(None, min_length=1, max_length=100)
     description: Optional[str] = Field(None, max_length=500)
-    logo: Optional[str] = None
+    logo: Optional[str] = Field(None, description="GCS URI of the logo (e.g., gs://bucket/path/image.png)")

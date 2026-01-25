@@ -56,7 +56,8 @@ from src.workflows_executor.workflows_executor_controller import (
 )
 from src.workspaces.workspace_controller import router as workspace_router
 
-# ... (omitted for brevity)
+from src.credits.credits_controller import router as credits_router
+from src.analytics.analytics_controller import router as analytics_router
 
 
 # Get a logger instance for use in this file. It will inherit the root setup.
@@ -198,3 +199,5 @@ app.include_router(workspace_router)
 app.include_router(brand_guideline_router)
 app.include_router(workflow_router)
 app.include_router(workflows_executor_router)
+app.include_router(credits_router)
+app.include_router(analytics_router)

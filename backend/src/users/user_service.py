@@ -71,7 +71,15 @@ class UserService:
 
         # 3. Call the repository's create() method
         try:
-            return await self.user_repo.create(user_data)
+            created_user = await self.user_repo.create(user_data)
+
+            # --- Credit Economy: Create User Wallet ---
+            from src.credits.credit_model import UserWallet
+            wallet = UserWallet(user_id=created_user.id, balance=0.0)
+            self.user_repo.db.add(wallet)
+            await self.user_repo.db.commit()
+
+            return created_user
         except IntegrityError:
             # Handle race condition: User might have been created by another request
             await self.user_repo.db.rollback()

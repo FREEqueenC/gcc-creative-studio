@@ -22,6 +22,7 @@ import {MediaTemplatesManagementComponent} from './media-templates-management/me
 import {SourceAssetsManagementComponent} from './source-assets-management/source-assets-management.component';
 import {OrganizationsManagementComponent} from './organizations-management/organizations-management.component';
 import {WorkspacesManagementComponent} from './workspaces-management/workspaces-management.component';
+import {CreditsAnalyticsComponent} from './credits-analytics/credits-analytics.component';
 
 const routes: Routes = [
   {
@@ -34,6 +35,7 @@ const routes: Routes = [
       {path: 'media-templates', component: MediaTemplatesManagementComponent},
       {path: 'organizations', component: OrganizationsManagementComponent},
       {path: 'workspaces', component: WorkspacesManagementComponent},
+      {path: 'credits-analytics', component: CreditsAnalyticsComponent},
       // Add more routes for other entities here
       // Example: { path: 'orders', component: OrdersManagementComponent },
     ],

@@ -366,6 +366,7 @@ export class AuthService {
     return isUserLoggedIn;
   }
 
+  // TODO: This should be removed, the new permissions should be used
   isUserAdmin() {
     if (!isPlatformBrowser(this.platformId)) return false;
 

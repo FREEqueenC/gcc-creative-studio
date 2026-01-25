@@ -34,7 +34,7 @@ export interface UserWorkspaceSummary {
 }
 
 export interface UserModel {
-  id?: number | string;
+  id?: number;
   name?: string;
   email: string;
   roles?: UserRolesEnum[];
@@ -46,4 +46,12 @@ export interface UserModel {
   isSuperAdmin?: boolean;
   canAccessAdminPanel?: boolean;
   canViewAllOrgWorkspaces?: boolean;
+  wallet?: UserWalletDto;
+}
+
+export interface UserWalletDto {
+  balance: number;
+  cumulative_spend: number;
+  expires_at?: string | null;
+  status: string;
 }

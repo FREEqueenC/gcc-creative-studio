@@ -56,6 +56,7 @@ class WorkspaceService:
         email_service: EmailService = Depends(),
         organization_service: OrganizationService = Depends(),
         consistency_service: ConsistencyService = Depends(),
+        iam_signer_credentials: IamSignerCredentials = Depends(),
     ):
         self.workspace_repo = workspace_repo
         self.user_repo = user_repo
@@ -63,7 +64,7 @@ class WorkspaceService:
         self.organization_service = organization_service
         self.permission_service = PermissionService()
         self.consistency_service = consistency_service
-        self.signer = IamSignerCredentials()
+        self.signer = iam_signer_credentials
 
     def _sign_logo(self, workspace: WorkspaceModel):
         """Generates a presigned URL for the organization logo if it exists."""

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from src.credits.dependencies import check_and_log_credits
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi import status as Status
 
@@ -41,6 +42,7 @@ async def generate_images(
     service: ImagenService = Depends(),
     current_user: UserModel = Depends(get_current_user),
     workspace_repo: WorkspaceRepository = Depends(),
+    _credits: None = Depends(check_and_log_credits("imagen-3.0-generate-001")),
 ) -> MediaItemResponse | None:
     try:
         # Use our centralized dependency to authorize the user for the workspace

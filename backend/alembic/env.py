@@ -31,6 +31,7 @@ from src.source_assets.schema.source_asset_model import SourceAsset
 from src.workflows.schema.workflow_model import Workflow
 from src.organizations.organization_model import Organization
 from src.workflows.schema.workflow_run_model import WorkflowRun
+from src.credits.credit_model import PriceCatalog, UserWallet, OrganizationWallet, CreditLog, BudgetDeposit
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

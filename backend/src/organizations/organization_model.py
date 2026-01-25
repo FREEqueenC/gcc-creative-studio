@@ -66,6 +66,14 @@ class Organization(Base):
         back_populates="organization",
         cascade="all, delete-orphan",
     )
+    
+    # Credit Economy
+    wallet: Mapped["OrganizationWallet"] = relationship(
+        "OrganizationWallet",
+        back_populates="organization",
+        cascade="all, delete-orphan",
+        uselist=False,
+    )
     owner: Mapped["User"] = relationship(foreign_keys=[owner_id])
 
 class UserOrganization(Base):

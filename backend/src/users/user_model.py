@@ -24,7 +24,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship, Session, with_lo
 from src.common.base_repository import BaseDocument
 from src.database import Base
 from sqlalchemy import Boolean
-
+from src.credits.credit_model import CreditLog, UserWallet
 
 class User(Base):
     """
@@ -67,6 +67,21 @@ class User(Base):
         cascade="all, delete-orphan",
     )
 
+    # Credit Economy
+    wallet: Mapped["UserWallet"] = relationship(
+        "UserWallet",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        uselist=False,
+    )
+    
+    credit_logs: Mapped[List["CreditLog"]] = relationship(
+        "CreditLog",
+        foreign_keys="CreditLog.target_user_id",
+        back_populates="target_user",
+        cascade="all, delete-orphan",
+    )
+
 
 class UserOrganizationSummary(BaseModel):
     """
@@ -87,6 +102,13 @@ class UserWorkspaceSummary(BaseModel):
     role: str
 
 
+class UserWalletDto(BaseModel):
+    balance: float
+    cumulative_spend: float
+    expires_at: Optional[datetime.datetime]
+    status: str
+
+
 class UserModel(BaseDocument):
     """
     Represents a user document (DTO) for the API.
@@ -103,6 +125,7 @@ class UserModel(BaseDocument):
     can_access_admin_panel: bool = False
     organizations: List[UserOrganizationSummary] = Field(default_factory=list)
     workspaces: List[UserWorkspaceSummary] = Field(default_factory=list)
+    wallet: Optional[UserWalletDto] = None
     deleted_at: Optional[datetime.datetime] = None
 
     @field_validator("roles", mode="after")

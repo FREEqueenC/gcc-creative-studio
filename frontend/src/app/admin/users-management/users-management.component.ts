@@ -282,7 +282,7 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
       });
   }
 
-  async deleteUser(userId: string): Promise<void> {
+  async deleteUser(userId: number): Promise<void> {
     if (this.currentUser && this.currentUser.id === userId) {
       handleErrorSnackbar(this._snackBar, 'You cannot delete your own account.', 'Delete User');
       return;

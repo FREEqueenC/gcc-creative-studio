@@ -53,14 +53,15 @@ class OrganizationService:
         self, 
         repo: OrganizationRepository = Depends(), 
         db: AsyncSession = Depends(get_db),
-        consistency_service: ConsistencyService = Depends()
+        consistency_service: ConsistencyService = Depends(),
+        iam_signer_credentials: IamSignerCredentials = Depends()
     ):
         self.repo = repo
         self.db = db
         self.user_repo = UserRepository(db)
         self.permission_service = PermissionService()
         self.consistency_service = consistency_service
-        self.signer = IamSignerCredentials()
+        self.signer = iam_signer_credentials
 
     def _sign_logo(self, org: OrganizationModel):
         """Generates a presigned URL for the organization logo if it exists."""
@@ -111,7 +112,15 @@ class OrganizationService:
         
         # 2. Define DB Operation
         async def db_op() -> OrganizationModel:
-            return await self.repo.create(schema, user_id)
+            created_org = await self.repo.create(schema, user_id)
+
+            # --- Credit Economy: Create Organization Wallet ---
+            from src.credits.credit_model import OrganizationWallet
+            wallet = OrganizationWallet(organization_id=created_org.id, balance=0.0)
+            self.db.add(wallet)
+            await self.db.commit()
+
+            return created_org
 
         # 3. Define FGA Operation
         async def fga_op(created_org: OrganizationModel):
@@ -194,7 +203,7 @@ class OrganizationService:
         update_dict = update_data.model_dump(exclude_unset=True)
         if "domain" in update_dict:
             del update_dict["domain"]
-            
+
         updated_org = await self.repo.update(org_id, update_dict)
         
         if not updated_org:

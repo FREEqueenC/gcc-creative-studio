@@ -6,6 +6,8 @@ local/
 
 .aider*
 .vscode
+.idea
+*.iml
 
 # Terraform state and providers
 /.terraform/

@@ -35,6 +35,7 @@ import {
   handleErrorSnackbar,
   handleSuccessSnackbar,
 } from '../../utils/handleMessageSnackbar';
+import { AuthService } from '../../common/services/auth.service';
 
 export interface RewritePromptRequest {
   targetType: 'image' | 'video';
@@ -74,6 +75,7 @@ export class SearchService {
   constructor(
     private http: HttpClient,
     private _snackBar: MatSnackBar,
+    private authService: AuthService,
   ) { }
 
   searchImagen(searchRequest: ImagenRequest) {
@@ -92,6 +94,8 @@ export class SearchService {
       tap(initialItem => {
         this.activeImageJob.next(initialItem);
         this.startImagenPolling(initialItem.id);
+        // Refresh user data to update wallet balance after deduction
+        this.authService.refreshCurrentUser().subscribe();
       }),
     );
   }

@@ -107,6 +107,16 @@ async def get_admin_overview_stats(
         "audiosGenerated": 500
     }
 
+@router.get("/admin/assigned-over-time", response_model=List[Dict[str, Any]])
+async def get_admin_assigned_over_time(
+    current_user: UserModel = Depends(get_current_user),
+    service: CreditsService = Depends()
+):
+    if not current_user.is_super_admin:
+        # TODO: Scope for Org Admin
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+    return await service.get_admin_assigned_over_time(current_user)
+
 @router.get("/admin/usage-over-time", response_model=List[Dict[str, Any]])
 async def get_admin_usage_over_time(
     current_user: UserModel = Depends(get_current_user),

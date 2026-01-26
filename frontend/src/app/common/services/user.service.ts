@@ -16,6 +16,7 @@
 
 import {Injectable} from '@angular/core';
 import {UserModel} from '../models/user.model';
+import { PaginatedResponse } from '../models/pagination.model';
 import {environment} from '../../../environments/environment';
 import {HttpClient} from '@angular/common/http';
 import {Observable} from 'rxjs';
@@ -40,8 +41,8 @@ export class UserService {
     return this.http.delete<void>(`${environment.backendURL}/users/${id}`);
   }
 
-  searchUsers(query: string): Observable<UserModel[]> {
-    return this.http.get<UserModel[]>(`${environment.backendURL}/users`, { params: { filter: query } });
+  searchUsers(query: string): Observable<PaginatedResponse<UserModel>> {
+    return this.http.get<PaginatedResponse<UserModel>>(`${environment.backendURL}/users`, { params: { email: query } });
   }
 
   // Deprecated: Use AuthService.getUser() or AuthService.getCurrentUserValue()

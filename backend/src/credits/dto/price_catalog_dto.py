@@ -3,11 +3,11 @@ from datetime import datetime
 from enum import Enum
 
 class ModelCategoryEnum(str, Enum):
-    IMAGE = "Image"
-    VIDEO = "Video"
-    AUDIO = "Audio"
+    IMAGE = "IMAGE"
+    VIDEO = "VIDEO"
+    AUDIO = "AUDIO"
     VTO = "VTO"
-    TEXT = "Text"
+    TEXT = "TEXT"
 
 class PriceCatalogDto(BaseModel):
     model_id: str

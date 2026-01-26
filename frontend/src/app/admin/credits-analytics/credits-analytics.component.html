@@ -71,6 +71,12 @@
     </div>
   </section>
 
+  <!-- Assigned Credits Over Time Section -->
+  <section class="mb-8 bg-white dark:bg-[#1E1F22] p-6 rounded-lg shadow" *ngIf="isSuperAdmin">
+    <h3 class="text-xl font-semibold mb-4">Assigned Credits Over Time</h3>
+    <div #assignedCreditsChart class="chart-container h-[300px]"></div>
+  </section>
+
   <!-- Price Catalog Section -->
   <section class="mb-8 bg-white dark:bg-[#1E1F22] p-6 rounded-lg shadow" *ngIf="isSuperAdmin">
     <div class="flex justify-between items-center mb-4">

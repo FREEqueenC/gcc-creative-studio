@@ -74,6 +74,30 @@
         <td mat-cell *matCellDef="let org">{{ org.domain }}</td>
       </ng-container>
 
+      <!-- AI Credits Usage Column -->
+      <ng-container matColumnDef="walletUsage">
+        <th mat-header-cell *matHeaderCellDef>AI Credits Usage</th>
+        <td mat-cell *matCellDef="let org">
+          <div *ngIf="org.wallet; else noOrgWallet">
+            <ng-container *ngIf="(org.wallet.balance + org.wallet.cumulativeSpend) > 0; else zeroOrgTotal">
+              <div class="text-xs text-neutral-500 dark:text-neutral-400 mb-1">
+                Spent: {{ org.wallet.cumulativeSpend | number:'1.2-2' }} / {{ (org.wallet.balance + org.wallet.cumulativeSpend) | number:'1.2-2' }}
+              </div>
+              <mat-progress-bar
+                mode="determinate"
+                [value]="(org.wallet.cumulativeSpend / (org.wallet.balance + org.wallet.cumulativeSpend)) * 100"
+                color="primary"
+                style="height: 8px; border-radius: 4px;">
+              </mat-progress-bar>
+            </ng-container>
+            <ng-template #zeroOrgTotal>
+              <span class="text-gray-500 text-sm">0.00 / 0.00</span>
+            </ng-template>
+          </div>
+          <ng-template #noOrgWallet><span class="text-gray-500 text-sm">N/A</span></ng-template>
+        </td>
+      </ng-container>
+
       <!-- Created At Column -->
       <ng-container matColumnDef="createdAt">
         <th mat-header-cell *matHeaderCellDef mat-sort-header>Created At</th>

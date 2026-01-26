@@ -36,4 +36,13 @@ export class UserProfileComponent implements OnInit {
       })
     );
   }
+
+  getWalletStatus(expiresAt: string | null | undefined): 'Active' | 'Expired' {
+    if (!expiresAt) {
+      return 'Active'; // No expiration date
+    }
+    const expiryDate = new Date(expiresAt);
+    const now = new Date();
+    return expiryDate > now ? 'Active' : 'Expired';
+  }
 }

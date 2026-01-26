@@ -398,4 +398,17 @@ export class AuthService {
     // For a simple deploy button click, getting a fresh token on sign-in might suffice.
     return this.currentOAuthAccessToken;
   }
+
+  refreshCurrentUser(): Observable<UserModel | null> {
+    if (!this.isLoggedIn()) {
+      return of(null);
+    }
+    return this.getValidFirebaseToken$().pipe(
+      switchMap(token => this.syncUserWithBackend$(token)),
+      catchError(err => {
+        console.error('Failed to refresh current user', err);
+        return of(null); // Don't block if refresh fails
+      })
+    );
+  }
 }

@@ -20,7 +20,7 @@ from src.common.dto.pagination_response_dto import PaginationResponseDto
 from src.organizations.dto.organization_search_dto import OrganizationSearchDto
 from src.organizations.dto.update_organization_role_dto import UpdateOrganizationRoleDto
 from src.organizations.dto.update_organization_dto import UpdateOrganizationDto
-from src.organizations.organization_model import OrganizationModel
+from src.organizations.organization_model import OrganizationModel, OrganizationMemberViewModel
 from src.organizations.organization_service import OrganizationService
 
 router = APIRouter(
@@ -47,7 +47,7 @@ async def list_organizations(
     
 @router.get(
     "/{org_id}",
-    response_model=OrganizationModel,
+    response_model=OrganizationMemberViewModel,
     summary="Get Organization by ID",
 )
 async def get_organization(

@@ -47,6 +47,18 @@ class OrganizationRepository(BaseRepository[Organization, OrganizationModel]):
             return None
         return self._map_to_schema(org)
 
+    async def get_by_id(self, item_id: int) -> Optional[OrganizationModel]:
+        """Retrieves a single Organization by ID, including the wallet."""
+        result = await self.db.execute(
+            select(self.model)
+            .where(self.model.id == item_id)
+            .options(selectinload(self.model.wallet))
+        )
+        item = result.scalar_one_or_none()
+        if not item:
+            return None
+        return self.schema.model_validate(item)
+
     async def create(self, schema: OrganizationModel, user_id: int) -> OrganizationModel:
         """
         Creates a new organization and makes the creating user an ADMIN.
@@ -148,6 +160,7 @@ class OrganizationRepository(BaseRepository[Organization, OrganizationModel]):
             select(self.model, UserOrganization.role)
             .join(UserOrganization)
             .where(UserOrganization.user_id == user_id)
+            .options(selectinload(self.model.wallet))
         )
         rows = result.all()
         
@@ -180,7 +193,7 @@ class OrganizationRepository(BaseRepository[Organization, OrganizationModel]):
         from sqlalchemy import func
 
         # 1. Build Query
-        query = select(self.model)
+        query = select(self.model).options(selectinload(self.model.wallet))
 
         if search_dto.name:
             query = query.where(self.model.name.ilike(f"%{search_dto.name}%"))

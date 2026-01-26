@@ -24,6 +24,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.common.base_repository import BaseDocument
 from src.database import Base
 from src.users.user_model import User
+from src.credits.credit_model import OrganizationWallet
+from pydantic import field_validator
+from decimal import Decimal
 
 class OrganizationRoleEnum(str, Enum):
     """Defines the permissions a user has within an organization."""
@@ -115,9 +118,48 @@ class OrganizationPermissions(BaseModel):
     )
 
 
+class OrganizationWalletDto(BaseModel):
+    organization_id: int
+    balance: Decimal
+    cumulative_spend: Decimal
+    expires_at: Optional[datetime.datetime] = None
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+        alias_generator=to_camel,
+    )
+
 class OrganizationModel(BaseDocument):
     """
     DTO for Organization.
+    """
+    id: int
+    name: str
+    owner_id: int
+    description: Optional[str] = None
+    logo: Optional[str] = None
+    domain: Optional[str] = None
+    role: Optional[OrganizationRoleEnum] = Field(
+        default=None, 
+        description="The role of the current user in this organization (if applicable)."
+    )
+    permissions: Optional[OrganizationPermissions] = Field(
+        default=None,
+        description="Computed permissions for the current user."
+    )
+    wallet: Optional[OrganizationWalletDto] = Field(default=None)
+
+    @field_validator('wallet', mode='before')
+    def validate_wallet(cls, v):
+        if isinstance(v, OrganizationWallet):
+            return OrganizationWalletDto.model_validate(v)
+        return v
+
+
+class OrganizationMemberViewModel(BaseDocument):
+    """
+    DTO for Organization, excluding sensitive information like wallet details.
     """
     id: int
     name: str

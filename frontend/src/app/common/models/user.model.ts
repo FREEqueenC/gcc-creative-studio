@@ -51,7 +51,7 @@ export interface UserModel {
 
 export interface UserWalletDto {
   balance: number;
-  cumulative_spend: number;
-  expires_at?: string | null;
+  cumulativeSpend: number;
+  expiresAt?: string | null;
   status: string;
 }

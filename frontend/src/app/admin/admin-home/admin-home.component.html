@@ -9,28 +9,28 @@
         <div *ngIf="overviewStats$ | async as stats; else loadingStats">
           <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             <div class="dark:bg-[#2A2B2F] p-4 rounded-lg shadow-md flex flex-col items-center justify-center">
-              <mat-icon class="text-blue-400 mb-2">group</mat-icon>
-              <span class="text-3xl font-bold">{{ stats.totalUsers }}</span>
+              <mat-icon class="text-blue-400 mb-2" style="font-size: 48px; width: 48px; height: 48px;">group</mat-icon>
+              <span class="!text-3xl font-bold">{{ stats.totalUsers }}</span>
               <span class="text-gray-400 mt-1">Total Users</span>
             </div>
             <div class="dark:bg-[#2A2B2F] p-4 rounded-lg shadow-md flex flex-col items-center justify-center">
-              <mat-icon class="text-purple-400 mb-2">business</mat-icon>
-              <span class="text-3xl font-bold">{{ stats.totalOrganizations }}</span>
+              <mat-icon class="text-purple-400 mb-2" style="font-size: 48px; width: 48px; height: 48px;">business</mat-icon>
+              <span class="!text-3xl font-bold">{{ stats.totalOrganizations }}</span>
               <span class="text-gray-400 mt-1">Total Orgs</span>
             </div>
             <div class="dark:bg-[#2A2B2F] p-4 rounded-lg shadow-md flex flex-col items-center justify-center">
-              <mat-icon class="text-red-400 mb-2">image</mat-icon>
-              <span class="text-3xl font-bold">{{ stats.imagesGenerated }}</span>
+              <mat-icon class="text-red-400 mb-2" style="font-size: 48px; width: 48px; height: 48px;">image</mat-icon>
+              <span class="!text-3xl font-bold">{{ stats.imagesGenerated }}</span>
               <span class="text-gray-400 mt-1">Images Gen.</span>
             </div>
             <div class="dark:bg-[#2A2B2F] p-4 rounded-lg shadow-md flex flex-col items-center justify-center">
-              <mat-icon class="text-green-400 mb-2">movie</mat-icon>
-              <span class="text-3xl font-bold">{{ stats.videosGenerated }}</span>
+              <mat-icon class="text-green-400 mb-2" style="font-size: 48px; width: 48px; height: 48px;">movie</mat-icon>
+              <span class="!text-3xl font-bold">{{ stats.videosGenerated }}</span>
               <span class="text-gray-400 mt-1">Videos Gen.</span>
             </div>
             <div class="dark:bg-[#2A2B2F] p-4 rounded-lg shadow-md flex flex-col items-center justify-center">
-              <mat-icon class="text-yellow-400 mb-2">audiotrack</mat-icon>
-              <span class="text-3xl font-bold">{{ stats.audiosGenerated }}</span>
+              <mat-icon class="text-yellow-400 mb-2" style="font-size: 48px; width: 48px; height: 48px;">audiotrack</mat-icon>
+              <span class="!text-3xl font-bold">{{ stats.audiosGenerated }}</span>
               <span class="text-gray-400 mt-1">Audios Gen.</span>
             </div>
           </div>

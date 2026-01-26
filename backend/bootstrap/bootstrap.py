@@ -41,6 +41,7 @@ from src.workspaces.repository.workspace_repository import WorkspaceRepository
 from src.auth.iam_signer_credentials_service import IamSignerCredentials
 from src.common.permission_service import PermissionService
 from seed_credits import seed_credit_data
+from seed_wallets import seed_wallets
 from src.common.consistency_service import ConsistencyService
 from src.common.email_service import EmailService
 from src.auth import auth_service
@@ -518,6 +519,9 @@ async def main():
                 
                 logger.info("Seeding credit economy data...")
                 await seed_credit_data(db)
+                
+                logger.info("Seeding wallets...")
+                await seed_wallets(db)
             else:
                 logger.warning("No admin user found. Skipping organization seeding.")
 

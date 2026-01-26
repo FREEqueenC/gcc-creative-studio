@@ -25,6 +25,7 @@ from src.common.base_repository import BaseDocument
 from src.database import Base
 from sqlalchemy import Boolean
 from src.credits.credit_model import CreditLog, UserWallet
+from src.common.base_dto import BaseDto
 
 class User(Base):
     """
@@ -102,11 +103,10 @@ class UserWorkspaceSummary(BaseModel):
     role: str
 
 
-class UserWalletDto(BaseModel):
+class UserWalletDto(BaseDto):
     balance: float
     cumulative_spend: float
     expires_at: Optional[datetime.datetime]
-    status: str
 
 
 class UserModel(BaseDocument):
@@ -127,6 +127,21 @@ class UserModel(BaseDocument):
     workspaces: List[UserWorkspaceSummary] = Field(default_factory=list)
     wallet: Optional[UserWalletDto] = None
     deleted_at: Optional[datetime.datetime] = None
+
+    @field_validator('wallet', mode='before')
+    @classmethod
+    def validate_wallet(cls, v: Any) -> Optional[UserWalletDto]:
+        if isinstance(v, UserWallet):
+            return UserWalletDto(
+                balance=v.balance,
+                cumulative_spend=v.cumulative_spend,
+                expires_at=v.expires_at,
+            )
+        if isinstance(v, dict):
+            return UserWalletDto(**v)
+        if v is None:
+            return None
+        raise ValueError('Invalid type for wallet')
 
     @field_validator("roles", mode="after")
     @classmethod

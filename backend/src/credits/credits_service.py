@@ -1,11 +1,8 @@
 import datetime
 from typing import Optional, List, Dict, Type, Any
 from fastapi import Depends, HTTPException
-from sqlalchemy import select, func, case, delete, update
+from sqlalchemy import select, func, cast, Date
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
-import logging
-from decimal import Decimal
 
 from src.database import get_db
 from src.config.config_service import config_service
@@ -370,3 +367,26 @@ class CreditsService:
             ]
         else:
             raise HTTPException(status_code=501, detail="Org Admin active roles not yet implemented")
+
+    async def get_admin_assigned_over_time(self, current_user: UserModel) -> List[Dict[str, Any]]:
+        if not current_user.is_super_admin:
+            raise HTTPException(status_code=403, detail="Forbidden")
+
+        stmt = select(
+            cast(CreditLog.timestamp, Date).label("date"),
+            func.sum(CreditLog.amount).label("total_assigned")
+        ).where(
+            CreditLog.action == "assign"
+        ).group_by(
+            cast(CreditLog.timestamp, Date)
+        ).order_by(
+            cast(CreditLog.timestamp, Date)
+        )
+        
+        result = await self.db.execute(stmt)
+        rows = result.fetchall()
+
+        return [
+            {"date": row.date.isoformat(), "total_assigned": float(row.total_assigned)}
+            for row in rows
+        ]

@@ -36,8 +36,16 @@ export interface OrganizationUsage {
   // Define structure based on backend response
 }
 
-export interface UserUsage {
-  // Define structure based on backend response
+export interface UserUsageItem {
+  date: string;
+  category: string;
+  spend: number;
+}
+export type UserUsage = UserUsageItem[];
+
+export interface AssignedCreditsOverTime {
+  date: string;
+  total_assigned: number;
 }
 
 @Injectable({
@@ -47,6 +55,10 @@ export class AnalyticsService {
   private readonly apiUrl = `${environment.backendURL}/analytics`;
 
   constructor(private http: HttpClient) { }
+
+  getAdminAssignedOverTime(): Observable<AssignedCreditsOverTime[]> {
+    return this.http.get<AssignedCreditsOverTime[]>(`${environment.backendURL}/credits/admin/assigned-over-time`);
+  }
 
   getTokenUsage(): Observable<TokenUsage> {
     return this.http.get<TokenUsage>(`${this.apiUrl}/token-usage`);

@@ -39,6 +39,7 @@ export class OrganizationsManagementComponent implements OnInit, OnDestroy {
     'logo',
     'name',
     'domain',
+    'walletUsage',
     'createdAt',
     'updatedAt',
   ];

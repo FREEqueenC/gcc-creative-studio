@@ -32,6 +32,13 @@ export interface OrganizationPermissions {
   canViewAllOrgWorkspaces: boolean;
 }
 
+export interface OrganizationWallet {
+  organizationId: number;
+  balance: number;
+  cumulativeSpend: number;
+  expiresAt?: string | null;
+}
+
 export interface Organization {
   id: number;
   name: string;
@@ -40,6 +47,7 @@ export interface Organization {
   domain?: string;
   role?: string;
   permissions?: OrganizationPermissions;
+  wallet?: OrganizationWallet;
   createdAt?: string;
   updatedAt?: string;
 }

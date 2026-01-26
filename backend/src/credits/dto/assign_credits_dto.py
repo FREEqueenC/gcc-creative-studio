@@ -1,11 +1,12 @@
 from typing import Optional
 from pydantic import BaseModel, Field
 from datetime import datetime
+from decimal import Decimal
 
 class AssignCreditsDto(BaseModel):
     target_user_id: Optional[int] = None
     target_org_id: Optional[int] = None
-    amount: float = Field(..., gt=0, description="Amount of credits to assign")
+    amount: Decimal = Field(..., gt=0, description="Amount of credits to assign")
     custom_expiration_date: Optional[datetime] = None
     
     # Validator to ensure at least one target is set

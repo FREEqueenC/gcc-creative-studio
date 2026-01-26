@@ -1,4 +1,4 @@
-import { Component, OnInit, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, OnInit, ElementRef, ViewChild, AfterViewInit, OnDestroy } from '@angular/core';
 import { Observable, of, forkJoin } from 'rxjs';
 import { map, catchError, filter } from 'rxjs/operators';
 import { AuthService } from '../../common/services/auth.service';
@@ -10,7 +10,7 @@ import * as d3 from 'd3';
   templateUrl: './admin-home.component.html',
   styleUrls: ['./admin-home.component.scss']
 })
-export class AdminHomeComponent implements OnInit, AfterViewInit {
+export class AdminHomeComponent implements OnInit, AfterViewInit, OnDestroy {
   isSuperAdmin$: Observable<boolean>;
   overviewStats$: Observable<AdminOverviewStats | null> = of(null);
   usageOverTime$: Observable<AdminUsageOverTime[] | null> = of(null);
@@ -128,16 +128,9 @@ export class AdminHomeComponent implements OnInit, AfterViewInit {
       .y1(d => y(d[1]));
 
     // Tooltip
-    const tooltip = d3.select(element).append('div')
-      .attr('class', 'tooltip')
-      .style('opacity', 0)
-      .style('position', 'absolute')
-      .style('background-color', 'white')
-      .style('color', 'black')
-      .style('border', 'solid')
-      .style('border-width', '1px')
-      .style('border-radius', '5px')
-      .style('padding', '10px');
+    const tooltip = d3.select('body').append('div')
+      .attr('class', 'chart-tooltip absolute bg-white text-black border border-gray-300 rounded px-2 py-1 opacity-0 pointer-events-none')
+      .style('z-index', '1000');
 
     svg.selectAll('.layer')
       .data(series)
@@ -234,16 +227,9 @@ export class AdminHomeComponent implements OnInit, AfterViewInit {
       .range([height, 0]);
 
     // Tooltip
-    const tooltip = d3.select(element).append('div')
-      .attr('class', 'tooltip')
-      .style('opacity', 0)
-      .style('position', 'absolute')
-      .style('background-color', 'white')
-      .style('color', 'black')
-      .style('border', 'solid')
-      .style('border-width', '1px')
-      .style('border-radius', '5px')
-      .style('padding', '10px');
+    const tooltip = d3.select('body').append('div')
+      .attr('class', 'chart-tooltip absolute bg-white text-black border border-gray-300 rounded px-2 py-1 opacity-0 pointer-events-none')
+      .style('z-index', '1000');
 
     const mouseover = (event: any, d: any) => {
       tooltip.style('opacity', 1);
@@ -352,16 +338,9 @@ export class AdminHomeComponent implements OnInit, AfterViewInit {
       .innerRadius(radius * 0.4)
       .outerRadius(radius * 0.8);
 
-    const tooltip = d3.select(element).append('div')
-      .attr('class', 'tooltip')
-      .style('opacity', 0)
-      .style('position', 'absolute')
-      .style('background-color', 'white')
-      .style('color', 'black')
-      .style('border', 'solid')
-      .style('border-width', '1px')
-      .style('border-radius', '5px')
-      .style('padding', '10px');
+    const tooltip = d3.select('body').append('div')
+      .attr('class', 'chart-tooltip absolute bg-white text-black border border-gray-300 rounded px-2 py-1 opacity-0 pointer-events-none')
+      .style('z-index', '1000');
 
     svg.selectAll('slices')
       .data(pie(data))
@@ -424,13 +403,11 @@ export class AdminHomeComponent implements OnInit, AfterViewInit {
       .append('g')
       .attr('transform', `translate(${margin.left},${margin.top})`);
 
-    console.log('renderTotalMediaChart data:', data);
     if (!data || data.length === 0) {
       console.error('No data for renderTotalMediaChart');
       return;
     }
     const keys = Object.keys(data[0]).filter(k => k !== 'date');
-    console.log('renderTotalMediaChart keys:', keys);
     const colors = d3.scaleOrdinal<string>()
       .domain(keys)
       .range(['#3b82f6', '#f87171', '#8b5cf6', '#fbbf24', '#4ade80', '#e11d48', '#ff6347']); // Added more colors
@@ -443,7 +420,6 @@ export class AdminHomeComponent implements OnInit, AfterViewInit {
       return d3.max(keys, key => d[key] as number || 0);
     }) || 0;
     const yDomain = [0, yMax];
-    console.log('yDomain:', yDomain);
     const y = d3.scaleLinear()
       .domain(yDomain)
       .nice()
@@ -471,16 +447,9 @@ export class AdminHomeComponent implements OnInit, AfterViewInit {
         .text('Credits Spent');
 
     // Tooltip
-    const tooltip = d3.select(element).append('div')
-      .attr('class', 'tooltip')
-      .style('opacity', 0)
-      .style('position', 'absolute')
-      .style('background-color', 'white')
-      .style('color', 'black')
-      .style('border', 'solid')
-      .style('border-width', '1px')
-      .style('border-radius', '5px')
-      .style('padding', '10px');
+    const tooltip = d3.select('body').append('div')
+      .attr('class', 'chart-tooltip absolute bg-white text-black border border-gray-300 rounded px-2 py-1 opacity-0 pointer-events-none')
+      .style('z-index', '1000');
 
     // Draw lines for each key
     keys.forEach(key => {
@@ -488,12 +457,10 @@ export class AdminHomeComponent implements OnInit, AfterViewInit {
         .x(d => x(d.date)!)
         .y(d => {
           const val = y(d[key] as number || 0);
-          // console.log(`Key: ${key}, Date: ${d.date}, Value: ${d[key]}, Y: ${val}`);
           return val;
         });
 
       const pathData = line(data);
-      console.log(`Key: ${key}, Path Data:`, pathData);
 
       svg.append('path')
         .datum(data)
@@ -548,5 +515,9 @@ export class AdminHomeComponent implements OnInit, AfterViewInit {
         .style('fill', '#e5e7eb')
         .text(key);
     });
+  }
+
+  ngOnDestroy(): void {
+    d3.select('body').selectAll('.chart-tooltip').remove();
   }
 }

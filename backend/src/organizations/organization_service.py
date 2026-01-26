@@ -18,7 +18,7 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database import get_db
-from src.organizations.organization_model import OrganizationModel, OrganizationRoleEnum, OrganizationPermissions
+from src.organizations.organization_model import OrganizationModel, OrganizationMemberViewModel, OrganizationRoleEnum, OrganizationPermissions
 from src.organizations.repository.organization_repository import OrganizationRepository
 from src.users.user_model import UserModel
 from src.users.repository.user_repository import UserRepository
@@ -81,7 +81,7 @@ class OrganizationService:
             
         return orgs
 
-    async def get_organization_by_id(self, org_id: int, user_id: int) -> Optional[OrganizationModel]:
+    async def get_organization_by_id(self, org_id: int, user_id: int) -> Optional[OrganizationMemberViewModel]:
         """
         Retrieves an organization by ID, ensuring the user is a member.
         """
@@ -102,7 +102,19 @@ class OrganizationService:
         org.permissions = perms
         self._sign_logo(org)
         
-        return org
+        # Manually map to OrganizationMemberViewModel to exclude wallet
+        return OrganizationMemberViewModel(
+            id=org.id,
+            name=org.name,
+            owner_id=org.owner_id,
+            description=org.description,
+            logo=org.logo,
+            domain=org.domain,
+            created_at=org.created_at,
+            updated_at=org.updated_at,
+            role=org.role,
+            permissions=org.permissions,
+        )
 
     async def create_organization(self, schema: OrganizationModel, user_id: int) -> OrganizationModel:
         """Creates a new organization, writes FGA tuples, and seeds default data."""

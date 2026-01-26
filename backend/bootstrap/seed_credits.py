@@ -72,7 +72,7 @@ INITIAL_PRICES: List[PriceCatalogItem] = [
     PriceCatalogItem(model_id=GenerationModelEnum.GEMINI_2_5_PRO_TTS, category=ModelCategoryEnum.AUDIO, cost=Decimal("0.0015")), 
 ]
 
-INITIAL_BUDGET = Decimal("70000.0")
+# INITIAL_BUDGET = Decimal("70000.0")
 
 async def seed_credits():
     logger.info("Starting Credit Economy Seeding...")
@@ -100,19 +100,19 @@ async def seed_credits():
                 logger.info(f"Created price for {price_item.model_id.value} ({price_item.category.value})")
         
         # 2. Seed Initial Budget (only if no deposits exist)
-        stmt = select(BudgetDeposit)
-        result = await session.execute(stmt)
-        existing_deposit = result.first()
+        # stmt = select(BudgetDeposit)
+        # result = await session.execute(stmt)
+        # existing_deposit = result.first()
         
-        if not existing_deposit:
-            deposit = BudgetDeposit(
-                amount_usd=INITIAL_BUDGET,
-                notes="Initial Grant"
-            )
-            session.add(deposit)
-            logger.info(f"Deposited initial budget of ${INITIAL_BUDGET}")
-        else:
-            logger.info("Budget deposits already exist, skipping initial grant.")
+        # if not existing_deposit:
+        #     deposit = BudgetDeposit(
+        #         amount_usd=INITIAL_BUDGET,
+        #         notes="Initial Grant"
+        #     )
+        #     session.add(deposit)
+        #     logger.info(f"Deposited initial budget of ${INITIAL_BUDGET}")
+        # else:
+        #     logger.info("Budget deposits already exist, skipping initial grant.")
             
         await session.commit()
         logger.info("Seeding complete.")

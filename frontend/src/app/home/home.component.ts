@@ -732,6 +732,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
           console.log('Image generation job started:', initialResponse);
         },
         error: error => {
+          this.isImageGenerating = false; // Hide overlay on error
           handleErrorSnackbar(this._snackBar, error, 'Search');
         },
       });

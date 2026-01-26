@@ -19,23 +19,23 @@
       <div class="p-6 rounded-2xl bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 shadow-sm flex flex-col justify-between">
         <div>
           <h4 class="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-2 flex items-center">
-            <mat-icon class="!text-base !w-4 !h-4 mr-1.5">account_balance_wallet</mat-icon>
+            <mat-icon class="!text-3xl !w-10 !h-10 mr-1.5">account_balance_wallet</mat-icon>
             Current Balance
           </h4>
           <p class="text-4xl font-bold text-neutral-800 dark:text-neutral-100">{{ user.wallet.balance | number: '1.0-0' }} <span class="text-2xl font-normal">Credits</span></p>
         </div>
-        <p class="text-xs text-neutral-400 dark:text-neutral-500 mt-4">Expires: {{ user.wallet.expires_at ? (user.wallet.expires_at | date: 'mediumDate') : 'Never' }}</p>
+        <p class="text-xs text-neutral-400 dark:text-neutral-500 mt-4">Expires: {{ user.wallet.expiresAt ? (user.wallet.expiresAt | date: 'mediumDate') : 'Never' }}</p>
+        <p class="text-xs mt-2 {{ getWalletStatus(user.wallet.expiresAt) === 'Active' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }}">
+          Status: {{ getWalletStatus(user.wallet.expiresAt) }}
+        </p>
       </div>
 
       <div class="p-6 rounded-2xl bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 shadow-sm">
         <h4 class="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-2 flex items-center">
-          <mat-icon class="!text-base !w-4 !h-4 mr-1.5">history</mat-icon>
+          <mat-icon class="!text-3xl !w-10 !h-10 mr-1.5">history</mat-icon>
           Lifetime Spend
         </h4>
-        <p class="text-3xl font-bold text-neutral-800 dark:text-neutral-100">{{ user.wallet.cumulative_spend | number: '1.0-0' }} <span class="text-xl font-normal">Credits</span></p>
-        <p class="text-xs mt-2 {{ user.wallet.status === 'Active' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }}">
-          Status: {{ user.wallet.status }}
-        </p>
+        <p class="text-3xl font-bold text-neutral-800 dark:text-neutral-100">{{ user.wallet.cumulativeSpend | number: '1.2-4' }} <span class="text-xl font-normal">Credits</span></p>
       </div>
     </div>
     <ng-template #noWallet>
@@ -49,11 +49,28 @@
   <section class="mb-8">
     <h2 class="text-2xl font-semibold mb-4 text-neutral-700 dark:text-neutral-200">My Usage Analytics</h2>
     <div *ngIf="userUsage$ | async as usage; else loadingUsage" class="p-6 rounded-2xl bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 shadow-sm">
-      <!-- TODO: Render UserUsage data as a chart or list -->
       <h4 class="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-3">Spend History (Last 30 Days)</h4>
-      <div class="text-neutral-700 dark:text-neutral-300">
-        <pre class="bg-neutral-50 dark:bg-neutral-700/50 p-4 rounded-lg overflow-x-auto">{{ usage | json }}</pre>
+      <div *ngIf="usage && usage.length > 0; else noUsageData" class="text-neutral-700 dark:text-neutral-300">
+        <table class="min-w-full divide-y divide-neutral-200 dark:divide-neutral-700">
+          <thead>
+            <tr>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Date</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Category</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Spend</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white dark:bg-neutral-800 divide-y divide-neutral-200 dark:divide-neutral-700">
+            <tr *ngFor="let item of usage">
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-neutral-900 dark:text-neutral-100">{{ item.date | date: 'mediumDate' }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-neutral-500 dark:text-neutral-300">{{ item.category }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-neutral-900 dark:text-neutral-100">{{ item.spend | number: '1.2-4' }} Credits</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
+      <ng-template #noUsageData>
+        <p class="text-neutral-500 dark:text-neutral-400">No usage history yet. Start generating to see your analytics!</p>
+      </ng-template>
     </div>
     <ng-template #loadingUsage>
       <div class="p-6 rounded-2xl bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 shadow-sm">

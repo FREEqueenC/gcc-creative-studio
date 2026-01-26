@@ -27,6 +27,7 @@ from src.workspaces.workspace_auth_guard import workspace_auth_service
 from src.workspaces.repository.workspace_repository import WorkspaceRepository
 from src.common.permissions import WorkspacePermissionEnum
 from src.credits.credit_guards import check_and_log_credits
+from src.credits.credits_service import CreditsService
 
 router = APIRouter(
     prefix="/api/images",
@@ -60,6 +61,7 @@ async def generate_images(
         return await service.start_image_generation_job(
             request_dto=image_request, user=current_user, executor=executor
         )
+
     except HTTPException as http_exception:
         raise http_exception
     except ValueError as value_error:

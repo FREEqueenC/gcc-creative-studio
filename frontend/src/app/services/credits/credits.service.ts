@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { AuthService } from '../../common/services/auth.service';
+import { tap } from 'rxjs/operators';
 
 // Interfaces for Price Catalog
 export interface PriceCatalogDto {
@@ -60,10 +62,14 @@ export interface AssignCreditsDto {
 export class CreditsService {
   private apiUrl = `${environment.backendURL}/credits`;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private authService: AuthService) {}
 
   assignCredits(dto: AssignCreditsDto): Observable<any> {
-    return this.http.post(`${this.apiUrl}/assign`, dto);
+    return this.http.post(`${this.apiUrl}/assign`, dto).pipe(
+      tap(() => {
+        this.authService.refreshCurrentUser().subscribe();
+      })
+    );
   }
 
   getBalance(userId?: number, orgId?: number): Observable<{ balance: number }> {

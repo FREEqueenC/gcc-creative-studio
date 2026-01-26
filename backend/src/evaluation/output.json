@@ -1,0 +1,49 @@
+{
+  "summary": {
+    "total_tests": 3,
+    "passed_tests": 0,
+    "failed_tests": 3,
+    "pass_rate": 0.0,
+    "average_score": 0.0,
+    "threshold": 80.0,
+    "all_passed": false
+  },
+  "results": [
+    {
+      "test_id": "test_001_cymbal_logo",
+      "image_path": "N/A",
+      "is_compliant": false,
+      "score": 0,
+      "reasoning": "Image generation failed",
+      "issues": [
+        "Generation failed"
+      ],
+      "expected_compliant": true,
+      "passed": false
+    },
+    {
+      "test_id": "test_002_product_shot",
+      "image_path": "N/A",
+      "is_compliant": false,
+      "score": 0,
+      "reasoning": "Image generation failed",
+      "issues": [
+        "Generation failed"
+      ],
+      "expected_compliant": true,
+      "passed": false
+    },
+    {
+      "test_id": "test_003_chocolate_product",
+      "image_path": "N/A",
+      "is_compliant": false,
+      "score": 0,
+      "reasoning": "Image generation failed",
+      "issues": [
+        "Generation failed"
+      ],
+      "expected_compliant": true,
+      "passed": false
+    }
+  ]
+}

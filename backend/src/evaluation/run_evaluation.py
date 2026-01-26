@@ -143,6 +143,13 @@ def main():
         help="Enable verbose output with detailed results"
     )
     
+    parser.add_argument(
+        "--images-dir",
+        type=str,
+        default="generated_images",
+        help="Directory to save generated images (default: generated_images)"
+    )
+    
     args = parser.parse_args()
     
     # Validate dataset path
@@ -167,8 +174,8 @@ def main():
             sys.exit(0)
             
         # Create output directory for generated images
-        output_dir = Path("generated_images")
-        output_dir.mkdir(exist_ok=True)
+        output_dir = Path(args.images_dir)
+        output_dir.mkdir(exist_ok=True, parents=True)
         
         # Run generation and evaluation
         results = []
@@ -222,10 +229,17 @@ def main():
                 print(f"  Image: {result.image_path}")
                 print(f"  Score: {result.score}/100")
                 print(f"  Compliant: {result.is_compliant} (Expected: {result.expected_compliant})")
+                
+                if result.guideline_checks:
+                    print(f"\n  Guideline Checks:")
+                    for check in result.guideline_checks:
+                        check_status = "✓" if check.status == "Pass" else "✗" if check.status == "Fail" else "?"
+                        print(f"    [{check_status}] {check.criteria}: {check.explanation}")
+                
                 if result.issues:
-                    print(f"  Issues: {', '.join(result.issues)}")
-                if args.verbose and result.reasoning:
-                    print(f"  Reasoning: {result.reasoning[:200]}...")
+                    print(f"\n  Issues: {', '.join(result.issues)}")
+                if result.reasoning and not result.guideline_checks: # Fallback if no detailed checks
+                     print(f"  Reasoning: {result.reasoning[:200]}...")
         
         # Save results to file if requested
         if args.output:

@@ -2,7 +2,9 @@
   "test_cases": [
     {
       "id": "test_001_cymbal_logo",
-      "original_image_path": "/Users/switon/dev/GoogleCloudPlatform/gcc-creative-studio/backend/bootstrap/assets/media-template/cymbal_logo.png",
+      "reference_image_paths": [
+        "/Users/switon/dev/GoogleCloudPlatform/gcc-creative-studio/backend/bootstrap/assets/media-template/cymbal_logo.png"
+      ],
       "original_prompt": "Generate a brand logo for Cymbal",
       "guidelines": {
         "text": "Logo must be clean, modern, and professional. Should use brand colors. Must be easily recognizable and suitable for digital use.",
@@ -13,7 +15,9 @@
     },
     {
       "id": "test_002_product_shot",
-      "original_image_path": "/Users/switon/dev/GoogleCloudPlatform/gcc-creative-studio/backend/bootstrap/assets/media-template/cymbal_vaccum.png",
+      "reference_image_paths": [
+        "/Users/switon/dev/GoogleCloudPlatform/gcc-creative-studio/backend/bootstrap/assets/media-template/cymbal_vaccum.png"
+      ],
       "original_prompt": "Create a product photography shot of a vacuum cleaner",
       "guidelines": {
         "text": "Product images must show the product clearly. Good lighting required. Product should be the main focus.",
@@ -24,7 +28,9 @@
     },
     {
       "id": "test_003_chocolate_product",
-      "original_image_path": "/Users/switon/dev/GoogleCloudPlatform/gcc-creative-studio/backend/bootstrap/assets/media-template/cymbal_chocolate.png",
+      "reference_image_paths": [
+        "/Users/switon/dev/GoogleCloudPlatform/gcc-creative-studio/backend/bootstrap/assets/media-template/cymbal_chocolate.png"
+      ],
       "original_prompt": "Create a chocolate product image for gourmet brand",
       "guidelines": {
         "text": "Food imagery should be appetizing and high quality. Warm tones preferred for chocolate products.",

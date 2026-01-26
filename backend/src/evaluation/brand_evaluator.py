@@ -44,7 +44,7 @@ class Guidelines(BaseModel):
 class TestCase(BaseModel):
     """A single test case in the golden dataset."""
     id: str = Field(description="Unique identifier for this test case")
-    original_image_path: str = Field(description="Path or GCS URI to the original reference image (if any)")
+    reference_image_paths: List[str] = Field(default_factory=list, description="Paths or GCS URIs to reference images (if any)")
     original_prompt: str = Field(description="The prompt used to generate the image")
     guidelines: Guidelines = Field(description="Brand guidelines to check against")
     expected_compliant: bool = Field(default=True, description="Whether this image is expected to be compliant")
@@ -56,6 +56,14 @@ class GoldenDataset(BaseModel):
 
 
 @dataclass
+class GuidelineCheck:
+    """Result of checking a specific guideline element."""
+    criteria: str
+    status: str  # "Pass", "Fail", "N/A"
+    explanation: str
+
+
+@dataclass
 class ValidationResult:
     """Result of validating a single image against brand guidelines."""
     test_id: str
@@ -64,6 +72,7 @@ class ValidationResult:
     score: int  # 0-100
     reasoning: str
     issues: List[str] = field(default_factory=list)
+    guideline_checks: List[GuidelineCheck] = field(default_factory=list)
     expected_compliant: bool = True
     passed: bool = False  # True if result matches expectation
     
@@ -134,13 +143,20 @@ class BrandEvaluator:
             '  "is_compliant": boolean,\n'
             '  "score": integer (0-100),\n'
             '  "reasoning": "string explanation",\n'
-            '  "issues": ["list", "of", "issues"]\n'
+            '  "issues": ["list", "of", "issues"],\n'
+            '  "guideline_checks": [\n'
+            '    {\n'
+            '      "criteria": "string (e.g. Color Palette)",\n'
+            '      "status": "Pass" | "Fail" | "N/A",\n'
+            '      "explanation": "why it passed or failed"\n'
+            '    }\n'
+            '  ]\n'
             "}\n\n"
-            "IMPORTANT INSTRUCTIONS FOR 'reasoning':\n"
-            "1.  Use a clean, structured format with sections.\n"
-            "2.  Be specific about what is wrong or what matches the guidelines.\n"
-            "3.  The 'score' should reflect how well the image adheres to ALL guidelines.\n"
-            "4.  List any specific violations in the 'issues' array.\n"
+            "IMPORTANT INSTRUCTIONS:\n"
+            "1.  Break down the guidelines into specific checks (e.g., Color Accuracy, Subject Visibility, Style Match).\n"
+            "2.  For each check, provide a status and a brief explanation.\n"
+            "3.  The 'score' should reflect the overall compliance.\n"
+            "4.  List main violations in 'issues'.\n"
         )
         return prompt
     
@@ -215,6 +231,12 @@ class BrandEvaluator:
                 result_data = json.loads(response.text)
                 logger.info(f"Test {test_case.id}: score={result_data.get('score', 0)}, compliant={result_data.get('is_compliant', False)}")
                 
+                # Parse guideline checks
+                guideline_checks_data = result_data.get("guideline_checks", [])
+                guideline_checks = [
+                    GuidelineCheck(**check) for check in guideline_checks_data
+                ]
+                
                 return ValidationResult(
                     test_id=test_case.id,
                     image_path=image_path,
@@ -222,6 +244,7 @@ class BrandEvaluator:
                     score=result_data.get("score", 0),
                     reasoning=result_data.get("reasoning", ""),
                     issues=result_data.get("issues", []),
+                    guideline_checks=guideline_checks,
                     expected_compliant=test_case.expected_compliant,
                 )
             

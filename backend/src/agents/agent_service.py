@@ -12,8 +12,6 @@ from google.adk.events.event import Event
 from google.genai import types
 
 # Backend Imports
-from src.agents.enforcer_agent import BrandingEnforcerAgent as LegacyEnforcer # Keep just in case or remove?
-from src.agents.validator_agent import ValidatorAgent as LegacyValidator
 from src.agents.dto.agent_dto import AgentGenerationRequest, AgentGenerationResponse, MediaTypeEnum
 from src.images.dto.create_imagen_dto import CreateImagenDto, AspectRatioEnum
 from src.videos.dto.create_veo_dto import CreateVeoDto

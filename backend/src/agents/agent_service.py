@@ -2,7 +2,7 @@ import logging
 import asyncio
 from enum import Enum
 from typing import Dict, Any, List, AsyncGenerator
-from fastapi import Depends
+from fastapi import Depends, BackgroundTasks
 
 # ADK Imports
 from google.adk.runners import Runner
@@ -28,7 +28,8 @@ from src.common.schema.media_item_model import JobStatusEnum
 
 # New ADK Agents
 from src.agents.adk.enforcer import BrandingEnforcerADK
-from src.agents.adk.generator import MediaGeneratorADK
+from src.agents.adk.enforcer import BrandingEnforcerADK
+# from src.agents.adk.generator import MediaGeneratorADK
 from src.agents.adk.validator import ValidatorADK
 from src.tools.adk_wrappers import create_adk_search_tool
 from src.common.vector_search_service import VectorSearchService
@@ -71,12 +72,8 @@ class AgentService:
             brand_guideline_repo=brand_guideline_repo
         )
         
-        self.generator = MediaGeneratorADK(
-            name="MediaGenerator",
-            imagen_service=imagen_service,
-            veo_service=veo_service,
-            audio_service=audio_service
-        )
+        # self.generator is removed in favor of MediaGenerationToolWrapper instantiated per request
+        # self.generator = MediaGeneratorADK(...)
         
         # We also initialize the ValidatorADK for potential use (even if triggers later)
         self.validator_adk = ValidatorADK(
@@ -92,7 +89,8 @@ class AgentService:
     async def generate_compliant_media(
         self, 
         request: AgentGenerationRequest, 
-        current_user: UserModel
+        current_user: UserModel,
+        background_tasks: BackgroundTasks
     ) -> AgentGenerationResponse:
         """
         Executes the ADK workflow.
@@ -118,161 +116,238 @@ class AgentService:
             "reference_image_uris": [request.reference_image_uri] if request.reference_image_uri else []
         }
         
-        # 2. Run Enforcer Agent
-        logger.info("Running BrandingEnforcerADK...")
+        # Prepare Tool Wrapper (needs to be created here to capture services)
+        from src.agents.tools.media_generation_tool import MediaGenerationToolWrapper
+        # Note: We pass current_user, but technically in background it might be detached? 
+        # SQLAlchemy objects used in background tasks need care. 
+        # But here we just pass the object for ID access. Data access might fail if session closed.
+        # Ideally, pass primitive ID and reload user in background if needed.
+        # For now, we assume `current_user` is a Pydantic model or detached ORM object?
+        # It is `UserModel` (Pydantic/ORM hybrid or just ORM). 
+        # If it's ORM attached to a request session, accessing it in background might fail.
+        # Safest: Pass necessary data explicitly or merge.
+        # But `AgentGenerationRequest` has everything.
         
-        # NOTE: The ADK BaseAgent seems to infer 'app_name' from the package or defaults to 'adk'.
-        # To avoid mismatch warnings/errors, we align the Runner with the Agent's expected app_name.
-        enforcer_app_name = "adk"
-        
-        # Ensure session exists in the 'adk' namespace as well
-        await self.session_service.create_session(
-            app_name=enforcer_app_name,
-            user_id=current_user.email,
+        # We start the background task
+        background_tasks.add_task(
+            self._run_director_background,
+            request=request,
+            user=current_user,
             session_id=session_id,
             state=state
         )
-
-        enforcer_runner = Runner(
-            agent=self.enforcer,
-            app_name=enforcer_app_name,
-            session_service=self.session_service
-        )
-
-        prompt_with_context = (
-            f"Context:\n"
-            f"Workspace ID: {request.workspace_id}\n"
-            f"Original Prompt: {request.prompt}\n\n"
-            f"Task: Rewrite the prompt according to brand guidelines."
-        )
-        enforcer_start_msg = types.Content(role="user", parts=[types.Part(text=prompt_with_context)])
         
-        async for event in enforcer_runner.run_async(user_id=current_user.email, session_id=session_id, new_message=enforcer_start_msg):
-            # Log ALL events for debugging
-            logger.info(f"[Enforcer Event] {event.author} ({type(event).__name__}): {event}")
-            
-            if event.content:
-                 text = event.content.parts[0].text if event.content.parts else ''
-                 logger.info(f"[Enforcer Content] {text}")
-                 
-                 # Publish to user stream 
-                 if text:
-                    await self.event_bus.publish(f"user_{current_user.email}", event)
-
-        # 3. Parse Enforcer Output
-        # Re-fetch session from the 'adk' namespace to get the agent's response
-        enforcer_session = await self.session_service.get_session(app_name=enforcer_app_name, user_id=current_user.email, session_id=session_id)
+        logger.info(f"Agentic flow started in background. Session: {session_id}")
         
-        enhanced_prompt = request.prompt
-        reference_image_uris = []
-        guidelines_used = ""
-        
-        if enforcer_session and enforcer_session.events:
-            last_message = enforcer_session.events[-1]
-            if last_message.content and last_message.content.parts:
-                 text = last_message.content.parts[0].text
-                 try:
-                     import json
-                     # Clean potential markdown
-                     clean_text = text.strip()
-                     if clean_text.startswith("```json"):
-                         clean_text = clean_text[7:]
-                     elif clean_text.startswith("```"):
-                         clean_text = clean_text[3:]
-                     if clean_text.endswith("```"):
-                         clean_text = clean_text[:-3]
-                     
-                     data = json.loads(clean_text)
-                     enhanced_prompt = data.get("enhanced_prompt", request.prompt)
-                     reference_image_uris = data.get("reference_image_uris", [])
-                     guidelines_used = data.get("guidelines_used", "")
-                     
-                     logger.info(f"CAPTURED ENHANCED PROMPT: {enhanced_prompt}")
-                     logger.info(f"CAPTURED REFERENCE IMAGES: {reference_image_uris}")
-                     
-                 except (json.JSONDecodeError, AttributeError, ImportError):
-                     logger.warning("Failed to parse Enforcer JSON output. Using raw text as fallback.")
-                     # Fallback: if it's not JSON, maybe it's just the text prompt
-                     if text.strip():
-                        enhanced_prompt = text
-
-        # Update Session State for Generator
-        # Since MediaGeneratorADK is also in 'src.agents.adk', it will also require app_name="adk".
-        # So we update the 'adk' session directly.
-        if enforcer_session:
-             # Merge reference URIs
-             existing_uris = enforcer_session.state.get("reference_image_uris", [])
-             all_uris = list(set(existing_uris + reference_image_uris))
-             
-             enforcer_session.state["enhanced_prompt"] = enhanced_prompt
-             enforcer_session.state["reference_image_uris"] = all_uris
-             enforcer_session.state["guidelines_used"] = guidelines_used
-             logger.info("Updated 'adk' session state with Enforcer results.")
-
-        # 4. Run Generator Agent
-        logger.info("Running MediaGeneratorADK...")
-        
-        # Publish a starting event manually to update UI immediately
-        start_event = Event(
-            author="MediaGeneratorADK",
-            content=types.Content(parts=[types.Part(text="Starting generation process...")])
-        )
-        await self.event_bus.publish(f"user_{current_user.email}", start_event)
-        
-        # Generator also needs 'adk' app_name to match package location
-        generator_runner = Runner(
-            agent=self.generator,
-            app_name=enforcer_app_name, 
-            session_service=self.session_service
-        )
-        
-        # We can send a dummy signal or "Start Generation".
-        gen_trigger = types.Content(role="user", parts=[types.Part(text="Proceed with generation.")])
-        
-        async for event in generator_runner.run_async(user_id=current_user.email, session_id=session_id, new_message=gen_trigger):
-             if event.content:
-                 # Generator events (e.g. "Generating...")
-                 await self.event_bus.publish(f"user_{current_user.email}", event)
-
-        # 5. Extract Final Results from the 'adk' session
-        final_session = await self.session_service.get_session(app_name=enforcer_app_name, user_id=current_user.email, session_id=session_id)
-        final_state = final_session.state if final_session else {}
-        assets = final_state.get("generated_assets", [])
-
-
-        
-        # 5. Trigger Background Validation (Legacy Logic Compatibility)
-        if assets:
-            job_id = assets[0]['id']
-            # Determine Repo
-            repo_service = None
-            if request.media_type == "IMAGE":
-                repo_service = self.imagen_service
-            elif request.media_type == "VIDEO":
-                repo_service = self.veo_service
-            elif request.media_type == "AUDIO":
-                repo_service = self.audio_service
-            
-            if repo_service:
-                # We reuse the legacy poll_and_validate logic or adapt it to use ValidatorADK
-                # Let's adapt to use ValidatorADK in a separate "Runner" or manual run
-                self.validator_adk.media_repo = repo_service.media_repo
-                
-                asyncio.create_task(self._run_async_validation(
-                    job_id=job_id,
-                    guidelines=guidelines_used, 
-                    prompt=enhanced_prompt, # Use enhanced prompt for validation context? Or original? Legacy used original. But enhanced has more detail. Let's use enhanced or both. Legacy used 'original_prompt'.
-                    # User request: "also check if it faithfully represents the original user prompt" -> So ORIGINAL.
-                    # But guidelines check needs guidelines.
-                    user_id=current_user.email
-                ))
-
+        # Return immediate response (Pending)
         return AgentGenerationResponse(
             original_prompt=request.prompt,
-            enhanced_prompt=enhanced_prompt,
-            generated_assets=assets,
+            enhanced_prompt="Processing...",
+            generated_assets=[],
             session_id=session_id
         )
+
+    async def _run_director_background(self, request: AgentGenerationRequest, user: UserModel, session_id: str, state: Dict[str, Any]):
+        """
+        Background task to run the Creative Director Flow.
+        """
+        from src.database import AsyncSessionLocal
+        from src.images.repository.media_item_repository import MediaRepository
+        
+        # Create a fresh DB session for the background task
+        async with AsyncSessionLocal() as session:
+            try:
+                logger.info(f"[_run_director_background] Starting for {session_id}")
+                
+                # Setup Repo
+                media_repo = MediaRepository(session)
+                
+                # Setup Tools with fresh repo
+                # Validator needs the repo
+                # We create a fresh validator for this background run to avoid state issues
+                validator = ValidatorADK(
+                    name="Validator",
+                    gemini_service=self.validator_adk.gemini_service, # Reuse service
+                    media_repo=media_repo
+                )
+                
+                # Generator Tool Wrapper (needs user)
+                # Note: The usage of self.imagen_service inside this wrapper might still be problematic 
+                # if inside it uses a closed DB session. 
+                # HOWEVER, ImagenService usually does `repo = ...`. 
+                # If ImagenService was initialized with a Repo that depends on a closed session, it will fail.
+                # `AgentService` gets `imagen_service` from `Depends`.
+                # We might need to "Patch" the repo in `imagen_service` too?
+                # or create a new `ImagenService`?
+                # For `start_generation`, it calls `media_repo.create`.
+                # We should probably inject the FRESH `media_repo` into the `MediaGenerationToolWrapper`?
+                # BUT `MediaGenerationToolWrapper` takes `ImagenService`.
+                # Let's hope `ImagenService` is stateless regarding DB session OR we patch it.
+                # Actually `ImagenService` has `self.media_repo`.
+                # We MUST patch it.
+                
+                # Patch services with fresh repo (Hack but necessary for BackgroundTasks with Depends pattern)
+                # Ideally we factories everything.
+                self.imagen_service.media_repo = media_repo
+                # Veo/Audio services also need repos? Assuming image for now or generic media repo works for all?
+                # If they use different repos, we need to recreate them too. 
+                # For now, let's assume they share or we just patch imagen as partial fix.
+                # Actually, `MediaRepository` handles `media_items` table which is shared.
+                
+                from src.agents.tools.media_generation_tool import MediaGenerationToolWrapper
+                gen_tool_wrapper = MediaGenerationToolWrapper(
+                    self.imagen_service, 
+                    self.veo_service, 
+                    self.audio_service, 
+                    user,
+                    original_prompt=state.get("original_prompt"),
+                    generation_model=request.generation_model
+                )
+                generation_tool = gen_tool_wrapper.get_tool()
+                
+                from src.agents.adk.manager import create_creative_director
+                director = create_creative_director(self.enforcer, generation_tool, validator)
+                
+                await self.session_service.create_session(
+                    app_name="adk",
+                    user_id=user.email,
+                    session_id=session_id,
+                    state=state
+                )
+                
+                director_runner = Runner(
+                    agent=director,
+                    app_name="adk",
+                    session_service=self.session_service
+                )
+                
+                user_intent = (
+                    f"User ID: {user.email}\n"
+                    f"Workspace ID: {request.workspace_id}\n"
+                    f"Request: Generate {request.media_type} with prompt: '{request.prompt}'.\n"
+                    f"Config: {state.get('request_config')}\n"
+                    f"Ref Images: {state.get('reference_image_uris')}\n\n"
+                    "Please proceed with the Enforce -> Generate -> Validate workflow."
+                )
+                
+                director_msg = types.Content(role="user", parts=[types.Part(text=user_intent)])
+                
+                # Copy of the polling loop logic
+                def get_long_running_function_call(event: Event) -> types.FunctionCall:
+                    if not event.long_running_tool_ids or not event.content or not event.content.parts:
+                        return None
+                    for part in event.content.parts:
+                        if (
+                            part
+                            and part.function_call
+                            and event.long_running_tool_ids
+                            and part.function_call.id in event.long_running_tool_ids
+                        ):
+                            return part.function_call
+                    return None
+
+                def get_function_response(event: Event, function_call_id: str) -> types.FunctionResponse:
+                    if not event.content or not event.content.parts:
+                        return None
+                    for part in event.content.parts:
+                        if (
+                            part
+                            and part.function_response
+                            and part.function_response.id == function_call_id
+                        ):
+                            return part.function_response
+                    return None
+
+                events_async = director_runner.run_async(user_id=user.email, session_id=session_id, new_message=director_msg)
+                
+                long_running_function_call = None
+                long_running_function_response = None
+                current_job_id = None
+                
+                try:
+                    async for event in events_async:
+                        logger.info(f"[Director Event] {event.author}: {event}")
+
+                        if event.author == "BrandingEnforcer" and event.content:
+                             for part in event.content.parts:
+                                 if part.text:
+                                      logger.info(f"Values from Enforcer: {part.text}")
+                        if not long_running_function_call:
+                            long_running_function_call = get_long_running_function_call(event)
+                        else:
+                            _potential_response = get_function_response(event, long_running_function_call.id)
+                            if _potential_response:
+                                long_running_function_response = _potential_response
+                                if 'job_id' in long_running_function_response.response:
+                                    current_job_id = long_running_function_response.response['job_id']
+                                    # Publish event when Job ID is captured
+                                    await self.event_bus.publish(
+                                        f"user_{user.email}",
+                                        Event(
+                                            author="System",
+                                            content=types.Content(
+                                                parts=[types.Part(text=f"Captured Long Running Job ID: {current_job_id}")]
+                                            )
+                                        )
+                                    )
+                        
+                        if event.content and event.content.parts:
+                            text = event.content.parts[0].text
+                            if text:
+                                await self.event_bus.publish(f"user_{user.email}", event)
+                except Exception as e:
+                    logger.error(f"Error in Director loop: {e}", exc_info=True)
+                    await self.event_bus.publish(
+                        f"user_{user.email}",
+                        Event(
+                            author="System",
+                            content=types.Content(
+                                parts=[types.Part(text=f"Agent Process Failed: {str(e)}")]
+                            )
+                        )
+                    )
+                    return
+
+                
+                if long_running_function_call and current_job_id:
+                    logger.info(f"Director Paused. Polling for Job {current_job_id}...")
+                    
+                    # Poll loop (Wait for completion)
+                    final_job_status = "failed"
+                    # Use the fresh repo for polling
+                    
+                    for _ in range(60): 
+                        await asyncio.sleep(2)
+                        job = await media_repo.get_by_id(current_job_id)
+                        if job:
+                            if job.status == JobStatusEnum.COMPLETED:
+                                final_job_status = "completed"
+                                break
+                            if job.status == JobStatusEnum.FAILED:
+                                final_job_status = "failed"
+                                break
+                    
+                    logger.info(f"Job finished: {final_job_status}. Resuming...")
+                    
+                    updated_response = long_running_function_response.model_copy(deep=True)
+                    updated_response.response = {
+                        "status": final_job_status, 
+                        "job_id": current_job_id,
+                        "message": "Generation completed."
+                    }
+                    
+                    resume_msg = types.Content(parts=[types.Part(function_response=updated_response)], role='user')
+                    
+                    async for event in director_runner.run_async(user_id=user.email, session_id=session_id, new_message=resume_msg):
+                        logger.info(f"[Director Resumed Event] {event.author}: {event}")
+                        if event.content:
+                             await self.event_bus.publish(f"user_{user.email}", event)
+
+            except Exception as e:
+                logger.error(f"Background ADK Flow Failed: {e}", exc_info=True)
+                # Publish error event to user
+                await self.event_bus.publish(f"user_{user.email}", Event(author="System", content=types.Content(parts=[types.Part(text=f"Agent process failed: {str(e)}")]) ))
+
 
     async def _run_async_validation(self, job_id: int, guidelines: str, prompt: str, user_id: str):
         """

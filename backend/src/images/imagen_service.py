@@ -804,15 +804,21 @@ class ImagenService:
         """
         Immediately creates a placeholder MediaItem and starts the image generation
         in the background.
+
+        Returns:
+            The initial MediaItem with a 'processing' status and a pre-generated ID.
         """
-        # Create a placeholder document
+        # 1. Create a placeholder MediaItem (without ID, let DB generate it)
+        # We store the *User's* prompt in 'prompt' and 'original_prompt'
+        # We store the *Enhanced* prompt in 'rewritten_prompt' (if it exists)
         placeholder_item = MediaItemModel(
             workspace_id=request_dto.workspace_id,
             user_email=user.email,
             user_id=user.id,
-            mime_type=MimeTypeEnum.IMAGE_PNG,  # Default to PNG, will update if needed
+            mime_type=MimeTypeEnum.IMAGE_PNG,
             model=request_dto.generation_model,
             original_prompt=request_dto.prompt,
+            prompt=request_dto.prompt,
             status=JobStatusEnum.PROCESSING,
             aspect_ratio=request_dto.aspect_ratio,
             style=request_dto.style,
@@ -825,10 +831,10 @@ class ImagenService:
             gcs_uris=[],
         )
 
-        # Save the placeholder to the database immediately
+        # 2. Save to DB to get the ID
         placeholder_item = await self.media_repo.create(placeholder_item)
 
-        # Submit the long-running function to the process pool
+        # 3. Submit background task
         executor.submit(
             _process_image_in_background,
             media_item_id=placeholder_item.id,

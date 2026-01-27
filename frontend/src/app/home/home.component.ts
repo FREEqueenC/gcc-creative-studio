@@ -403,22 +403,39 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
       this.zone.run(() => {
         // console.log('Processing Agent Event:', event); // Debug log
 
+        const text = event.content?.parts?.[0]?.text;
+
+        // Pattern Matching for Job ID
+        if (text && text.includes("Captured Long Running Job ID:")) {
+          // Extract ID
+          const parts = text.split("Job ID:");
+          const jobIdStr = parts[1]?.trim();
+          const jobId = parseInt(jobIdStr, 10);
+          if (!isNaN(jobId)) {
+            console.log("Frontend detected Job ID from Agent Event:", jobId);
+            // Start tracking this job via the existing SearchService polling mechanism
+            this.service.trackImageGeneration(jobId);
+            this.isImageGenerating = true;
+          }
+        }
+
         if (event.author === 'BrandingEnforcer' || event.author === 'BrandingEnforcerADK') {
           this.agentStatus = "Consulting Brand Guidelines...";
 
           // Check if this is the final output event containing the enhanced prompt
-          const text = event.content?.parts?.[0]?.text;
           if (text && text.includes('enhanced_prompt')) {
             this.agentStatus = "Optimizing Prompt with Brand Guidelines...";
           }
         } else if (event.author === 'MediaGenerator' || event.author === 'MediaGeneratorADK') {
           this.agentStatus = "Generating high-fidelity media...";
+        } else if (event.author === 'Validator' || event.author === 'ValidatorADK') {
+          this.agentStatus = "Validating assets against guidelines...";
         } else {
           // Fallback for other agents or default state
           // If we have a specific message, show it, otherwise keep previous or default
-          if (event.content?.parts?.[0]?.text) {
-            // Optional: Show raw text if it's short, otherwise generic
-            // this.agentStatus = event.content.parts[0].text;
+          if (text) {
+          // Optional: Show raw text if it's short, otherwise generic
+            // this.agentStatus = text;
           }
         }
       });
@@ -713,6 +730,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     this.saveState();
   }
 
+
   searchTerm() {
     if (!this.searchRequest.prompt) {
       handleInfoSnackbar(this._snackBar, 'Please enter a prompt to generate an image.');
@@ -772,24 +790,21 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
 
       this.agentService.generateMedia(agentRequest)
         .pipe(finalize(() => {
-          // We don't set isLoading=false here immediately because we start polling
-          // But startImagenGeneration sets isLoading=false in finalize.
-          // We should probably set isLoading=false here too as the *request* is done.
           this.isLoading = false;
-          this.agentStatus = null;
         }))
         .subscribe({
           next: (response) => {
             this.agentStatus = 'Agent started...';
 
+            // If response is immediate (synchronous flow), handle it
             if (response.generatedAssets && response.generatedAssets.length > 0) {
-              const assetId = response.generatedAssets[0].id;
-              // Track the job using SearchService
-              this.service.trackImageGeneration(assetId);
-              if (response.enhancedPrompt) {
-                // optionally show the enhanced prompt or just log it
-                console.log('Enhanced Prompt:', response.enhancedPrompt);
-              }
+              this.handleGenerationSuccess(response.generatedAssets[0].id, response.enhancedPrompt);
+            } else {
+              // Async Flow: We wait for events.
+              this.agentStatus = 'Agent processing in background...';
+              // We don't have a Job ID yet from the HTTP response in the new flow?
+              // The HTTP response has session_id.
+              // We rely on the Event Stream to tell us when generation starts/completes.
             }
           },
           error: (error) => {
@@ -798,7 +813,6 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
             handleErrorSnackbar(this._snackBar, error, 'Agent Generation');
           }
         });
-
       return;
     }
 
@@ -1206,6 +1220,15 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     this.router.navigate(['/vto'], navigationExtras);
   }
 
+
+
+  private handleGenerationSuccess(assetId: number, enhancedPrompt?: string) {
+    // Track the job using SearchService
+    this.service.trackImageGeneration(assetId);
+    if (enhancedPrompt) {
+      console.log('Enhanced Prompt:', enhancedPrompt);
+    }
+  }
 
   private applySourceAssets(sourceAssets: EnrichedSourceAsset[]) {
     this.referenceImages = sourceAssets.map(asset => ({

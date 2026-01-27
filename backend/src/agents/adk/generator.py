@@ -58,17 +58,62 @@ class MediaGeneratorADK(BaseAgent):
         """
         state = ctx.session.state
         
-        # 1. Retrieve Context
-        # We expect these to be populated in the session state by the caller (AgentService)
-        # or previous agents.
+        
+        # 1. Retrieve Context (Hybrid: Message > State)
         prompt = state.get("enhanced_prompt") or state.get("original_prompt")
         media_type = state.get("media_type", "IMAGE")
         workspace_id = state.get("workspace_id")
-        user: UserModel = state.get("current_user") # Passed as object or handled via ID? 
-        # Note: Passing complex objects in state is fine in-memory.
+        user: UserModel = state.get("current_user")
+
         
+        # Check if we received instructions directly (Agent-as-a-Tool pattern)
+        # The CreativeDirector might say: "Generate image with prompt: '...'"
+        # A simple keyword extraction or relying on the session state update which mimics 'arguments' is tricky
+        # because AgentTool currently relies on the *conversation* to pass info, NOT structured function call args yet for Agents.
+        # BUT, the Director agent's LLM will likely *call* the tool with arguments if it was a FunctionTool.
+        # As an AgentTool, the Director sends a *Message*.
+        
+        import re
+        incoming_text = ""
+        if ctx.user_content and ctx.user_content.parts:
+            incoming_text = ctx.user_content.parts[0].text
+            logger.info(f"[{self.name}] Received instructions: {incoming_text}")
+            
+            # Try parsing as JSON first (Director might pass Enforcer output directly)
+            try:
+                import json
+                # Handle markdown code blocks if present
+                clean_text = incoming_text.strip()
+                if clean_text.startswith("```json"):
+                     clean_text = clean_text[7:]
+                elif clean_text.startswith("```"):
+                     clean_text = clean_text[3:]
+                if clean_text.endswith("```"):
+                     clean_text = clean_text[:-3]
+                
+                data = json.loads(clean_text)
+                if isinstance(data, dict):
+                    if "enhanced_prompt" in data:
+                        prompt = data["enhanced_prompt"]
+                        logger.info(f"[{self.name}] Extracted enhanced_prompt from JSON.")
+                    if "reference_image_uris" in data and isinstance(data["reference_image_uris"], list):
+                        # Update state with these URIs so service can find them
+                        state["reference_image_uris"] = data["reference_image_uris"]
+                        logger.info(f"[{self.name}] Extracted reference_image_uris from JSON.")
+            except json.JSONDecodeError:
+                # Not JSON, fall back to regex or raw text
+                pass
+
+        # Simple heuristic extraction if prompt is missing or to override
+        # If the Director provided a prompt explicitly in quotes (and it wasn't JSON):
+        if not prompt:  
+            match = re.search(r"prompt:\s*['\"](.*?)['\"]", incoming_text, re.IGNORECASE | re.DOTALL)
+            if match:
+                 prompt = match.group(1)
+                 logger.info(f"[{self.name}] Extracted prompt from message (regex): {prompt}")
+
         if not prompt:
-            yield Event(author=self.name, content=types.Content(parts=[types.Part(text="Error: No prompt found in state.")]))
+            yield Event(author=self.name, content=types.Content(parts=[types.Part(text="Error: No prompt found in state or message.")]))
             return
 
         request_config = state.get("request_config", {}) # Dict of other params
@@ -96,7 +141,9 @@ class MediaGeneratorADK(BaseAgent):
                     reference_image_gcs_uris=state.get("reference_image_uris") # From Enforcer/Tool
                 )
                 media_response = await self.imagen_service.start_image_generation_job(
-                    request_dto=dto, user=user, executor=executor
+                    request_dto=dto, 
+                    user=user, 
+                    executor=executor
                 )
                 
             elif media_type == "VIDEO":
@@ -110,7 +157,9 @@ class MediaGeneratorADK(BaseAgent):
                     style=request_config.get("style")
                 )
                 media_response = await self.veo_service.start_video_generation_job(
-                    request_dto=dto, user=user, executor=executor
+                    request_dto=dto, 
+                    user=user, 
+                    executor=executor
                 )
                 
             elif media_type == "AUDIO":
@@ -124,15 +173,37 @@ class MediaGeneratorADK(BaseAgent):
                     sample_count=request_config.get("number_of_media", 1)
                 )
                 media_response = await self.audio_service.generate_audio(
-                    request_dto=dto, user=user
+                    request_dto=dto, 
+                    user=user
                 )
                 
             else:
                 yield Event(author=self.name, content=types.Content(parts=[types.Part(text=f"Unsupported media type: {media_type}")]))
                 return
 
-            # 3. Update State
+            # 3. Update State & DB for Provenance
             if media_response:
+                # Update DB with prompted lineage if applicable
+                original = state.get("original_prompt")
+                if original and original != prompt:
+                    try:
+                        repo = None
+                        if media_type == "IMAGE":
+                            repo = self.imagen_service.media_repo
+                        elif media_type == "VIDEO":
+                            repo = self.veo_service.media_repo
+                        elif media_type == "AUDIO":
+                            repo = self.audio_service.media_repo
+
+                        if repo:
+                            await repo.update(media_response.id, {
+                                "original_prompt": original,
+                                "rewritten_prompt": prompt
+                            })
+                            logger.info(f"[{self.name}] Updated MediaItem {media_response.id} with prompt lineage.")
+                    except Exception as e:
+                        logger.error(f"[{self.name}] Failed to update prompt lineage: {e}")
+
                 state["generated_assets"] = [{
                     "id": media_response.id,
                     "status": media_response.status,

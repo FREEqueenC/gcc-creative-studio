@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, BackgroundTasks
 from fastapi.responses import StreamingResponse
 from src.agents.dto.agent_dto import AgentGenerationRequest, AgentGenerationResponse
 from src.agents.agent_service import AgentService
@@ -11,13 +11,14 @@ router = APIRouter(prefix="/api/agents", tags=["Agents"])
 @router.post("/generate", response_model=AgentGenerationResponse, status_code=status.HTTP_200_OK)
 async def generate_compliant_media(
     request: AgentGenerationRequest,
+    background_tasks: BackgroundTasks,
     agent_service: AgentService = Depends(),
     current_user: UserModel = Depends(get_current_user)
 ):
     """
     Triggers the Agentic RAG workflow: Enforce -> Generate -> Validate (Async).
     """
-    return await agent_service.generate_compliant_media(request, current_user)
+    return await agent_service.generate_compliant_media(request, current_user, background_tasks)
 
 @router.get("/events/stream", response_class=StreamingResponse)
 async def stream_agent_events(current_user: UserModel = Depends(get_current_user)):

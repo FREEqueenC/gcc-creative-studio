@@ -40,6 +40,23 @@ class ValidatorADK(BaseAgent):
         state = ctx.session.state
         job_id = state.get("job_id")
         
+        # Agent-as-a-Tool Support: Extract Job ID from message
+        if ctx.user_content and ctx.user_content.parts:
+            text = ctx.user_content.parts[0].text
+            logger.info(f"[{self.name}] Input Text for Job Extraction: {text}")
+            import re
+            # Match "Job ID: 123" OR "job_id: 123" OR just "123" if context looks like a job id
+            match = re.search(r"(?:Job ID|job_id)[:=]?\s*(\d+)", text, re.IGNORECASE)
+            if match:
+                job_id = int(match.group(1))
+                logger.info(f"[{self.name}] Extracted Job ID: {job_id}")
+            else:
+                logger.warning(f"[{self.name}] Failed to extract Job ID from text.")
+                # Fallback: check if the text *is* the job ID?
+                if text.strip().isdigit():
+                     job_id = int(text.strip())
+                     logger.info(f"[{self.name}] Extracted Job ID (direct digit): {job_id}")
+
         if not job_id:
              yield Event(author=self.name, content=types.Content(parts=[types.Part(text="Skipping validation: No job_id found.")]))
              return
@@ -94,7 +111,26 @@ class ValidatorADK(BaseAgent):
         total = len(validation_results)
         
         summary = f"Validated {total} assets. {compliant_count} Compliant."
-        yield Event(author=self.name, content=types.Content(parts=[types.Part(text=summary)]))
+        
+        # Persist to DB
+        try:
+            logger.info(f"[{self.name}] Persisting validation results for Job {job_id}...")
+            await self.media_repo.update(job_id, {
+                "critique": summary,
+                "raw_data": {"validations": validation_results}
+            })
+            logger.info(f"[{self.name}] Persistence complete.")
+        except Exception as e:
+            logger.error(f"[{self.name}] Failed to persist validation results: {e}")
+
+        ordered_response = {
+            "is_compliant": compliant_count == total,
+            "score": int((compliant_count / total) * 100) if total > 0 else 0,
+            "reasoning": summary,
+            "issues": [issue for r in validation_results for issue in r.get("issues", [])]
+        }
+        
+        yield Event(author=self.name, content=types.Content(parts=[types.Part(text=json.dumps(ordered_response))]))
 
     async def validate_asset(self, asset_uri: str, guidelines: str, prompt: str) -> dict:
         # Re-using logic from original ValidatorAgent
@@ -107,12 +143,12 @@ class ValidatorADK(BaseAgent):
             f"--- BRAND GUIDELINES ---\n{guidelines}\n----------------------\n"
             f"--- ORIGINAL PROMPT ---\n{prompt}\n----------------------\n"
             "Provide your assessment in the following JSON format:\n"
-            "{\n"
             "  \"is_compliant\": boolean,\n"
             "  \"score\": integer (0-100),\n"
-            "  \"reasoning\": \"string explanation with specific sections\"\n"
+            "  \"reasoning\": \"string explanation with specific sections\",\n"
+            "  \"issues\": [\"string list of specific issues found\"]\n"
             "}\n\n"
-            "IMPORTANT INSTRUCTIONS FOR 'reasoning':\n"
+            "IMPORTANT INSTRUCTIONS FOR 'reasoning' AND 'issues':\n"
             "1. Use a clean, structured format.\n"
             "2. Use standard ASCII formatting for lists (e.g., '•' or '-') and capitalization for headers.\n"
             "3. Example Format:\n"
@@ -149,7 +185,7 @@ class ValidatorADK(BaseAgent):
                 if clean_text.endswith("```"):
                     clean_text = clean_text[:-3]
                 return json.loads(clean_text.strip())
-            return {"is_compliant": False, "score": 0, "reasoning": "No response"}
+            return {"is_compliant": False, "score": 0, "reasoning": "No response", "issues": []}
         except Exception as e:
             logger.error(f"Validator Gemini call failed: {e}")
-            return {"is_compliant": False, "score": 0, "reasoning": str(e)}
+            return {"is_compliant": False, "score": 0, "reasoning": str(e), "issues": [str(e)]}

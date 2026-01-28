@@ -82,7 +82,7 @@ class CreditsService:
         # Update Wallet
         target_wallet.balance += dto.amount
         target_wallet.expires_at = expires_at
-        target_wallet.cumulative_spend = 0  # Reset rule
+        # target_wallet.cumulative_spend = 0  # Reset rule if we want 'Spend since last top up'
         
         # Log Transaction
         log = CreditLog(

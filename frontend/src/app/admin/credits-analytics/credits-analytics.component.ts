@@ -341,7 +341,9 @@ export class CreditsAnalyticsComponent implements OnInit, AfterViewInit, OnDestr
   ngAfterViewInit(): void {
     this.assignedCreditsData$?.pipe(filter(data => !!data)).subscribe(data => {
       if (data) {
-        this.renderAssignedCreditsChart(data);
+        setTimeout(() => {
+          this.renderAssignedCreditsChart(data);
+        }, 0);
       }
     });
   }
@@ -411,6 +413,16 @@ export class CreditsAnalyticsComponent implements OnInit, AfterViewInit, OnDestr
       .attr('stroke', '#3b82f6')
       .attr('stroke-width', 2)
       .attr('d', line);
+
+    // Add circles for each data point
+    svg.selectAll('.dot')
+      .data(data)
+      .enter().append('circle')
+        .attr('class', 'dot')
+        .attr('cx', d => x(new Date(d.date)))
+        .attr('cy', d => y(d.total_assigned))
+        .attr('r', 4)
+        .style('fill', '#3b82f6');
 
     // Tooltip
     const tooltip = d3.select('body').append('div')

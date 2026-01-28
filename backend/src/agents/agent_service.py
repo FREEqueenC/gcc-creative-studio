@@ -60,6 +60,8 @@ class AgentService:
         self.imagen_service = imagen_service
         self.veo_service = veo_service
         self.audio_service = audio_service
+        self.vector_search_service = vector_search_service
+        self.gemini_service = gemini_service
         
         # Initialize ADK Agents
         # Note: In a real app, these might be singletons or factory-created.
@@ -147,7 +149,7 @@ class AgentService:
 
     async def _run_director_background(self, request: AgentGenerationRequest, user: UserModel, session_id: str, state: Dict[str, Any]):
         """
-        Background task to run the Creative Director Flow.
+        Background task to run the Deterministic Media Pipeline.
         """
         from src.database import AsyncSessionLocal
         from src.images.repository.media_item_repository import MediaRepository
@@ -160,51 +162,67 @@ class AgentService:
                 # Setup Repo
                 media_repo = MediaRepository(session)
                 
-                # Setup Tools with fresh repo
-                # Validator needs the repo
-                # We create a fresh validator for this background run to avoid state issues
+                # Setup Components with fresh repo
+                # Validator needs the fresh repo for polling
                 validator = ValidatorADK(
                     name="Validator",
                     gemini_service=self.validator_adk.gemini_service, # Reuse service
                     media_repo=media_repo
                 )
                 
-                # Generator Tool Wrapper (needs user)
-                # Note: The usage of self.imagen_service inside this wrapper might still be problematic 
-                # if inside it uses a closed DB session. 
-                # HOWEVER, ImagenService usually does `repo = ...`. 
-                # If ImagenService was initialized with a Repo that depends on a closed session, it will fail.
-                # `AgentService` gets `imagen_service` from `Depends`.
-                # We might need to "Patch" the repo in `imagen_service` too?
-                # or create a new `ImagenService`?
-                # For `start_generation`, it calls `media_repo.create`.
-                # We should probably inject the FRESH `media_repo` into the `MediaGenerationToolWrapper`?
-                # BUT `MediaGenerationToolWrapper` takes `ImagenService`.
-                # Let's hope `ImagenService` is stateless regarding DB session OR we patch it.
-                # Actually `ImagenService` has `self.media_repo`.
-                # We MUST patch it.
-                
-                # Patch services with fresh repo (Hack but necessary for BackgroundTasks with Depends pattern)
-                # Ideally we factories everything.
+                # Patch services with fresh repo
+                # This ensures the Generator tool uses the active session
+                # Ideally, we should refactor services to accept repo per call or be request-scoped properly in BG tasks.
+                # For now, this patch pattern mimics the previous working solution.
                 self.imagen_service.media_repo = media_repo
-                # Veo/Audio services also need repos? Assuming image for now or generic media repo works for all?
-                # If they use different repos, we need to recreate them too. 
-                # For now, let's assume they share or we just patch imagen as partial fix.
-                # Actually, `MediaRepository` handles `media_items` table which is shared.
+                self.veo_service.media_repo = media_repo
+                self.audio_service.media_repo = media_repo
                 
-                from src.agents.tools.media_generation_tool import MediaGenerationToolWrapper
-                gen_tool_wrapper = MediaGenerationToolWrapper(
-                    self.imagen_service, 
-                    self.veo_service, 
-                    self.audio_service, 
-                    user,
-                    original_prompt=state.get("original_prompt"),
-                    generation_model=request.generation_model
+                # Initialize MediaGeneratorADK
+                # We do NOT use the wrapper here anymore, we use the Agent directly
+                # However, MediaGeneratorADK needs the services.
+                from src.agents.adk.generator import MediaGeneratorADK
+                generator_agent = MediaGeneratorADK(
+                    name="MediaGenerator",
+                    imagen_service=self.imagen_service,
+                    veo_service=self.veo_service,
+                    audio_service=self.audio_service
                 )
-                generation_tool = gen_tool_wrapper.get_tool()
                 
-                from src.agents.adk.manager import create_creative_director
-                director = create_creative_director(self.enforcer, generation_tool, validator)
+                # Initialize JobPollerADK
+                from src.agents.adk.poller import JobPollerADK
+                poller_agent = JobPollerADK(
+                    name="JobPoller",
+                    media_repo=media_repo
+                )
+                
+                # Enforcer (Reuse instance as it is service-based, but ensure its services are safe)
+                # Enforcer uses VectorSearch/Gemini which are generally stateless/http-based or handle their own sessions
+                # If Enforcer uses BrandGuidelineRepository, we might need to patch that too if it uses DB.
+                # It does! `brand_guideline_repo` in `__init__`.
+                # We need to make sure `self.enforcer` works.
+                # Actually `self.enforcer` was created with `Depends(BrandGuidelineRepository)`.
+                # If that repo depends on `Depends(get_db)`, it might be closed.
+                # Safest bet: Re-create Enforcer with fresh repo if needed.
+                # `BrandGuidelineRepository` is just SQLalchemy wrapper.
+                
+                # Let's check `self.enforcer.brand_guideline_repo`.
+                # If it's closed, we need a new one.
+                # To be Robust: Re-create Enforcer.
+                from src.brand_guidelines.repository.brand_guideline_repository import BrandGuidelineRepository
+                bg_repo = BrandGuidelineRepository(session)
+                # Re-create Enforcer with fresh BG Repo
+                # We can reuse the services (Vector/Gemini) as they are likely safe
+                enforcer = BrandingEnforcerADK(
+                    name="BrandingEnforcer",
+                    vector_search_service=self.vector_search_service,
+                    gemini_service=self.gemini_service,
+                    brand_guideline_repo=bg_repo 
+                )
+                
+                from src.agents.adk.manager import create_media_pipeline
+                
+                pipeline = create_media_pipeline(enforcer, generator_agent, poller_agent, validator)
                 
                 await self.session_service.create_session(
                     app_name="adk",
@@ -213,136 +231,61 @@ class AgentService:
                     state=state
                 )
                 
-                director_runner = Runner(
-                    agent=director,
+                pipeline_runner = Runner(
+                    agent=pipeline,
                     app_name="adk",
                     session_service=self.session_service
                 )
                 
-                user_intent = (
-                    f"User ID: {user.email}\n"
-                    f"Workspace ID: {request.workspace_id}\n"
-                    f"Request: Generate {request.media_type} with prompt: '{request.prompt}'.\n"
-                    f"Config: {state.get('request_config')}\n"
-                    f"Ref Images: {state.get('reference_image_uris')}\n\n"
-                    "Please proceed with the Enforce -> Generate -> Validate workflow."
+                # Start the pipeline
+                # The SequentialAgent runs the sub-agents in order.
+                # We don't need a prompt really, just a kick-off.
+                # But Enforcer expects `original_prompt` in context/message to find guidelines.
+                # Enforcer instruction: "1. CHECK the context for `workspace_id` and the user's `original_prompt`."
+                
+                # We send the actual instructions as the first message to kick off the Enforcer.
+                # The Enforcer's system prompt expects: "1. CHECK the context for `workspace_id` and the user's `original_prompt`."
+                # However, LlmAgents respond better to direct instructions in the message history.
+                
+                start_instruction = (
+                    f"Please enforce guidelines for the following request:\n"
+                    f"Workspace ID: {state.get('workspace_id')}\n"
+                    f"Prompt: {state.get('original_prompt')}\n"
+                    f"Media Type: {state.get('media_type')}"
                 )
                 
-                director_msg = types.Content(role="user", parts=[types.Part(text=user_intent)])
+                trigger_msg = types.Content(role="user", parts=[types.Part(text=start_instruction)])
                 
-                # Copy of the polling loop logic
-                def get_long_running_function_call(event: Event) -> types.FunctionCall:
-                    if not event.long_running_tool_ids or not event.content or not event.content.parts:
-                        return None
-                    for part in event.content.parts:
-                        if (
-                            part
-                            and part.function_call
-                            and event.long_running_tool_ids
-                            and part.function_call.id in event.long_running_tool_ids
-                        ):
-                            return part.function_call
-                    return None
-
-                def get_function_response(event: Event, function_call_id: str) -> types.FunctionResponse:
-                    if not event.content or not event.content.parts:
-                        return None
-                    for part in event.content.parts:
-                        if (
-                            part
-                            and part.function_response
-                            and part.function_response.id == function_call_id
-                        ):
-                            return part.function_response
-                    return None
-
-                events_async = director_runner.run_async(user_id=user.email, session_id=session_id, new_message=director_msg)
-                
-                long_running_function_call = None
-                long_running_function_response = None
-                current_job_id = None
-                
-                try:
-                    async for event in events_async:
-                        logger.info(f"[Director Event] {event.author}: {event}")
-
-                        if event.author == "BrandingEnforcer" and event.content:
-                             for part in event.content.parts:
-                                 if part.text:
-                                      logger.info(f"Values from Enforcer: {part.text}")
-                        if not long_running_function_call:
-                            long_running_function_call = get_long_running_function_call(event)
-                        else:
-                            _potential_response = get_function_response(event, long_running_function_call.id)
-                            if _potential_response:
-                                long_running_function_response = _potential_response
-                                if 'job_id' in long_running_function_response.response:
-                                    current_job_id = long_running_function_response.response['job_id']
-                                    # Publish event when Job ID is captured
-                                    await self.event_bus.publish(
-                                        f"user_{user.email}",
-                                        Event(
+                async for event in pipeline_runner.run_async(user_id=user.email, session_id=session_id, new_message=trigger_msg):
+                    logger.info(f"[Pipeline Event] {event.author}: {event}")
+                    
+                    # Publish relevant events to frontend
+                    if event.content and event.content.parts:
+                         text = event.content.parts[0].text
+                         if text:
+                             # 1. Pass through the original event
+                             await self.event_bus.publish(f"user_{user.email}", event)
+                             
+                             # 2. Check for Job ID signal from MediaGenerator to unblock Frontend
+                             # Format: "Generation started. Job ID: <id>"
+                             if "Generation started. Job ID:" in text:
+                                try:
+                                    job_id_str = text.split("Job ID:")[-1].strip()
+                                    if job_id_str.isdigit():
+                                        # Emit the legacy System event that the frontend expects
+                                        sys_event = Event(
                                             author="System",
                                             content=types.Content(
-                                                parts=[types.Part(text=f"Captured Long Running Job ID: {current_job_id}")]
+                                                parts=[types.Part(text=f"Captured Long Running Job ID: {job_id_str}")]
                                             )
                                         )
-                                    )
-                        
-                        if event.content and event.content.parts:
-                            text = event.content.parts[0].text
-                            if text:
-                                await self.event_bus.publish(f"user_{user.email}", event)
-                except Exception as e:
-                    logger.error(f"Error in Director loop: {e}", exc_info=True)
-                    await self.event_bus.publish(
-                        f"user_{user.email}",
-                        Event(
-                            author="System",
-                            content=types.Content(
-                                parts=[types.Part(text=f"Agent Process Failed: {str(e)}")]
-                            )
-                        )
-                    )
-                    return
-
-                
-                if long_running_function_call and current_job_id:
-                    logger.info(f"Director Paused. Polling for Job {current_job_id}...")
-                    
-                    # Poll loop (Wait for completion)
-                    final_job_status = "failed"
-                    # Use the fresh repo for polling
-                    
-                    for _ in range(60): 
-                        await asyncio.sleep(2)
-                        job = await media_repo.get_by_id(current_job_id)
-                        if job:
-                            if job.status == JobStatusEnum.COMPLETED:
-                                final_job_status = "completed"
-                                break
-                            if job.status == JobStatusEnum.FAILED:
-                                final_job_status = "failed"
-                                break
-                    
-                    logger.info(f"Job finished: {final_job_status}. Resuming...")
-                    
-                    updated_response = long_running_function_response.model_copy(deep=True)
-                    updated_response.response = {
-                        "status": final_job_status, 
-                        "job_id": current_job_id,
-                        "message": "Generation completed."
-                    }
-                    
-                    resume_msg = types.Content(parts=[types.Part(function_response=updated_response)], role='user')
-                    
-                    async for event in director_runner.run_async(user_id=user.email, session_id=session_id, new_message=resume_msg):
-                        logger.info(f"[Director Resumed Event] {event.author}: {event}")
-                        if event.content:
-                             await self.event_bus.publish(f"user_{user.email}", event)
+                                        await self.event_bus.publish(f"user_{user.email}", sys_event)
+                                        logger.info(f"Published legacy System event for Job ID: {job_id_str}")
+                                except Exception as e:
+                                    logger.warning(f"Failed to parse Job ID for legacy event: {e}")
 
             except Exception as e:
-                logger.error(f"Background ADK Flow Failed: {e}", exc_info=True)
+                logger.error(f"Background ADK Pipeline Failed: {e}", exc_info=True)
                 # Publish error event to user
                 await self.event_bus.publish(f"user_{user.email}", Event(author="System", content=types.Content(parts=[types.Part(text=f"Agent process failed: {str(e)}")]) ))
 

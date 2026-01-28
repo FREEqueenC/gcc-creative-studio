@@ -60,6 +60,35 @@ class MediaGeneratorADK(BaseAgent):
         
         
         # 1. Retrieve Context (Hybrid: Message > State)
+        # Parse enforcer output if available
+        if "enforcer_response_json" in state:
+            try:
+                import json
+                enforcer_data = state["enforcer_response_json"]
+                # It might be a string (most likely) or dict if some middleware parsed it
+                if isinstance(enforcer_data, str):
+                    clean_text = enforcer_data.strip()
+                    if clean_text.startswith("```json"):
+                         clean_text = clean_text[7:]
+                    elif clean_text.startswith("```"):
+                         clean_text = clean_text[3:]
+                    if clean_text.endswith("```"):
+                         clean_text = clean_text[:-3]
+                    enforcer_data = json.loads(clean_text)
+                
+                if isinstance(enforcer_data, dict):
+                    if "enhanced_prompt" in enforcer_data:
+                        state["enhanced_prompt"] = enforcer_data["enhanced_prompt"]
+                        logger.info(f"[{self.name}] Parsed enhanced_prompt from enforcer_response_json.")
+                    if "reference_image_uris" in enforcer_data:
+                        state["reference_image_uris"] = enforcer_data["reference_image_uris"]
+                        logger.info(f"[{self.name}] Parsed reference_image_uris from enforcer_response_json.")
+                    if "guidelines_used" in enforcer_data:
+                        state["guidelines_used"] = enforcer_data["guidelines_used"]
+                        logger.info(f"[{self.name}] Parsed guidelines_used from enforcer_response_json.")
+            except Exception as e:
+                logger.warning(f"[{self.name}] Failed to parse enforcer_response_json: {e}")
+
         prompt = state.get("enhanced_prompt") or state.get("original_prompt")
         media_type = state.get("media_type", "IMAGE")
         workspace_id = state.get("workspace_id")

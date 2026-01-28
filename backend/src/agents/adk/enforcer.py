@@ -59,7 +59,7 @@ class BrandingEnforcerADK(LlmAgent):
             "{\n"
             "  \"enhanced_prompt\": \"The rewritten prompt string...\",\n"
             "  \"reference_image_uris\": [\"gs://...\", \"gs://...\"],\n"
-            "  \"guidelines_used\": \"Summary of guidelines used (e.g. 'Used Visual Style from Guideline A')...\"\n"
+            "  \"guidelines_used\": \"FULL TEXT of the specific rules and guidelines you applied. Do not summarize. copy-paste the relevant sentences from the tool output.\"\n"
             "}\n"
             "Make sure 'enhanced_prompt' contains the final detailed prompt for generation."
         )

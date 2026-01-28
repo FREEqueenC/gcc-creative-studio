@@ -69,27 +69,17 @@ class ValidatorADK(BaseAgent):
         
         logger.info(f"[{self.name}] Checking status for Job {job_id}...")
         
-        # Poll for completion (Simple implementation for demonstration)
-        # Timeout after 60s for demo? Or rely on background task.
-        max_retries = 30
-        for i in range(max_retries):
-            item = await self.media_repo.get_by_id(job_id)
-            if not item:
-                 yield Event(author=self.name, content=types.Content(parts=[types.Part(text="Job not found.")]))
-                 return
-            
-            if item.status == JobStatusEnum.COMPLETED:
-                break
-            if item.status == JobStatusEnum.FAILED:
-                 yield Event(author=self.name, content=types.Content(parts=[types.Part(text="Generation Checked: FAILED.")]))
-                 return
-            
-            if i % 5 == 0:
-                 yield Event(author=self.name, content=types.Content(parts=[types.Part(text=f"Waiting for generation... ({i*2}s)")]))
-            
-            await asyncio.sleep(2)
-        else:
-             yield Event(author=self.name, content=types.Content(parts=[types.Part(text="Validation timed out waiting for generation.")]))
+        # Polling is now handled by JobPollerADK. 
+        # We perform a single check to ensure readiness, but no long wait loop.
+        
+        item = await self.media_repo.get_by_id(job_id)
+        if not item:
+             yield Event(author=self.name, content=types.Content(parts=[types.Part(text="Job not found.")]))
+             return
+        
+        if item.status != JobStatusEnum.COMPLETED:
+             # This should not happen if Poller did its job, unless it failed or timed out.
+             yield Event(author=self.name, content=types.Content(parts=[types.Part(text=f"Job status is {item.status}, expected COMPLETED.")]))
              return
 
         # Proceed to Validate

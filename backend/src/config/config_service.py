@@ -62,14 +62,20 @@ class ConfigService(BaseSettings):
     FIREBASE_DB: str = "cstudio-development"
 
     # --- Database Configuration ---
-    INSTANCE_CONNECTION_NAME: str = ""
-    DB_USER: str = "postgres"
-    DB_PASS: str = "password"
+    # INSTANCE_CONNECTION_NAME: str = ""
+    # DB_USER: str = "postgres"
+    # DB_PASS: str = "password"
+    # DB_NAME: str = "creative_studio"
+    # USE_CLOUD_SQL_AUTH_PROXY: bool = False
+    # DB_HOST: str = "localhost"
+    # DB_PORT: str = "5432"
+    # --- Database Configuration (Cloud SQL) ---
+    INSTANCE_CONNECTION_NAME: str = "orca-479911:us-central1:creative-studio-db-14db0191"
+    DB_USER: str = "studio_user"
+    DB_PASS: str = "4fovhnqj21hxvZ22"
     DB_NAME: str = "creative_studio"
     USE_CLOUD_SQL_AUTH_PROXY: bool = False
-    DB_HOST: str = "localhost"
-    DB_PORT: str = "5432"
-    # --- Database Configuration (Cloud SQL) ---
+    ADMIN_USER_EMAIL: str = "admin@vasanthakumara.altostrat.com"
 
     # --- Veo ---
     VEO_MODEL_ID: str = "veo-2.0-generate-001"
@@ -90,17 +96,17 @@ class ConfigService(BaseSettings):
     IMAGEN_RECONTEXT_SUBFOLDER: str = "recontext_images"
 
     # --- Vector Search ---
-    VECTOR_SEARCH_INDEX_ENDPOINT_ID: str = ""
-    VECTOR_SEARCH_DEPLOYED_INDEX_ID: str = "" # Legacy/Unused
+    VECTOR_SEARCH_INDEX_ENDPOINT_ID: str = "projects/orca-479911/locations/us-central1/indexEndpoints/4526410095600336896"
+    VECTOR_SEARCH_DEPLOYED_INDEX_ID: str = "creative_studio_deployed_index" # Legacy/Unused
     
     # Dual Index Configuration
     # Text Index (768 dim) for brand guideline text chunks
-    VECTOR_SEARCH_TEXT_INDEX_ID: str = ""
-    VECTOR_SEARCH_DEPLOYED_TEXT_INDEX_ID: str = ""
+    VECTOR_SEARCH_TEXT_INDEX_ID: str = "projects/orca-479911/locations/us-central1/indexes/4885466612766867456"
+    VECTOR_SEARCH_DEPLOYED_TEXT_INDEX_ID: str = "creative_studio_deployed_index_text"
     
     # Image Index (1408 dim) for reference images
-    VECTOR_SEARCH_IMAGE_INDEX_ID: str = ""
-    VECTOR_SEARCH_DEPLOYED_IMAGE_INDEX_ID: str = ""
+    VECTOR_SEARCH_IMAGE_INDEX_ID: str = "projects/orca-479911/locations/us-central1/indexes/8448939817923772416"
+    VECTOR_SEARCH_DEPLOYED_IMAGE_INDEX_ID: str = "creative_studio_deployed_index_image"
 
     # --- Email Service ---
     SENDER_EMAIL: str = (

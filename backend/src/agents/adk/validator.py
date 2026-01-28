@@ -61,16 +61,7 @@ class ValidatorADK(BaseAgent):
              yield Event(author=self.name, content=types.Content(parts=[types.Part(text="Skipping validation: No job_id found.")]))
              return
 
-        # TODO: In a real Loop, we need to WAIT for the job to complete.
-        # For Phase 1 (Async), we might just check status and exit if not ready,
-        # forcing the orchestrator to handle the waiting/polling.
-        # OR we can implement a simple poll here if this agent is expected to block.
-        # Given "Realtime Updates", blocking here and yielding status events is good.
-        
         logger.info(f"[{self.name}] Checking status for Job {job_id}...")
-        
-        # Polling is now handled by JobPollerADK. 
-        # We perform a single check to ensure readiness, but no long wait loop.
         
         item = await self.media_repo.get_by_id(job_id)
         if not item:
@@ -78,7 +69,6 @@ class ValidatorADK(BaseAgent):
              return
         
         if item.status != JobStatusEnum.COMPLETED:
-             # This should not happen if Poller did its job, unless it failed or timed out.
              yield Event(author=self.name, content=types.Content(parts=[types.Part(text=f"Job status is {item.status}, expected COMPLETED.")]))
              return
 
@@ -88,16 +78,18 @@ class ValidatorADK(BaseAgent):
         guidelines_text = state.get("guidelines_used", "No explicit guidelines.")
         original_prompt = state.get("original_prompt", "")
         
-        validation_results = []
+        from src.agents.dto.agent_validation_dto import AgentValidationResult
+        validation_results: list[AgentValidationResult] = []
+        
         for uri in item.gcs_uris:
             res = await self.validate_asset(uri, guidelines_text, original_prompt)
             validation_results.append(res)
         
-        # Store in state
-        state["validation_report"] = validation_results
+        # Store in state (Dump as dicts for serialization if needed, or keep objects)
+        state["validation_report"] = [v.model_dump() for v in validation_results]
         
         # Calculate summary
-        compliant_count = sum(1 for r in validation_results if r.get("is_compliant"))
+        compliant_count = sum(1 for r in validation_results if r.is_compliant)
         total = len(validation_results)
         
         summary = f"Validated {total} assets. {compliant_count} Compliant."
@@ -107,24 +99,27 @@ class ValidatorADK(BaseAgent):
             logger.info(f"[{self.name}] Persisting validation results for Job {job_id}...")
             await self.media_repo.update(job_id, {
                 "critique": summary,
-                "raw_data": {"validations": validation_results}
+                "raw_data": {"validations": [v.model_dump() for v in validation_results]}
             })
             logger.info(f"[{self.name}] Persistence complete.")
         except Exception as e:
             logger.error(f"[{self.name}] Failed to persist validation results: {e}")
 
+        # Return the FIRST validation result as the event data for now (or summary)
+        # The ADK expects a standardized response.
         ordered_response = {
             "is_compliant": compliant_count == total,
             "score": int((compliant_count / total) * 100) if total > 0 else 0,
             "reasoning": summary,
-            "issues": [issue for r in validation_results for issue in r.get("issues", [])]
+            "issues": [issue for r in validation_results for issue in r.issues]
         }
         
         yield Event(author=self.name, content=types.Content(parts=[types.Part(text=json.dumps(ordered_response))]))
 
-    async def validate_asset(self, asset_uri: str, guidelines: str, prompt: str) -> dict:
+    async def validate_asset(self, asset_uri: str, guidelines: str, prompt: str) -> 'AgentValidationResult':
+        from src.agents.dto.agent_validation_dto import AgentValidationResult
+        
         # Re-using logic from original ValidatorAgent
-        # We construct the multimodal prompt
         system_prompt = (
             "You are the Brand Validator Agent.\n"
             "Your task is to audit the provided image against the brand guidelines. "
@@ -151,11 +146,11 @@ class ValidatorADK(BaseAgent):
         )
         
         try:
-            # We need to handle image types.
             mime_type = "image/png"
             if asset_uri.endswith(".mp4"):
-                 mime_type = "video/mp4" # Gemini 2.5 supports video
+                 mime_type = "video/mp4" 
             
+            # ADK/GenAI SDK usage
             image_part = types.Part.from_uri(file_uri=asset_uri, mime_type=mime_type)
             
             response = await self.gemini_service.client.aio.models.generate_content(
@@ -174,8 +169,21 @@ class ValidatorADK(BaseAgent):
                     clean_text = clean_text[3:]
                 if clean_text.endswith("```"):
                     clean_text = clean_text[:-3]
-                return json.loads(clean_text.strip())
-            return {"is_compliant": False, "score": 0, "reasoning": "No response", "issues": []}
+                
+                data = json.loads(clean_text.strip())
+                return AgentValidationResult(**data, raw_response=data)
+            
+            return AgentValidationResult(
+                is_compliant=False, 
+                score=0, 
+                reasoning="No response from validation model", 
+                issues=["Model error"]
+            )
         except Exception as e:
             logger.error(f"Validator Gemini call failed: {e}")
-            return {"is_compliant": False, "score": 0, "reasoning": str(e), "issues": [str(e)]}
+            return AgentValidationResult(
+                is_compliant=False, 
+                score=0, 
+                reasoning=f"Validation Execution Failed: {str(e)}", 
+                issues=[str(e)]
+            )

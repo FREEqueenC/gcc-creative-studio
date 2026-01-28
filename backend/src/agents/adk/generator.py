@@ -27,6 +27,7 @@ class MediaGeneratorADK(BaseAgent):
     _imagen_service: Any = PrivateAttr()
     _veo_service: Any = PrivateAttr()
     _audio_service: Any = PrivateAttr()
+    _executor: Any = PrivateAttr()
 
     def __init__(
         self,
@@ -34,11 +35,13 @@ class MediaGeneratorADK(BaseAgent):
         imagen_service: ImagenService,
         veo_service: VeoService,
         audio_service: AudioService,
+        executor: Any,
     ):
         super().__init__(name=name)
         self._imagen_service = imagen_service
         self._veo_service = veo_service
         self._audio_service = audio_service
+        self._executor = executor
     
     @property
     def imagen_service(self):
@@ -51,6 +54,10 @@ class MediaGeneratorADK(BaseAgent):
     @property
     def audio_service(self):
         return self._audio_service
+
+    @property
+    def executor(self):
+        return self._executor
 
     async def _run_async_impl(self, ctx: InvocationContext) -> AsyncGenerator[Event, None]:
         """
@@ -154,12 +161,16 @@ class MediaGeneratorADK(BaseAgent):
         media_response = None
         
         try:
-            from concurrent.futures import ThreadPoolExecutor
-            # TODO: Inject executor or use global one
-            executor = ThreadPoolExecutor(max_workers=1)
+            executor = self.executor
 
             if media_type == "IMAGE":
                 # Prepare DTO
+                # Combine User Reference (Ingredients) + Brand References (Enforcer)
+                # prioritize user provided reference image
+                user_ref = state.get("user_reference_image_uri")
+                brand_refs = state.get("reference_image_uris") or []
+                all_refs = ([user_ref] if user_ref else []) + (brand_refs if isinstance(brand_refs, list) else [])
+                
                 dto = CreateImagenDto(
                     prompt=prompt,
                     workspace_id=workspace_id,
@@ -167,7 +178,7 @@ class MediaGeneratorADK(BaseAgent):
                     aspect_ratio=request_config.get("aspect_ratio") or AspectRatioEnum.RATIO_1_1,
                     number_of_media=request_config.get("number_of_media", 1),
                     style=request_config.get("style"),
-                    reference_image_gcs_uris=state.get("reference_image_uris") # From Enforcer/Tool
+                    reference_image_gcs_uris=all_refs
                 )
                 media_response = await self.imagen_service.start_image_generation_job(
                     request_dto=dto, 

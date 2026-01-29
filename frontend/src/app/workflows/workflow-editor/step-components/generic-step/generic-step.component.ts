@@ -26,6 +26,36 @@ import { StepConfig } from './step.model';
   styleUrls: ['./generic-step.component.scss'],
 })
 export class GenericStepComponent implements OnInit, OnChanges {
+  isStepOutputReference(item: any): boolean {
+    return item && typeof item === 'object' && !Array.isArray(item) && 'step' in item && 'output' in item;
+  }
+  getLinkedOutputLabel(item: any): string {
+    const matchingOutput = this.availableOutputs.find(out =>
+      out.value && out.value.step === item.step && out.value.output === item.output
+    );
+    return matchingOutput ? matchingOutput.label : 'Linked Output';
+  }
+  clearReferenceImage(inputName: string, index: number): void {
+    const images = this.referenceImages[inputName];
+    if (images && Array.isArray(images) && index >= 0 && index < images.length) {
+      const updatedImages = [...images];
+      updatedImages.splice(index, 1);
+      this.stepForm.get('inputs')?.get(inputName)?.setValue(updatedImages);
+    }
+  }
+openImageSelectorForReference(inputName: string, type: string): void {
+    // TODO: Implement image selector logic, possibly by emitting an event
+  }
+
+addLinkedOutput(inputName: string, output: any): void {
+    const current = this.referenceImages[inputName] || [];
+    const updated = [...current, output.value];
+    this.stepForm.get('inputs')?.get(inputName)?.setValue(updated);
+  }
+
+onReferenceImageDrop(event: DragEvent, inputName: string): void {
+    // TODO: Implement drag-and-drop logic
+  }
   @Input() stepForm!: FormGroup;
   @Input() stepIndex!: number;
   @Input() availableOutputs: any[] = [];
@@ -42,6 +72,11 @@ export class GenericStepComponent implements OnInit, OnChanges {
   isCollapsed = true;
   inputModes: { [key: string]: 'fixed' | 'linked' | 'mixed' } = {};
   compatibleOutputs: { [key: string]: any[] } = {};
+  get referenceImages(): { [key: string]: any[] } {
+    const inputs = this.stepForm.get('inputs');
+    return inputs ? inputs.value : {};
+  }
+  compareFn!: (o1: any, o2: any) => boolean;
 
   constructor(
     private fb: FormBuilder,

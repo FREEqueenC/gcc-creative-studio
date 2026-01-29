@@ -153,7 +153,6 @@ import { WorkflowStatusPipe } from './workflows/workflow-status.pipe';
     FlowPromptBoxComponent,
     SharedModule,
     MediaLightboxComponent,
-
     // Explicitly listing all relevant Angular Material modules
     MatButtonModule,
     MatChipsModule,
@@ -179,6 +178,7 @@ import { WorkflowStatusPipe } from './workflows/workflow-status.pipe';
     MatSliderModule,
     MatStepperModule,
     MatTableModule,
+    WorkflowStatusPipe
 ],
   providers: [
     provideClientHydration(),

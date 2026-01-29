@@ -19,7 +19,11 @@
   <header class="header-section">
     <!-- Top Actions (Back Button) -->
     <div class="top-actions">
-        <button mat-icon-button routerLink="/workflows" matTooltip="Back to Workflows">
+        <button
+          mat-icon-button
+          (click)="goBack()"
+          matTooltip="Back"
+        >
             <mat-icon>arrow_back</mat-icon>
         </button>
     </div>
@@ -55,11 +59,23 @@
 
         <!-- Primary Actions -->
         <div class="flex items-center gap-2">
-            <button *ngIf="!isReadOnly" mat-raised-button color="primary" (click)="run()">
+            <button
+              *ngIf="!isReadOnly"
+              mat-raised-button
+              class="btn-cta"
+              (click)="run()"
+              [disabled]="isLoading || stepsArray.length === 0"
+            >
                 <mat-icon>play_arrow</mat-icon>
-                Run Workflow
+                Run
             </button>
-            <button *ngIf="!isReadOnly" mat-raised-button color="primary" (click)="save()" [disabled]="workflowForm.pristine">Save</button>
+            <button
+              *ngIf="!isReadOnly"
+              mat-raised-button
+              class="btn-glass-primary"
+              (click)="save()"
+              [disabled]="workflowForm.pristine || isLoading"
+            >Save</button>
         </div>
     </div>
   </header>
@@ -71,7 +87,10 @@
       <div class="p-4 border-b border-neutral-700 flex justify-between items-center">
         <h5 class="text-lg font-semibold">Workflow Graph</h5>
         <div class="flex items-center gap-2">
-          <button *ngIf="!isReadOnly" mat-stroked-button color="accent"
+          <button
+            *ngIf="!isReadOnly"
+            mat-raised-button
+            class="btn-glass-primary"
             (click)="openAddStepModal()">
             <mat-icon>add</mat-icon>
             Add Step

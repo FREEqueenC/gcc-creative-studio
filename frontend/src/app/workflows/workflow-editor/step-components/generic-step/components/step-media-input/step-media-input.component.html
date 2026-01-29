@@ -1,8 +1,8 @@
-<!-- MIXED MODE (Grid Layout) -->
-<div *ngIf="maxItems > 1" class="input-container-mixed">
+<!-- MIXED MODE (Grid Layout) - NOW DEFAULT FOR ALL -->
+<div class="input-container-mixed">
   <!-- Counter -->
   <div class="text-xs text-neutral-500 mb-2 font-medium">
-    {{ items.length }}/{{ maxItems }} items selected
+    {{ items.length }}/{{ maxItems }} item{{ maxItems === 1 ? '' : 's' }} selected
   </div>
 
   <!-- List of current items -->
@@ -14,7 +14,7 @@
       <ng-container *ngIf="!isStepOutputReference(item)">
         <img *ngIf="$any(item).previewUrl" [src]="$any(item).previewUrl" class="h-full w-full object-cover" />
         <div *ngIf="!$any(item).previewUrl" class="h-full w-full flex items-center justify-center">
-          <mat-icon class="text-neutral-500">image</mat-icon>
+          <mat-icon class="text-neutral-500">{{ type === 'video' ? 'video' : 'image' }}</mat-icon>
         </div>
       </ng-container>
 
@@ -45,7 +45,8 @@
       class="h-10 w-10 flex flex-col items-center justify-center cursor-pointer rounded-lg border-2 border-dashed border-neutral-700 hover:border-neutral-500 hover:bg-neutral-800 transition-colors gap-1"
       (click)="openImageSelectorForReference()"
       matTooltip="Add {{ type === 'video' ? 'Video' : 'Image' }}">
-      <mat-icon class="text-neutral-400 !w-5 !h-5 !text-xl">add_photo_alternate</mat-icon>
+      <mat-icon class="text-neutral-400 !w-5 !h-5 !text-xl">{{ type === 'video' ? 'video_library' :
+        'add_photo_alternate' }}</mat-icon>
     </div>
   
     <!-- Add Linked -->
@@ -69,42 +70,4 @@
    <mat-error *ngIf="control.invalid && (control.touched || showValidationErrors) && items.length === 0">
        At least one input is required
    </mat-error>
-</div>
-
-<!-- FIXED MODE (Compact Row Layout) -->
-<div *ngIf="maxItems === 1" class="flex items-center gap-3">
-  <div
-    class="relative h-16 w-16 cursor-pointer rounded-xl border-2 border-dashed transition-colors flex items-center justify-center"
-    [ngClass]="{
-      'border-red-500 bg-red-500/10': control.invalid && (control.touched || showValidationErrors),
-      'border-neutral-700 bg-neutral-800 hover:border-neutral-500 hover:bg-neutral-700': !(control.invalid && (control.touched || showValidationErrors))
-    }"
-    [class.opacity-50]="items.length >= maxItems"
-    (click)="openImageSelectorForReference()"
-    (dragover)="$event.preventDefault()"
-    (drop)="onReferenceImageDrop($event)"
-    >
-    <mat-icon class="text-neutral-500">
-      {{ type === 'image' ? 'add_photo_alternate' : 'video_library' }}
-    </mat-icon>
-    <span *ngIf="type === 'image'" class="absolute bottom-1 text-[10px] text-neutral-500">{{ items.length }}/{{ maxItems }}</span>
-  </div>
-  
-  <!-- Show small previews of reference images -->
-  <div class="flex gap-1 overflow-x-auto max-w-xs">
-    <div *ngFor="let ref of items; let i = index" class="relative h-12 w-12 flex-shrink-0">
-      <img *ngIf="type === 'image'" [src]="$any(ref).previewUrl" class="h-full w-full rounded-lg object-cover" />
-      <div *ngIf="type === 'video'" class="h-full w-full rounded-lg bg-neutral-800 flex items-center justify-center border border-neutral-700">
-        <mat-icon class="text-neutral-500 !text-lg !w-5 !h-5">
-          movie
-        </mat-icon>
-      </div>
-      <button
-        (click)="clearReferenceImage(i)"
-        class="absolute -right-1 -top-1 rounded-full bg-neutral-900 p-0.5 text-neutral-400 hover:text-white"
-      >
-        <mat-icon class="!h-3 !w-3 text-xs">close</mat-icon>
-      </button>
-    </div>
-  </div>
 </div>

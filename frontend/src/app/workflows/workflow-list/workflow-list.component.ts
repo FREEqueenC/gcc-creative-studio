@@ -40,6 +40,8 @@ import {
   WorkflowRunStatusEnum,
 } from '../workflow.models';
 import { WorkflowService } from '../workflow.service';
+import { AuthService } from '../../common/services/auth.service';
+
 
 @Component({
   selector: 'app-workflow-list',
@@ -80,7 +82,8 @@ export class WorkflowListComponent implements OnInit, OnDestroy, AfterViewInit {
     private workflowService: WorkflowService,
     private router: Router,
     public dialog: MatDialog,
-  ) {}
+    public authService: AuthService,
+  ) { }
 
   ngOnInit(): void {
     this.subscriptions.add(
@@ -214,7 +217,7 @@ export class WorkflowListComponent implements OnInit, OnDestroy, AfterViewInit {
       Math.abs((now.getTime() - date.getTime()) / 1000),
     );
 
-    const intervals: {[key: string]: number} = {
+    const intervals: { [key: string]: number } = {
       year: 31536000,
       month: 2592000,
       week: 604800,

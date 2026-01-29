@@ -22,12 +22,13 @@
 }
 
 .workflow-list-container {
+  --max-container-width: 1400px;
   background-color: transparent;
   padding: 20px 40px;
-  max-width: 1400px;
+  max-width: var(--max-container-width);
   margin: 0 auto;
-  margin-left: calc(5vw + 4.5rem);
-  margin-top: calc(10vh + 0px)
+  margin-top: calc(10vh + 0px);
+  margin-left: max(calc(5vw + 4.5rem), calc(50% - var(--max-container-width) / 2));
 }
 
 /* Header Section */
@@ -108,42 +109,9 @@
   }
 }
 
-/* Primary Action Button (Pill shape) */
-.primary-btn {
-  background: white !important;
-  color: #161616 !important;
-  border-radius: 100px !important;
-  padding: 0 24px !important;
-  height: 40px !important;
-  font-weight: 500 !important;
-  font-family: 'Google Sans Text', sans-serif;
-  font-size: 14px;
-  letter-spacing: 0.1px;
-  box-shadow: none !important;
-  border: none;
-  display: flex;
-  align-items: center;
-  
-  &:hover {
-    background: #F5F5F5 !important;
-  }
 
-  &:disabled {
-    background: rgba(255, 255, 255, 0.12) !important;
-    color: rgba(255, 255, 255, 0.38) !important;
-  }
 
-  mat-icon {
-    margin-right: 8px;
-    font-size: 18px;
-    height: 18px;
-    width: 18px;
-  }
-}
 
-/* Secondary/Ghost Button for "Open in Editor" if we want distinct styles, 
-   but user asked for similar to "Add" button which is the primary pill. 
-   We can make both primary or share the style. */
 
 /* Executions List Container */
 .executions-list {
@@ -225,14 +193,15 @@
 }
 
 
-/* Secondary/Ghost Icon Button (Circular) */
-.secondary-icon-btn {
+/* Refresh Button */
+.refresh-btn {
+  // Independent definition to match previous look or new look:
   color: #C4C7C5;
   background: #ffffff0d;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  min-width: 40px;
-  width: 40px;
-  height: 40px;
+  min-width: 36px;
+    width: 36px;
+    height: 36px;
   padding: 0;
   display: flex;
   align-items: center;
@@ -241,9 +210,9 @@
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   
   mat-icon {
-    font-size: 20px;
-    width: 20px;
-    height: 20px;
+      font-size: 18px;
+        width: 18px;
+        height: 18px;
   }
   
   &:hover {
@@ -253,20 +222,6 @@
   }
 }
 
-/* Refresh Button - Uses same style but might be smaller if needed, or we just use the class directly in HTML */
-.refresh-btn {
-    @extend .secondary-icon-btn;
-    min-width: 36px;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    
-    mat-icon {
-        font-size: 18px;
-        width: 18px;
-        height: 18px;
-    }
-}
 
 /* Execution Card */
 .execution-card {
@@ -431,3 +386,4 @@
     color: rgba(255, 255, 255, 0.2) !important;
   }
 }
+@import "../shared/buttons";

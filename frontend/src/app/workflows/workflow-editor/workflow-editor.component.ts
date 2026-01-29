@@ -107,6 +107,7 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
   executionStepEntries: any[] = [];
   mediaUrlMap = new Map<string, string>();
   loadedMedia = new Set<string>();
+  returnUrl: string | null = null;
 
 
   constructor(
@@ -140,6 +141,12 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
     this.formService.availableOutputsPerStep$.subscribe(outputs => {
       this.availableOutputsPerStep = outputs;
     });
+
+    this.route.queryParamMap
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(params => {
+        this.returnUrl = params.get('returnUrl');
+      });
 
     this.mainSubscription = this.route.paramMap
       .pipe(
@@ -494,6 +501,14 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
         this.isLoading = false;
       }
     });
+  }
+
+  goBack(): void {
+    if (this.returnUrl) {
+      this.router.navigateByUrl(this.returnUrl);
+    } else {
+      this.router.navigate(['/workflows']);
+    }
   }
 
   private prepareSteps(formValue: any): any[] {

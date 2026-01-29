@@ -24,17 +24,45 @@
 
   &:hover {
     border-color: #555;
-    box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
   }
 
   /* --- Step Type Specific Top Borders --- */
-  &.user-input { border-top: 4px solid #f87171; }                  /* Red */
-  &.generate-text { border-top: 4px solid #339af0; }               /* Blue */
-  &.generate-image { border-top: 4px solid #51cf66; }              /* Green */
-  &.edit-image { border-top: 4px solid #ff922b; }                  /* Orange */
-  &.generate-video { border-top: 4px solid #fcc419; }              /* Purple */
-  &.crop-image { border-top: 4px solid #22b8cf; }                  /* Cyan */
-  &.virtual-try-on { border-top: 4px solid #8b5cf6; }              /* Purple */
+  &.user-input {
+    border-top: 4px solid #f87171;
+  }
+
+  /* Red */
+  &.generate-text {
+    border-top: 4px solid #339af0;
+  }
+
+  /* Blue */
+  &.generate-image {
+    border-top: 4px solid #51cf66;
+  }
+
+  /* Green */
+  &.edit-image {
+    border-top: 4px solid #ff922b;
+  }
+
+  /* Orange */
+  &.generate-video {
+    border-top: 4px solid #fcc419;
+  }
+
+  /* Purple */
+  &.crop-image {
+    border-top: 4px solid #22b8cf;
+  }
+
+  /* Cyan */
+  &.virtual-try-on {
+    border-top: 4px solid #8b5cf6;
+  }
+
+  /* Purple */
 
   &.invalid-step {
     border-color: #f44336 !important;
@@ -73,7 +101,7 @@
     font-family: 'Roboto Mono', monospace;
     font-size: 12px;
     color: var(--text-secondary);
-    background: rgba(0,0,0,0.2);
+    background: rgba(0, 0, 0, 0.2);
     padding: 4px 8px;
     border-radius: 4px;
   }
@@ -90,7 +118,8 @@
   padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 32px; /* Space between main sections (Inputs vs Settings) */
+  gap: 32px;
+  /* Space between main sections (Inputs vs Settings) */
 }
 
 /* 3. Inner Sections (Inputs, Settings, Outputs) */
@@ -118,14 +147,16 @@
 
 .settings-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr); /* Two columns for settings */
+  grid-template-columns: repeat(2, 1fr);
+  /* Two columns for settings */
   gap: 16px;
 }
 
 /* Mode Select (Fixed/Linked) specific styling to make it compact */
 .mode-select {
   .mat-mdc-form-field-subscript-wrapper {
-    display: none; /* Hides helper text space to make it compact */
+    display: none;
+    /* Hides helper text space to make it compact */
   }
 }
 
@@ -134,7 +165,8 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: rgba(140, 92, 245, 0.15); /* Tint of accent color */
+  background: rgba(140, 92, 245, 0.15);
+  /* Tint of accent color */
   color: #d0bfff;
   padding: 8px 16px;
   border-radius: 20px;
@@ -152,7 +184,7 @@
 /* Slider Group */
 .slider-group {
   margin-top: 8px;
-  
+
   label {
     display: block;
     font-size: 13px;
@@ -160,7 +192,7 @@
     color: var(--text-primary);
     margin-bottom: 4px;
   }
-  
+
   mat-slider {
     width: 100%;
   }
@@ -169,7 +201,7 @@
 /* Radio Group */
 .radio-group {
   margin-top: 8px;
-  
+
   label {
     display: block;
     font-size: 13px;
@@ -177,7 +209,7 @@
     color: var(--text-primary);
     margin-bottom: 8px;
   }
-  
+
   mat-radio-group {
     display: flex;
     flex-wrap: wrap;

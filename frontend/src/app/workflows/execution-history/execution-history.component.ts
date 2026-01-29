@@ -24,6 +24,7 @@ import { NodeTypes } from '../workflow.models';
 import { WorkflowService } from '../workflow.service';
 import { BatchExecutionModalComponent } from './batch-execution-modal/batch-execution-modal.component';
 import { ExecutionDetailsModalComponent } from './execution-details-modal/execution-details-modal.component';
+import { AuthService } from '../../common/services/auth.service';
 
 @Component({
     selector: 'app-execution-history',
@@ -43,7 +44,8 @@ export class ExecutionHistoryComponent implements OnInit {
         private route: ActivatedRoute,
         private workflowService: WorkflowService,
         private dialog: MatDialog,
-        private snackBar: MatSnackBar
+        private snackBar: MatSnackBar,
+        public authService: AuthService
     ) { }
 
     ngOnInit(): void {

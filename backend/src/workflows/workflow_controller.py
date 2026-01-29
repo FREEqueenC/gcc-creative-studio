@@ -30,15 +30,6 @@ router = APIRouter(
     prefix="/api/workflows",
     tags=["Workflows"],
     responses={404: {"description": "Not found"}},
-    dependencies=[
-        Depends(
-            RoleChecker(
-                allowed_roles=[
-                    UserRoleEnum.ADMIN,
-                ]
-            )
-        )
-    ],
 )
 
 
@@ -55,7 +46,11 @@ async def search_workflows(
     )
 
 
-@router.post("", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(RoleChecker(allowed_roles=[UserRoleEnum.ADMIN]))]
+)
 async def create_workflow(
     workflow_data: WorkflowCreateDto,
     current_user: UserModel = Depends(get_current_user),
@@ -69,7 +64,11 @@ async def create_workflow(
     return created_workflow
 
 
-@router.put("/{workflow_id}", response_model=WorkflowModel)
+@router.put(
+    "/{workflow_id}",
+    response_model=WorkflowModel,
+    dependencies=[Depends(RoleChecker(allowed_roles=[UserRoleEnum.ADMIN]))]
+)
 async def update_workflow(
     workflow_id: str,
     workflow_data: WorkflowCreateDto,
@@ -121,6 +120,7 @@ async def get_workflow(
     "/{workflow_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete a Workflow",
+    dependencies=[Depends(RoleChecker(allowed_roles=[UserRoleEnum.ADMIN]))],
 )
 async def delete_workflow(
     workflow_id: str,

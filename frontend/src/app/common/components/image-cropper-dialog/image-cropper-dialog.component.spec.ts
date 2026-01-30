@@ -15,7 +15,7 @@
  */
 
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { ImageCropperComponent } from 'ngx-image-cropper';
+import { ImageCropperComponent, ImageCropperModule } from 'ngx-image-cropper';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {AssetTypeEnum} from '../../../admin/source-assets-management/source-asset.model';
 import { of } from 'rxjs';

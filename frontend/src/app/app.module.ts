@@ -68,7 +68,7 @@ import { MatSliderModule } from '@angular/material/slider';
 import { MatStepperModule } from '@angular/material/stepper';
 import { MatTableModule } from '@angular/material/table';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { ImageCropperComponent } from 'ngx-image-cropper';
+import { ImageCropperModule } from 'ngx-image-cropper';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { ArenaComponent } from './arena/arena.component';
@@ -148,7 +148,7 @@ import { WorkflowStatusPipe } from './workflows/workflow-status.pipe';
     ClipboardModule,
     DragDropModule,
     ScrollingModule,
-    ImageCropperComponent,
+    ImageCropperModule,
     NotificationContainerComponent,
     FlowPromptBoxComponent,
     SharedModule,

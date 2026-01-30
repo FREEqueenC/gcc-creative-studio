@@ -51,7 +51,7 @@ import { AuthService } from '../../common/services/auth.service';
 export class WorkflowListComponent implements OnInit, OnDestroy {
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
-  dataSource: MatTableDataSource<WorkflowModel>;
+  dataSource!: MatTableDataSource<WorkflowModel>;
   displayedColumns: string[] = [
     'name',
     'description',

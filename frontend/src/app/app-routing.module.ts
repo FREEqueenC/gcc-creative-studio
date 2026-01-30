@@ -72,9 +72,9 @@ const routes: Routes = [
     canActivate: [AuthGuardService],
     children: [
       { path: '', component: WorkflowListComponent, pathMatch: 'full' },
-      { path: 'new', component: WorkflowEditorComponent },
+      { path: 'new', component: WorkflowEditorComponent, canActivate: [AdminAuthGuard] },
       // Match the parameter names used in your WorkflowEditorComponent
-      { path: 'edit/:workflowId', component: WorkflowEditorComponent },
+      { path: 'edit/:workflowId', component: WorkflowEditorComponent, canActivate: [AdminAuthGuard] },
       { path: ':id/executions', component: ExecutionHistoryComponent },
     ],
   },

@@ -19,10 +19,11 @@ import logging
 import os
 import shutil
 import uuid
+import mimetypes
 from typing import List, Optional
 
 from fastapi import Depends, HTTPException, UploadFile, status
-from PIL import Image as PILImage
+from PIL import Image as PILImage, ImageOps
 
 from src.auth.iam_signer_credentials_service import IamSignerCredentials
 from src.common.base_dto import (
@@ -560,3 +561,152 @@ class SourceAssetService:
             return None
 
         return await self._create_asset_response(asset)
+
+    async def create_from_gcs_uri(
+        self,
+        user: UserModel,
+        workspace_id: int,
+        gcs_uri: str,
+    ) -> SourceAssetResponseDto:
+        """
+        Creates a source asset from a GCS URI.
+        Downloads the file, validates it, and re-uploads it to the system bucket.
+        """
+        # 1. Download bytes
+        contents = await asyncio.to_thread(
+            self.gcs_service.download_bytes_from_gcs, gcs_uri
+        )
+        if not contents:
+            raise ValueError(f"Could not read file from {gcs_uri}")
+
+        # 2. Hash
+        file_hash = hashlib.sha256(contents).hexdigest()
+
+        # 3. Check duplicate
+        existing_asset = await self.repo.find_by_hash(user.id, file_hash)
+        if existing_asset:
+            logger.info(
+                f"Duplicate asset found for user {user.email} with hash {file_hash[:8]}. Returning existing."
+            )
+            return await self._create_asset_response(existing_asset)
+
+        # 4. Determine details
+        filename = gcs_uri.split("/")[-1]
+        mime_type_guess, _ = mimetypes.guess_type(filename)
+        is_video = mime_type_guess and "video" in mime_type_guess
+        
+        # Fallback if mimetype is unknown? assume boolean based on extension?
+        if not mime_type_guess:
+             # Basic extension check
+             if filename.lower().endswith(('.mp4', '.mov', '.avi')):
+                 is_video = True
+             else:
+                 is_video = False
+
+        final_gcs_uri: Optional[str] = None
+        thumbnail_gcs_uri: Optional[str] = None
+        temp_dir = f"temp/source_assets/{uuid.uuid4()}"
+        final_aspect_ratio: AspectRatioEnum
+
+        try:
+            local_path = None
+            if is_video:
+                # --- Video Upload Logic ---
+                os.makedirs(temp_dir, exist_ok=True)
+                local_path = os.path.join(temp_dir, filename)
+                with open(local_path, "wb") as buffer:
+                    buffer.write(contents)
+
+                # Check for valid aspect ratio early in the process
+                final_aspect_ratio = await self._get_and_validate_aspect_ratio(
+                    contents=contents,
+                    is_video=is_video,
+                    temp_video_path=local_path,
+                )
+
+                # Upload the video
+                final_gcs_uri = self.gcs_service.upload_file_to_gcs(
+                    local_path=local_path,
+                    destination_blob_name=f"source_assets/{user.id}/{file_hash}/{filename}",
+                    mime_type=mime_type_guess or "video/mp4",
+                )
+
+                # Generate and upload thumbnail
+                thumbnail_path = generate_thumbnail(local_path)
+                if thumbnail_path:
+                    thumbnail_gcs_uri = self.gcs_service.upload_file_to_gcs(
+                        local_path=thumbnail_path,
+                        destination_blob_name=f"source_assets/{user.id}/{file_hash}/thumbnail.png",
+                        mime_type="image/png",
+                    )
+            else:
+                # --- Image Upload & Upscale Logic ---
+                # Skip strict aspect ratio validation here for batch processing.
+                # We will auto-crop to 1:1 (Square) so we can enforce that ratio.
+
+                # Convert image to PNG for standardization before storing.
+                pil_image = PILImage.open(io.BytesIO(contents))
+                
+                # Auto-crop to square (1:1) if needed, as requested for batch inputs.
+                if pil_image.width != pil_image.height:
+                     logger.info(f"Auto-cropping batch image from {pil_image.width}x{pil_image.height} to square.")
+                     min_dim = min(pil_image.width, pil_image.height)
+                     # crop((left, top, right, bottom))
+                     left = (pil_image.width - min_dim) / 2
+                     top = (pil_image.height - min_dim) / 2
+                     right = (pil_image.width + min_dim) / 2
+                     bottom = (pil_image.height + min_dim) / 2
+                     pil_image = pil_image.crop((left, top, right, bottom))
+
+                png_contents: bytes
+
+                if pil_image.format != "PNG":
+                    with io.BytesIO() as output:
+                        # Convert to RGB to avoid issues with palettes (e.g., in GIFs)
+                        if pil_image.mode != "RGB":
+                            pil_image = pil_image.convert("RGB")
+                        pil_image.save(output, format="PNG")
+                        png_contents = output.getvalue()
+                else:
+                    png_contents = contents
+
+                # Check aspect ratio is correct after the crop
+                final_aspect_ratio = await self._get_and_validate_aspect_ratio(
+                    contents=png_contents,
+                    is_video=is_video,
+                )
+
+                final_gcs_uri = self.gcs_service.store_to_gcs(
+                    folder=f"source_assets/{user.id}/originals",
+                    file_name=f"{file_hash}.png",
+                    mime_type=MimeTypeEnum.IMAGE_PNG,
+                    contents=png_contents,
+                    decode=False,
+                )
+
+            if not final_gcs_uri:
+                raise Exception("Failed to upload processed asset.")
+
+        except Exception as e:
+            logger.error(f"Batch asset processing failed: {e}", exc_info=True)
+            raise ValueError(f"Failed to process asset from GCS: {str(e)}")
+        finally:
+            if os.path.exists(temp_dir):
+                shutil.rmtree(temp_dir)
+
+        # Create Record
+        new_asset = SourceAssetModel(
+            workspace_id=workspace_id,
+            user_id=user.id,
+            aspect_ratio=final_aspect_ratio,
+            gcs_uri=final_gcs_uri,
+            thumbnail_gcs_uri=thumbnail_gcs_uri,
+            original_filename=filename,
+            mime_type=MimeTypeEnum.VIDEO_MP4 if is_video else MimeTypeEnum.IMAGE_PNG,
+            file_hash=file_hash,
+            scope=AssetScopeEnum.PRIVATE,
+            asset_type=AssetTypeEnum.GENERIC_IMAGE,
+        )
+        new_asset = await self.repo.create(new_asset)
+
+        return await self._create_asset_response(new_asset)

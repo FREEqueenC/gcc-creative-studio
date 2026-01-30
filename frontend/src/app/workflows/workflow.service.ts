@@ -16,14 +16,18 @@
 
 import { HttpClient } from '@angular/common/http';
 import { Injectable, OnDestroy } from '@angular/core';
-import { BehaviorSubject, Observable, Subscription, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, Subscription, throwError, timer } from 'rxjs';
 import {
+  shareReplay,
+  switchMap,
+  takeWhile,
   tap
 } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { PaginationResponseDto } from '../common/services/source-asset.service';
 import { WorkspaceStateService } from '../services/workspace/workspace-state.service';
 import {
+  BatchExecutionResponse,
   ExecutionDetails,
   ExecutionResponse,
   WorkflowCreateDto,
@@ -112,14 +116,16 @@ export class WorkflowService implements OnDestroy {
     );
   }
 
-  loadWorkflows(reset = false): void {
+  loadWorkflows(reset = false, clearData = true): void {
     if (this._isLoading.value || (!reset && this._allWorkflowsLoaded.value)) {
       return;
     }
 
     if (reset) {
       this.currentPage = 0;
-      this._workflows.next([]);
+      if (clearData) {
+        this._workflows.next([]);
+      }
       this._allWorkflowsLoaded.next(false);
     }
 
@@ -153,7 +159,7 @@ export class WorkflowService implements OnDestroy {
 
   setFilter(filter: string) {
     this.currentFilter = filter;
-    this.loadWorkflows(true);
+    this.loadWorkflows(true, false);
   }
 
   createWorkflow(
@@ -207,9 +213,51 @@ export class WorkflowService implements OnDestroy {
     );
   }
 
+  batchExecuteWorkflow(workflowId: string, items: { row_index: number; args: any }[]): Observable<BatchExecutionResponse> {
+    const workspaceId = this.workspaceStateService.getActiveWorkspaceId();
+    if (!workspaceId) {
+      return throwError(() => new Error('No active workspace ID found.'));
+    }
+
+    // Inject workspaceId into each item's args if not present
+    const enrichedItems = items.map(item => ({
+      ...item,
+      args: {
+        ...item.args,
+        workspace_id: workspaceId
+      }
+    }));
+
+    return this.http.post<BatchExecutionResponse>(
+      `${this.API_BASE_URL}/workflows/${workflowId}/batch-execute`,
+      { items: enrichedItems }
+    );
+  }
+
   getExecutionDetails(workflowId: string, executionId: string): Observable<ExecutionDetails> {
     return this.http.get<ExecutionDetails>(
       `${this.API_BASE_URL}/workflows/${workflowId}/executions/${encodeURIComponent(executionId)}`
+    );
+  }
+
+  /**
+   * Polls execution details until the state is no longer 'ACTIVE'.
+   * @param workflowId The workflow ID
+   * @param executionId The execution ID
+   * @param intervalMs How often to poll (default 5000ms)
+   */
+  pollExecutionDetails(workflowId: string, executionId: string, intervalMs = 5000): Observable<ExecutionDetails> {
+    return timer(0, intervalMs).pipe(
+      // switchMap cancels the previous pending request if a new tick occurs
+      switchMap(() => this.getExecutionDetails(workflowId, executionId)),
+
+      // Continue polling ONLY while state is ACTIVE.
+      // The 'true' argument is vital: it ensures the *final* non-active value 
+      // (SUCCEEDED/FAILED) is emitted before the stream completes.
+      takeWhile(details => details.state === 'ACTIVE', true),
+
+      // Optional: Share the stream if multiple UI components need to listen to the same poll
+      shareReplay(1)
     );
   }
 

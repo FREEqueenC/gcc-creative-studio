@@ -60,7 +60,7 @@ class SourceMediaItemLink(BaseModel):
     role: str
 
 
-class ReferenceImage(BaseModel):
+class ReferenceMediaOrAsset(BaseModel):
     previewUrl: str
     sourceAssetId: Optional[int] = None
     sourceMediaItem: Optional[SourceMediaItemLink] = None
@@ -123,7 +123,7 @@ class BaseStep(BaseDto, Generic[InputT, SettingsT]):
 
 
 
-WorkflowInputItem = Union[StepOutputReference, ReferenceImage, int, List[Union[StepOutputReference, ReferenceImage, int]]]
+WorkflowInputItem = Union[StepOutputReference, ReferenceMediaOrAsset, int, List[Union[StepOutputReference, ReferenceMediaOrAsset, int]]]
 
 # --- User Input ---
 class UserInputInputs(BaseModel):
@@ -144,8 +144,8 @@ class UserInputStep(BaseStep[UserInputInputs, UserInputSettings]):
 # --- Generate Text ---
 class GenerateTextInputs(BaseModel):
     prompt: Union[StepOutputReference, str]
-    input_images: Optional[Union[StepOutputReference, List[WorkflowInputItem], int]] = None
-    input_videos: Optional[Union[StepOutputReference, List[WorkflowInputItem], int]] = None
+    input_images: Optional[WorkflowInputItem] = None
+    input_videos: Optional[WorkflowInputItem] = None
 
 
 class GenerateTextSettings(BaseModel):
@@ -179,7 +179,7 @@ class GenerateImageStep(BaseStep[GenerateImageInputs, GenerateImageSettings]):
 
 # --- Edit Image ---
 class EditImageInputs(BaseModel):
-    input_images: Union[StepOutputReference, List[WorkflowInputItem], int]
+    input_images: WorkflowInputItem
     prompt: Union[StepOutputReference, str]
 
 
@@ -198,9 +198,9 @@ class EditImageStep(BaseStep[EditImageInputs, EditImageSettings]):
 # --- Generate Video ---
 class GenerateVideoInputs(BaseModel):
     prompt: Union[StepOutputReference, str]
-    input_images: Optional[Union[StepOutputReference, List[WorkflowInputItem], int]] = None
-    start_frame: Optional[Union[StepOutputReference, List[WorkflowInputItem], int]] = None
-    end_frame: Optional[Union[StepOutputReference, List[WorkflowInputItem], int]] = None
+    input_images: Optional[WorkflowInputItem] = None
+    start_frame: Optional[WorkflowInputItem] = None
+    end_frame: Optional[WorkflowInputItem] = None
 
 
 class GenerateVideoSettings(BaseModel):
@@ -235,11 +235,11 @@ class CropImageStep(BaseStep[CropImageInputs, CropImageSettings]):
 
 # --- Virtual Try-On ---
 class VirtualTryOnInputs(BaseModel):
-    model_image: Union[StepOutputReference, List[WorkflowInputItem], int]
-    top_image: Optional[Union[StepOutputReference, List[WorkflowInputItem], int]] = None
-    bottom_image: Optional[Union[StepOutputReference, List[WorkflowInputItem], int]] = None
-    dress_image: Optional[Union[StepOutputReference, List[WorkflowInputItem], int]] = None
-    shoes_image: Optional[Union[StepOutputReference, List[WorkflowInputItem], int]] = None
+    model_image: WorkflowInputItem
+    top_image: Optional[WorkflowInputItem] = None
+    bottom_image: Optional[WorkflowInputItem] = None
+    dress_image: Optional[WorkflowInputItem] = None
+    shoes_image: Optional[WorkflowInputItem] = None
 
 
 class VirtualTryOnSettings(BaseModel):
@@ -349,7 +349,6 @@ class WorkflowModel(BaseStringDocument, WorkflowBase):
     The editable workflow *definition* (template).
     This is what the user edits in the UI.
     """
-    id: str  # Explicitly override to str
     user_id: int
 
 

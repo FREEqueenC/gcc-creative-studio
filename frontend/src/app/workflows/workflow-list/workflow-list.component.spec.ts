@@ -27,7 +27,7 @@ class DummyExecutionsComponent {}
 @Component({ template: '', selector: 'app-dummy-edit' })
 class DummyEditComponent {}
 
-fdescribe('WorkflowListComponent', () => {
+describe('WorkflowListComponent', () => {
   let component: WorkflowListComponent;
   let fixture: ComponentFixture<WorkflowListComponent>;
   let mockWorkflowService: jasmine.SpyObj<WorkflowService>;
@@ -145,7 +145,7 @@ fdescribe('WorkflowListComponent', () => {
     expect(router.navigate).toHaveBeenCalledWith(['/workflows/new']);
   });
 
-  fdescribe('deleteWorkflow', () => {
+  describe('deleteWorkflow', () => {
     const workflow: WorkflowModel = {
       id: '1',
       name: 'Test Workflow',
@@ -206,7 +206,7 @@ fdescribe('WorkflowListComponent', () => {
     });
   });
 
-  fdescribe('UI functions', () => {
+  describe('UI functions', () => {
     it('getWorkflowRunStatusChipClass should return correct class', () => {
       expect(
         component.getWorkflowRunStatusChipClass(WorkflowRunStatusEnum.RUNNING),
@@ -258,7 +258,7 @@ fdescribe('WorkflowListComponent', () => {
     });
   });
 
-  fdescribe('Template', () => {
+  describe('Template', () => {
     it('should have a create button with correct icon', () => {
       const button = debugElement.query(By.css('button[mat-raised-button]'));
       const icon = button.query(By.css('mat-icon'));
@@ -334,7 +334,7 @@ fdescribe('WorkflowListComponent', () => {
       ]);
     });
 
-    fdescribe('with data', () => {
+    describe('with data', () => {
 
       beforeEach(async () => {
         component.dataSource.data = mockWorkflows;
@@ -392,7 +392,7 @@ fdescribe('WorkflowListComponent', () => {
       });
     });
 
-    fdescribe('without data', () => {
+    describe('without data', () => {
       beforeEach(() => {
         (mockWorkflowService.workflows$ as Subject<WorkflowModel[]>).next([]);
         fixture.detectChanges();

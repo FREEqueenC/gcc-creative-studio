@@ -24,10 +24,10 @@
       <span class="step-id-subtle">#{{ stepIndex + 1 }}</span>
       <!-- Status Chip -->
       <mat-chip *ngIf="stepForm.get('status')?.value !== 'idle'" 
-                [ngClass]="getStatusClass(stepForm.get('status')?.value)"
+                [ngClass]="stepForm.get('status')?.value | workflowStatus:'class'"
                 class="ml-2">
-        <mat-icon *ngIf="getStatusIcon(stepForm.get('status')?.value)" class="!text-sm !w-4 !h-4 mr-1">
-          {{ getStatusIcon(stepForm.get('status')?.value) }}
+        <mat-icon class="!text-sm !w-4 !h-4 mr-1">
+          {{ stepForm.get('status')?.value | workflowStatus:'icon' }}
         </mat-icon>
         {{ stepForm.get('status')?.value | uppercase }}
       </mat-chip>
@@ -56,7 +56,7 @@
               
                <!-- Counter -->
               <div class="text-xs text-neutral-500 mb-2 font-medium">
-                  {{ referenceImages[input.name].length || 0 }}/{{ currentMaxReferenceImages }} items selected
+                  {{ referenceImages[input.name].length || 0 }}/{{ input.type === 'image' ? currentMaxReferenceImages : 1 }} items selected
               </div>
 
               <!-- List of current items -->
@@ -94,7 +94,7 @@
               </div>
 
                <!-- Add Buttons (Always on new row) -->
-               <div class="flex gap-2" *ngIf="(referenceImages[input.name]?.length || 0) < currentMaxReferenceImages">
+               <div class="flex gap-2" *ngIf="(referenceImages[input.name]?.length || 0) < (input.type === 'image' ? currentMaxReferenceImages : 1)">
                    <!-- Add Fixed -->
                   <div 
                         class="h-10 w-10 flex flex-col items-center justify-center cursor-pointer rounded-lg border-2 border-dashed border-neutral-700 hover:border-neutral-500 hover:bg-neutral-800 transition-colors gap-1"
@@ -185,7 +185,8 @@
           </div>
           <!-- / Inputs image -->
           <mat-form-field *ngIf="inputModes[input.name] === 'linked'" appearance="outline" class="value-input">
-                               <mat-select [formControlName]="input.name" [compareWith]="compareFn">              <mat-option *ngFor="let out of compatibleOutputs[input.name]" [value]="out.value">
+            <mat-select [formControlName]="input.name" [compareWith]="compareFn">
+              <mat-option *ngFor="let out of compatibleOutputs[input.name]" [value]="out.value">
                 {{ out.label }}
               </mat-option>
             </mat-select>

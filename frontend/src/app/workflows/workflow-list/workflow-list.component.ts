@@ -29,6 +29,7 @@ import { Router } from '@angular/router';
 import {
   debounceTime,
   distinctUntilChanged,
+  Observable,
   Subject,
   Subscription,
   takeUntil,
@@ -39,6 +40,8 @@ import {
   WorkflowRunStatusEnum,
 } from '../workflow.models';
 import { WorkflowService } from '../workflow.service';
+import { AuthService } from '../../common/services/auth.service';
+
 
 @Component({
   selector: 'app-workflow-list',
@@ -69,15 +72,18 @@ export class WorkflowListComponent implements OnInit, OnDestroy, AfterViewInit {
   private filterSubject = new Subject<string>();
   private destroy$ = new Subject<void>();
   currentFilter = '';
+  isFilterOpen = false;
   private subscriptions = new Subscription();
   public isLoading = false;
   public errorMessage: string | null = null;
+  public obs$!: Observable<WorkflowModel[]>;
 
   constructor(
     private workflowService: WorkflowService,
     private router: Router,
     public dialog: MatDialog,
-  ) {}
+    public authService: AuthService,
+  ) { }
 
   ngOnInit(): void {
     this.subscriptions.add(
@@ -98,29 +104,39 @@ export class WorkflowListComponent implements OnInit, OnDestroy, AfterViewInit {
       .subscribe(filter => {
         this.workflowService.setFilter(filter);
       });
+
+    this.obs$ = this.dataSource.connect();
   }
 
   ngAfterViewInit() {
     this.dataSource.sort = this.sort;
-    // The paginator should not be assigned to the datasource directly
-    // as we are handling pagination manually.
+    this.dataSource.paginator = this.paginator;
   }
 
   handlePageEvent(event: PageEvent) {
     // This will be implemented once pagination is handled in the component
   }
 
-  applyFilter(event: Event): void {
+  toggleFilter(): void {
+    this.isFilterOpen = !this.isFilterOpen;
+    if (!this.isFilterOpen) {
+      this.currentFilter = '';
+      this.filterSubject.next('');
+    }
+  }
+
+  onFilterChange(event: Event): void {
     const filterValue = (event.target as HTMLInputElement).value;
-    this.filterSubject.next(filterValue.trim());
+    this.currentFilter = filterValue;
+    this.filterSubject.next(filterValue);
   }
 
   createNewWorkflow(): void {
     this.router.navigate(['/workflows/new']);
   }
 
-  deleteWorkflow(workflow: WorkflowModel, event: MouseEvent): void {
-    event.stopPropagation();
+  deleteWorkflow(workflow: WorkflowModel, event?: MouseEvent): void {
+    event?.stopPropagation();
     const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
       width: '350px',
       data: {
@@ -186,6 +202,10 @@ export class WorkflowListComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
+  navigateToHistory(workflow: WorkflowModel): void {
+    this.router.navigate(['/workflows', workflow.id, 'executions']);
+  }
+
   public formatTimeAgo(dateString: string): string {
     if (!dateString) {
       return '';
@@ -197,7 +217,7 @@ export class WorkflowListComponent implements OnInit, OnDestroy, AfterViewInit {
       Math.abs((now.getTime() - date.getTime()) / 1000),
     );
 
-    const intervals: {[key: string]: number} = {
+    const intervals: { [key: string]: number } = {
       year: 31536000,
       month: 2592000,
       week: 604800,

@@ -8,7 +8,7 @@ import {
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { PageEvent } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { of, Subject, throwError } from 'rxjs';
 import { ConfirmationDialogComponent } from '../../common/components/confirmation-dialog/confirmation-dialog.component';
 import { WorkflowListComponent } from './workflow-list.component';
@@ -20,6 +20,8 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { By } from '@angular/platform-browser';
 import { RouterTestingModule } from '@angular/router/testing';
 import { DebugElement } from '@angular/core';
+import { Firestore } from '@angular/fire/firestore';
+import { Auth } from '@angular/fire/auth';
 
 @Component({ template: '', selector: 'app-dummy-executions' })
 class DummyExecutionsComponent {}
@@ -83,6 +85,9 @@ describe('WorkflowListComponent', () => {
       providers: [
         { provide: WorkflowService, useValue: mockWorkflowService },
         { provide: MatDialog, useValue: mockMatDialog },
+        { provide: Firestore, useValue: {} },
+        { provide: Auth, useValue: {} },
+        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => '' } } } }
       ],
     }).compileComponents();
 

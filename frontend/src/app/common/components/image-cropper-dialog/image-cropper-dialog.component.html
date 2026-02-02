@@ -101,10 +101,13 @@
     <div class="cropper-container">
       <image-cropper
         [imageFile]="imageFile || undefined"
-        [options]="options"
+        [aspectRatio]="currentAspectRatio"
+        [backgroundColor]="backgroundColor"
+        [containWithinAspectRatio]="
+          imageCropperForm.get('containWithinAspectRatio')?.value
+        "
         [canvasRotation]="canvasRotation"
         [(transform)]="transform"
-        [containWithinAspectRatio]="imageCropperForm.get('containWithinAspectRatio')?.value"
         format="png"
         (imageCropped)="imageCropped($event)"
       ></image-cropper>

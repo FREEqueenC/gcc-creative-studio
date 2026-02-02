@@ -37,7 +37,7 @@ import { NotificationContainerComponent } from './common/components/notification
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { ScrollingModule } from '@angular/cdk/scrolling';
-import { NgOptimizedImage } from '@angular/common';
+import { CommonModule, NgOptimizedImage } from '@angular/common';
 import {
   HTTP_INTERCEPTORS,
   provideHttpClient,
@@ -53,7 +53,7 @@ import {
 import { AngularFireAuthModule } from '@angular/fire/compat/auth';
 import { AngularFireDatabaseModule } from '@angular/fire/compat/database';
 import { AngularFirestoreModule } from '@angular/fire/compat/firestore';
-import { ReactiveFormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -75,7 +75,7 @@ import { ArenaComponent } from './arena/arena.component';
 import { AudioComponent } from './audio/audio.component';
 import { AuthInterceptor } from './auth.interceptor';
 import { ConfirmationDialogComponent } from './common/components/confirmation-dialog/confirmation-dialog.component';
-import { FlowPromptBoxComponent } from "./common/components/flow-prompt-box/flow-prompt-box.component";
+import { FlowPromptBoxComponent } from './common/components/flow-prompt-box/flow-prompt-box.component';
 import { ImageCropperDialogComponent } from './common/components/image-cropper-dialog/image-cropper-dialog.component';
 import { ImageSelectorComponent } from './common/components/image-selector/image-selector.component';
 import { MediaLightboxComponent } from './common/components/media-lightbox/media-lightbox.component';
@@ -105,7 +105,7 @@ import { GenericStepComponent } from './workflows/workflow-editor/step-component
 import { WorkflowEditorComponent } from './workflows/workflow-editor/workflow-editor.component';
 import { WorkflowListComponent } from './workflows/workflow-list/workflow-list.component';
 import { WorkflowStatusPipe } from './workflows/workflow-status.pipe';
-
+import { RouterModule } from '@angular/router';
 @NgModule({
   declarations: [
     AppComponent,
@@ -134,15 +134,18 @@ import { WorkflowStatusPipe } from './workflows/workflow-status.pipe';
     StepMediaInputComponent,
     RunWorkflowModalComponent,
     ExecutionHistoryComponent,
-
+    
     ExecutionDetailsModalComponent,
     StepExecutionDetailsComponent,
     BatchExecutionModalComponent,
   ],
+
   imports: [
     BrowserModule,
     AppRoutingModule,
     BrowserAnimationsModule,
+    CommonModule,
+    FormsModule,
     NgOptimizedImage,
     ReactiveFormsModule,
     ClipboardModule,
@@ -154,6 +157,7 @@ import { WorkflowStatusPipe } from './workflows/workflow-status.pipe';
     SharedModule,
     MediaLightboxComponent,
     // Explicitly listing all relevant Angular Material modules
+    RouterModule,
     MatButtonModule,
     MatChipsModule,
     MatDividerModule,
@@ -179,7 +183,7 @@ import { WorkflowStatusPipe } from './workflows/workflow-status.pipe';
     MatStepperModule,
     MatTableModule,
     WorkflowStatusPipe
-],
+  ],
   providers: [
     provideClientHydration(),
     provideHttpClient(withInterceptorsFromDi()),

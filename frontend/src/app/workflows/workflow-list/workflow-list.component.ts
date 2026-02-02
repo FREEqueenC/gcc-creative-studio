@@ -75,7 +75,6 @@ export class WorkflowListComponent implements OnInit, OnDestroy {
   public isLoading = false;
   public errorMessage: string | null = null;
   public obs$!: Observable<WorkflowModel[]>;
-  applyFilter: any;
 
   constructor(
     private workflowService: WorkflowService,
@@ -85,6 +84,7 @@ export class WorkflowListComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit(): void {
+    this.dataSource = new MatTableDataSource<WorkflowModel>();
     this.subscriptions.add(
       this.workflowService.workflows$.subscribe(
         w => (this.dataSource.data = w),
@@ -115,6 +115,11 @@ export class WorkflowListComponent implements OnInit, OnDestroy {
 
   handlePageEvent(event: PageEvent) {
     // This will be implemented once pagination is handled in the component
+  }
+
+  applyFilter(event: Event): void {
+    const filterValue = (event.target as HTMLInputElement).value;
+    this.filterSubject.next(filterValue);
   }
 
   toggleFilter(): void {

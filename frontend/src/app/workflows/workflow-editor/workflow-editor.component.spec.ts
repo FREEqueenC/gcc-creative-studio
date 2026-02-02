@@ -20,7 +20,7 @@ import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { of } from 'rxjs';
 import { DragDropModule } from '@angular/cdk/drag-drop';
@@ -64,12 +64,10 @@ describe('WorkflowEditorComponent', () => {
           provide: ActivatedRoute,
           useValue: {
             snapshot: {
-              paramMap: {
-                get: () => '123', // or any other mock value
-              },
+              paramMap: convertToParamMap({ workflowId: '123' }),
             },
-            paramMap: of({ get: (key: string) => '123' }),
-            queryParams: of({}),
+            paramMap: of(convertToParamMap({ workflowId: '123' })),
+            queryParamMap: of(convertToParamMap({})),
           },
         },
         { provide: MatDialog, useValue: mockMatDialog },

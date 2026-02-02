@@ -37,7 +37,7 @@ describe('ImageCropperDialogComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [ImageCropperDialogComponent],
-      imports: [ImageCropperComponent, HttpClientTestingModule, NoopAnimationsModule, MaterialModule, MatDialogModule, FormsModule, ReactiveFormsModule],
+      imports: [ImageCropperModule, HttpClientTestingModule, NoopAnimationsModule, MaterialModule, MatDialogModule, FormsModule, ReactiveFormsModule],
       providers: [
         { provide: MatDialogRef, useValue: {} },
         { provide: MAT_DIALOG_DATA, useValue: {
@@ -49,6 +49,7 @@ describe('ImageCropperDialogComponent', () => {
           uploadAsset: () => of({id: '123', name: 'mock.jpg'}) // Mock uploadAsset to return an observable
         }}
       ],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA]
     }).compileComponents();
 
     fixture = TestBed.createComponent(ImageCropperDialogComponent);

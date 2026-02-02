@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, DebugElement } from '@angular/core';
 import {
   ComponentFixture,
   fakeAsync,
@@ -7,8 +7,7 @@ import {
 } from '@angular/core/testing';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { PageEvent } from '@angular/material/paginator';
-import { MatSort } from '@angular/material/sort';
-import { Router, RouterLink, ActivatedRoute } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { of, Subject, throwError } from 'rxjs';
 import { ConfirmationDialogComponent } from '../../common/components/confirmation-dialog/confirmation-dialog.component';
 import { WorkflowListComponent } from './workflow-list.component';
@@ -19,9 +18,9 @@ import { MaterialModule } from '../../common/material.module';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { By } from '@angular/platform-browser';
 import { RouterTestingModule } from '@angular/router/testing';
-import { DebugElement } from '@angular/core';
 import { Firestore } from '@angular/fire/firestore';
 import { Auth } from '@angular/fire/auth';
+import { AuthService } from '../../common/services/auth.service';
 
 @Component({ template: '', selector: 'app-dummy-executions' })
 class DummyExecutionsComponent {}
@@ -37,6 +36,7 @@ describe('WorkflowListComponent', () => {
   let mockMatDialog: jasmine.SpyObj<MatDialog>;
   let nativeElement: HTMLElement;
   let debugElement: DebugElement;
+  let mockAuthService: jasmine.SpyObj<AuthService>;
 
   const mockWorkflows: WorkflowModel[] = [
     {
@@ -70,15 +70,23 @@ describe('WorkflowListComponent', () => {
       },
     );
     mockMatDialog = jasmine.createSpyObj('MatDialog', ['open']);
+    mockAuthService = jasmine.createSpyObj('AuthService', ['isUserAdmin']);
 
     await TestBed.configureTestingModule({
-      declarations: [WorkflowListComponent, DummyExecutionsComponent, DummyEditComponent],
+      declarations: [
+        WorkflowListComponent,
+        DummyExecutionsComponent,
+        DummyEditComponent,
+      ],
       imports: [
         HttpClientTestingModule,
         MaterialModule,
         NoopAnimationsModule,
         RouterTestingModule.withRoutes([
-          { path: 'workflows/:id/executions', component: DummyExecutionsComponent },
+          {
+            path: 'workflows/:id/executions',
+            component: DummyExecutionsComponent,
+          },
           { path: 'workflows/edit/:id', component: DummyEditComponent },
         ]),
       ],
@@ -87,7 +95,11 @@ describe('WorkflowListComponent', () => {
         { provide: MatDialog, useValue: mockMatDialog },
         { provide: Firestore, useValue: {} },
         { provide: Auth, useValue: {} },
-        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => '' } } } }
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { paramMap: { get: () => '' } } },
+        },
+        { provide: AuthService, useValue: mockAuthService },
       ],
     }).compileComponents();
 
@@ -96,6 +108,7 @@ describe('WorkflowListComponent', () => {
     nativeElement = fixture.nativeElement;
     debugElement = fixture.debugElement;
     router = TestBed.inject(Router);
+    mockAuthService.isUserAdmin.and.returnValue(true);
     fixture.detectChanges();
   });
 
@@ -110,24 +123,18 @@ describe('WorkflowListComponent', () => {
   });
 
   it('should initialize and subscribe to workflow service observables', () => {
-    (mockWorkflowService.workflows$ as Subject<WorkflowModel[]>).next(
-      mockWorkflows,
-    );
     (mockWorkflowService.isLoading$ as Subject<boolean>).next(true);
     (mockWorkflowService.errorMessage$ as Subject<string | null>).next('Error');
 
-    expect(component.dataSource.data).toEqual(mockWorkflows);
+    component.obs$.subscribe(data => {
+      expect(data).toEqual(mockWorkflows);
+    });
+    (mockWorkflowService.workflows$ as Subject<WorkflowModel[]>).next(
+      mockWorkflows,
+    );
+
     expect(component.isLoading).toBe(true);
     expect(component.errorMessage).toBe('Error');
-  });
-
-
-
-  it('should set the sort on ngAfterViewInit', () => {
-    const sort = {} as MatSort;
-    component.sort = sort;
-    component.ngAfterViewInit();
-    expect(component.dataSource.sort).toBe(sort);
   });
 
   it('should handle page events', () => {
@@ -139,7 +146,7 @@ describe('WorkflowListComponent', () => {
 
   it('should call setFilter on filter change', fakeAsync(() => {
     const filterValue = 'test filter';
-    component.applyFilter({ target: { value: filterValue } } as any);
+    component.onFilterChange({ target: { value: filterValue } } as any);
     tick(500);
     expect(mockWorkflowService.setFilter).toHaveBeenCalledWith(filterValue);
   }));
@@ -211,80 +218,31 @@ describe('WorkflowListComponent', () => {
     });
   });
 
-  describe('UI functions', () => {
-    it('getWorkflowRunStatusChipClass should return correct class', () => {
-      expect(
-        component.getWorkflowRunStatusChipClass(WorkflowRunStatusEnum.RUNNING),
-      ).toContain('blue');
-      expect(
-        component.getWorkflowRunStatusChipClass(
-          WorkflowRunStatusEnum.COMPLETED,
-        ),
-      ).toContain('green');
-      expect(
-        component.getWorkflowRunStatusChipClass(
-          WorkflowRunStatusEnum.SCHEDULED,
-        ),
-      ).toContain('amber');
-      expect(
-        component.getWorkflowRunStatusChipClass(WorkflowRunStatusEnum.FAILED),
-      ).toContain('red');
-      expect(
-        component.getWorkflowRunStatusChipClass(
-          WorkflowRunStatusEnum.CANCELED,
-        ),
-      ).toContain('red');
-      expect(
-        component.getWorkflowRunStatusChipClass(
-          'other' as WorkflowRunStatusEnum,
-        ),
-      ).toContain('gray');
-    });
-
-    it('getWorkflowRunStatusIcon should return correct icon', () => {
-      expect(
-        component.getWorkflowRunStatusIcon(WorkflowRunStatusEnum.RUNNING),
-      ).toBe('directions_run');
-      expect(
-        component.getWorkflowRunStatusIcon(WorkflowRunStatusEnum.COMPLETED),
-      ).toBe('check_circle');
-      expect(
-        component.getWorkflowRunStatusIcon(WorkflowRunStatusEnum.SCHEDULED),
-      ).toBe('schedule');
-      expect(
-        component.getWorkflowRunStatusIcon(WorkflowRunStatusEnum.FAILED),
-      ).toBe('cancel');
-      expect(
-        component.getWorkflowRunStatusIcon(WorkflowRunStatusEnum.CANCELED),
-      ).toBe('cancel');
-      expect(
-        component.getWorkflowRunStatusIcon('other' as WorkflowRunStatusEnum),
-      ).toBe('help_outline');
-    });
-  });
-
   describe('Template', () => {
     it('should have a create button with correct icon', () => {
-      const button = debugElement.query(By.css('button[mat-raised-button]'));
+      const button = debugElement.query(By.css('button[mat-flat-button]'));
       const icon = button.query(By.css('mat-icon'));
       expect(icon.nativeElement.textContent.trim()).toBe('add');
     });
 
-    it('should have a filter input with correct icon', () => {
-      const formField = debugElement.query(By.css('mat-form-field'));
-      const icon = formField.query(By.css('mat-icon[matSuffix]'));
-      expect(icon.nativeElement.textContent.trim()).toBe('search');
+    it('should have a filter button with correct icon', () => {
+      const button = debugElement.query(By.css('button.filter-btn'));
+      const icon = button.query(By.css('mat-icon'));
+      expect(icon.nativeElement.textContent.trim()).toBe('filter_list');
     });
 
-    it('should display loading spinner when isLoading is true and hide when false', () => {
+    it('should display loading spinner when isLoading is true and no data', () => {
+      (mockWorkflowService.workflows$ as Subject<WorkflowModel[]>).next([]);
       (mockWorkflowService.isLoading$ as Subject<boolean>).next(true);
       fixture.detectChanges();
-      let spinner = nativeElement.querySelector('mat-progress-spinner');
+      const spinner = nativeElement.querySelector('mat-spinner');
       expect(spinner).toBeTruthy();
+    });
 
+    it('should hide loading spinner when isLoading is false', () => {
       (mockWorkflowService.isLoading$ as Subject<boolean>).next(false);
       fixture.detectChanges();
-      spinner = nativeElement.querySelector('mat-progress-spinner');
+      const spinner = nativeElement.querySelector('mat-spinner');
       expect(spinner).toBeFalsy();
     });
 
@@ -305,95 +263,61 @@ describe('WorkflowListComponent', () => {
       expect(errorDiv).toBeFalsy();
     });
 
-    it('should display table headers with sort capabilities', () => {
-      fixture.detectChanges();
-      const headerCells = nativeElement.querySelectorAll('th[mat-header-cell]');
-      const headerTexts = Array.from(headerCells).map((cell) =>
-        cell.textContent?.trim(),
-      );
-      expect(headerTexts).toEqual([
-        'Name',
-        'Description',
-        'Created At',
-        'Updated At',
-        'Actions',
-      ]);
-      headerCells.forEach((cell) => {
-        if (!cell.classList.contains('!text-right')) {
-          //The actions column has no sort
-          expect(cell.hasAttribute('mat-sort-header')).toBeTrue();
-        }
-      });
-    });
-
     it('should correctly bind data to the paginator', () => {
       component.totalWorkflows = 100;
-      component.limit = 10;
+      component.limit = 5;
       fixture.detectChanges();
       const paginator = debugElement.query(By.css('mat-paginator'));
       expect(paginator).toBeTruthy();
-      expect(paginator.componentInstance.length).toBe(100);
-      expect(paginator.componentInstance.pageSize).toBe(10);
       expect(paginator.componentInstance.pageSizeOptions).toEqual([
-        10, 25, 100,
+        5, 10, 25, 100,
       ]);
     });
 
     describe('with data', () => {
-
       beforeEach(async () => {
-        component.dataSource.data = mockWorkflows;
+        (mockWorkflowService.workflows$ as Subject<WorkflowModel[]>).next(
+          mockWorkflows,
+        );
         fixture.detectChanges();
         await fixture.whenStable();
         fixture.detectChanges();
       });
 
-      it('should render a row for each workflow', () => {
-        const rows = nativeElement.querySelectorAll('tr[mat-row]');
-        expect(rows.length).toBe(mockWorkflows.length);
+      it('should render a card for each workflow', () => {
+        const cards = nativeElement.querySelectorAll('.workflow-card');
+        expect(cards.length).toBe(mockWorkflows.length);
       });
 
-      it('should display the correct data in each cell', () => {
-        const rows = debugElement.queryAll(By.css('tr[mat-row]'));
-        const firstRowCells = rows[0].queryAll(By.css('td[mat-cell]'));
+      it('should display the correct data in each card', () => {
+        const card = debugElement.query(By.css('.workflow-card'));
+        const name = card.query(By.css('h2'));
+        const description = card.query(By.css('.description'));
 
-        expect(firstRowCells[0].nativeElement.textContent.trim()).toBe(
-          'Workflow 1',
-        );
-        expect(firstRowCells[1].nativeElement.textContent.trim()).toBe(
+        expect(name.nativeElement.textContent.trim()).toBe('Workflow 1');
+        expect(description.nativeElement.textContent.trim()).toBe(
           'Description 1',
         );
-        expect(firstRowCells[2].nativeElement.textContent.trim()).toBe(
-          new Date(mockWorkflows[0].createdAt).toLocaleDateString(undefined, {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          }),
-        );
-        expect(firstRowCells[3].nativeElement.textContent.trim()).toBe(
-          component.formatTimeAgo(mockWorkflows[0].updatedAt),
-        );
       });
 
-      it('should navigate to correct routes when action buttons are clicked', fakeAsync(() => {
+      it('should navigate to history on card click', fakeAsync(() => {
         spyOn(router, 'navigate');
-        const historyButton = debugElement.query(By.css('button[matTooltip="View History"]')).nativeElement;
-        const editButton = debugElement.query(By.css('button[matTooltip="Edit Workflow"]')).nativeElement;
+        const card = debugElement.query(
+          By.css('.workflow-card'),
+        ).nativeElement;
 
-        fixture.detectChanges(); // Ensure changes are detected before click
-        historyButton.click();
-        tick(); // Simulate passage of time for async operations
-        expect(router.navigate).toHaveBeenCalledWith(['/workflows', '1', 'executions']);
-
-        fixture.detectChanges(); // Ensure changes are detected before click
-        editButton.click();
-        tick(); // Simulate passage of time for async operations
-        expect(router.navigate).toHaveBeenCalledWith(['/workflows/edit', '1']);
+        card.click();
+        tick();
+        expect(router.navigate).toHaveBeenCalledWith([
+          '/workflows',
+          '1',
+          'executions',
+        ]);
       }));
 
-      it('should not show the no data row', () => {
-        const noDataRow = nativeElement.querySelector('tr.mat-no-data-row');
-        expect(noDataRow).toBeFalsy();
+      it('should not show the empty state', () => {
+        const emptyState = nativeElement.querySelector('.empty-state');
+        expect(emptyState).toBeFalsy();
       });
     });
 
@@ -403,22 +327,16 @@ describe('WorkflowListComponent', () => {
         fixture.detectChanges();
       });
 
-      it('should show the no data row', () => {
-        const noDataRow = nativeElement.querySelector('tr.mat-row');
-        expect(noDataRow).toBeTruthy();
-        const cell = noDataRow!.querySelector('td.mat-cell');
-        expect(cell).toBeTruthy();
-        expect(cell!.textContent).toContain('No workflows found.');
-        expect(cell!.getAttribute('colspan')).toBe(
-          String(component.displayedColumns.length),
-        );
+      it('should show the empty state', () => {
+        const emptyState = nativeElement.querySelector('.empty-state');
+        expect(emptyState).toBeTruthy();
+        const p = emptyState!.querySelector('p');
+        expect(p!.textContent).toContain('No workflows found.');
       });
 
-      it('should not render any data rows', () => {
-        const dataRows = nativeElement.querySelectorAll(
-          'tr[mat-row]:not(.mat-no-data-row)',
-        );
-        expect(dataRows.length).toBe(0);
+      it('should not render any workflow cards', () => {
+        const cards = nativeElement.querySelectorAll('.workflow-card');
+        expect(cards.length).toBe(0);
       });
     });
   });

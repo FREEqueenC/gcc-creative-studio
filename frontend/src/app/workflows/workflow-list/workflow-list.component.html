@@ -47,7 +47,7 @@
 
   <!-- Loading Indicator (Initial or empty) -->
   <div
-    *ngIf="isLoading && dataSource.data.length === 0"
+    *ngIf="isLoading && ((obs$ | async)?.length ?? 0) === 0"
     class="flex justify-center items-center py-20"
   >
     <mat-spinner
@@ -59,7 +59,7 @@
   <!-- Workflows List (Cards) -->
   <div
     class="workflows-list"
-    *ngIf="(dataSource.data.length > 0 || !isLoading) && !errorMessage"
+    *ngIf="(((obs$ | async)?.length ?? 0) > 0 || !isLoading) && !errorMessage"
   >
     <div class="workflows-filter">
       <div

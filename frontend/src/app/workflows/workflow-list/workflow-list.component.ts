@@ -15,16 +15,12 @@
  */
 
 import {
-  AfterViewInit,
   Component,
   OnDestroy,
   OnInit,
-  ViewChild,
 } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { MatPaginator, PageEvent } from '@angular/material/paginator';
-import { MatSort } from '@angular/material/sort';
-import { MatTableDataSource } from '@angular/material/table';
+import { PageEvent } from '@angular/material/paginator';
 import { Router } from '@angular/router';
 import {
   debounceTime,
@@ -49,17 +45,6 @@ import { AuthService } from '../../common/services/auth.service';
   styleUrls: ['./workflow-list.component.scss'],
 })
 export class WorkflowListComponent implements OnInit, OnDestroy {
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
-  @ViewChild(MatSort) sort!: MatSort;
-  dataSource!: MatTableDataSource<WorkflowModel>;
-  displayedColumns: string[] = [
-    'name',
-    'description',
-    'createdAt',
-    'updatedAt',
-    'actions',
-  ];
-
   // --- Pagination State ---
   totalWorkflows = 0;
   limit = 10;
@@ -84,12 +69,7 @@ export class WorkflowListComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit(): void {
-    this.dataSource = new MatTableDataSource<WorkflowModel>();
-    this.subscriptions.add(
-      this.workflowService.workflows$.subscribe(
-        w => (this.dataSource.data = w),
-      ),
-    );
+    this.obs$ = this.workflowService.workflows$;
     this.subscriptions.add(
       this.workflowService.isLoading$.subscribe(l => (this.isLoading = l)),
     );
@@ -104,13 +84,6 @@ export class WorkflowListComponent implements OnInit, OnDestroy {
         this.workflowService.setFilter(filter);
       });
 
-    this.obs$ = this.dataSource.connect();
-  }
-
-  ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator;
-    this.dataSource.sort = this.sort;
-    this.dataSource.paginator = this.paginator;
   }
 
   handlePageEvent(event: PageEvent) {

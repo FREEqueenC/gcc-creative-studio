@@ -14,15 +14,14 @@
 
 import asyncio
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.database import SessionLocal, engine, Base
+from src.database import AsyncSessionLocal, engine, Base
 from src.users.user_model import User
 from src.credits.credit_model import UserWallet
 from src.organizations.organization_model import Organization
 from src.credits.credit_model import OrganizationWallet
 
-async def seed_user_wallets(db: AsyncSession):
+async def seed_user_wallets(db: AsyncSessionLocal):
     print("Seeding user wallets...")
     result = await db.execute(select(User))
     users = result.scalars().all()
@@ -44,7 +43,7 @@ async def seed_user_wallets(db: AsyncSession):
     else:
         print("No new user wallets needed.")
 
-async def seed_organization_wallets(db: AsyncSession):
+async def seed_organization_wallets(db: AsyncSessionLocal):
     print("Seeding organization wallets...")
     result = await db.execute(select(Organization))
     organizations = result.scalars().all()
@@ -66,8 +65,12 @@ async def seed_organization_wallets(db: AsyncSession):
     else:
         print("No new organization wallets needed.")
 
-async def main():
-    async with SessionLocal() as db:
+async def main(db=None):
+    if db is None:
+        async with AsyncSessionLocal() as session:
+            await seed_user_wallets(session)
+            await seed_organization_wallets(session)
+    else:
         await seed_user_wallets(db)
         await seed_organization_wallets(db)
 

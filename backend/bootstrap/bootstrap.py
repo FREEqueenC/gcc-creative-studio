@@ -33,29 +33,23 @@ from src.users.user_model import UserModel
 from src.organizations.organization_service import OrganizationService
 from src.organizations.repository.organization_repository import OrganizationRepository
 from src.backfill_organizations import backfill_organizations
-from src.common.base_dto import AspectRatioEnum
 from src.common.storage_service import GcsService
 from src.media_templates.repository.media_template_repository import MediaTemplateRepository
 from src.source_assets.repository.source_asset_repository import SourceAssetRepository
 from src.workspaces.repository.workspace_repository import WorkspaceRepository
 from src.auth.iam_signer_credentials_service import IamSignerCredentials
 from src.common.permission_service import PermissionService
-from seed_credits import seed_credit_data
-from seed_wallets import seed_wallets
+from bootstrap.seed_credits import main as main_seed_credits
+from bootstrap.seed_wallets import main as main_seed_wallets
 from src.common.consistency_service import ConsistencyService
 from src.common.email_service import EmailService
 from src.auth import auth_service
 from src.workspaces.workspace_service import WorkspaceService
 from src.media_templates.media_templates_service import MediaTemplateService
-from src.common.models import AspectRatioEnum, AssetScopeEnum, AssetTypeEnum
-from src.source_assets.source_asset_model import SourceAssetModel
-from src.core.fga import fga_config, fga_client, setup_fga
+from src.common.base_dto import AspectRatioEnum
 from src.common.schema.media_item_model import AssetRoleEnum
 from src.source_assets.schema.source_asset_model import SourceAssetModel, AssetScopeEnum, AssetTypeEnum
-from src.common.email_service import EmailService
-from src.common.consistency_service import ConsistencyService
 from src.media_templates.schema.media_template_model import MediaTemplateModel, GenerationParameters, IndustryEnum
-from src.workspaces.workspace_service import WorkspaceService
 from src.core.fga import fga_client, config as fga_config
 from openfga_sdk import OpenFgaClient
 from src.core.fga_setup import setup_fga
@@ -518,10 +512,10 @@ async def main():
                 await seed_media_templates(db, admin_user)
                 
                 logger.info("Seeding credit economy data...")
-                await seed_credit_data(db)
+                await main_seed_credits(db)
                 
                 logger.info("Seeding wallets...")
-                await seed_wallets(db)
+                await main_seed_wallets(db)
             else:
                 logger.warning("No admin user found. Skipping organization seeding.")
 

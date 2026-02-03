@@ -74,48 +74,54 @@ INITIAL_PRICES: List[PriceCatalogItem] = [
 
 # INITIAL_BUDGET = Decimal("70000.0")
 
-async def seed_credits():
+async def main(db=None):
     logger.info("Starting Credit Economy Seeding...")
     
-    async with AsyncSessionLocal() as session:
-        # 1. Seed Price Catalog
-        for price_item in INITIAL_PRICES:
-            stmt = select(PriceCatalog).where(
-                PriceCatalog.model_id == price_item.model_id.value,
-                PriceCatalog.category == price_item.category
+    if db is None:
+        async with AsyncSessionLocal() as session:
+            await _seed_credits_logic(session)
+    else:
+        await _seed_credits_logic(db)
+
+async def _seed_credits_logic(session):
+    # 1. Seed Price Catalog
+    for price_item in INITIAL_PRICES:
+        stmt = select(PriceCatalog).where(
+            PriceCatalog.model_id == price_item.model_id.value,
+            PriceCatalog.category == price_item.category
+        )
+        result = await session.execute(stmt)
+        existing_price = result.scalar_one_or_none()
+        
+        if existing_price:
+            existing_price.cost = price_item.cost
+            logger.info(f"Updated price for {price_item.model_id.value} ({price_item.category.value})")
+        else:
+            new_price = PriceCatalog(
+                model_id=price_item.model_id.value,
+                category=price_item.category,
+                cost=price_item.cost
             )
-            result = await session.execute(stmt)
-            existing_price = result.scalar_one_or_none()
-            
-            if existing_price:
-                existing_price.cost = price_item.cost
-                logger.info(f"Updated price for {price_item.model_id.value} ({price_item.category.value})")
-            else:
-                new_price = PriceCatalog(
-                    model_id=price_item.model_id.value,
-                    category=price_item.category,
-                    cost=price_item.cost
-                )
-                session.add(new_price)
-                logger.info(f"Created price for {price_item.model_id.value} ({price_item.category.value})")
+            session.add(new_price)
+            logger.info(f"Created price for {price_item.model_id.value} ({price_item.category.value})")
+    
+    # 2. Seed Initial Budget (only if no deposits exist)
+    # stmt = select(BudgetDeposit)
+    # result = await session.execute(stmt)
+    # existing_deposit = result.first()
+    
+    # if not existing_deposit:
+    #     deposit = BudgetDeposit(
+    #         amount_usd=INITIAL_BUDGET,
+    #         notes="Initial Grant"
+    #     )
+    #     session.add(deposit)
+    #     logger.info(f"Deposited initial budget of ${INITIAL_BUDGET}")
+    # else:
+    #     logger.info("Budget deposits already exist, skipping initial grant.")
         
-        # 2. Seed Initial Budget (only if no deposits exist)
-        # stmt = select(BudgetDeposit)
-        # result = await session.execute(stmt)
-        # existing_deposit = result.first()
-        
-        # if not existing_deposit:
-        #     deposit = BudgetDeposit(
-        #         amount_usd=INITIAL_BUDGET,
-        #         notes="Initial Grant"
-        #     )
-        #     session.add(deposit)
-        #     logger.info(f"Deposited initial budget of ${INITIAL_BUDGET}")
-        # else:
-        #     logger.info("Budget deposits already exist, skipping initial grant.")
-            
-        await session.commit()
-        logger.info("Seeding complete.")
+    await session.commit()
+    logger.info("Seeding complete.")
 
 if __name__ == "__main__":
-    asyncio.run(seed_credits())
+    asyncio.run(main())

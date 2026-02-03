@@ -261,6 +261,8 @@ export class WorkbenchComponent implements OnInit, OnDestroy {
 
     // Setup an effect to handle video seeking/sync when active clip changes or time jumps
     effect(() => {
+      if (!this.isBrowser) return;
+
       const vid = this.mainVideo?.nativeElement;
       const vClip = this.activeVideoClip();
       const curTime = this.currentTime();
@@ -325,7 +327,7 @@ export class WorkbenchComponent implements OnInit, OnDestroy {
   }
   
   ngOnDestroy() {
-    if (this.animationFrameId) cancelAnimationFrame(this.animationFrameId);
+    if (this.isBrowser && this.animationFrameId) cancelAnimationFrame(this.animationFrameId);
   }
 
   // --- Logic: File Handling ---

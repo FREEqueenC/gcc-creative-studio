@@ -1,4 +1,5 @@
-import { Component, OnInit, ElementRef, ViewChild, AfterViewInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, ElementRef, ViewChild, AfterViewInit, OnDestroy, Inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { Observable, of, forkJoin } from 'rxjs';
 import { map, catchError, filter } from 'rxjs/operators';
 import { AuthService } from '../../common/services/auth.service';
@@ -24,7 +25,8 @@ export class AdminHomeComponent implements OnInit, AfterViewInit, OnDestroy {
 
   constructor(
     private authService: AuthService,
-    private creditsService: CreditsService
+    private creditsService: CreditsService,
+    @Inject(PLATFORM_ID) private platformId: Object
   ) {
     this.isSuperAdmin$ = this.authService.currentUser$.pipe(
       map(user => !!user?.isSuperAdmin)
@@ -518,6 +520,8 @@ export class AdminHomeComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    d3.select('body').selectAll('.chart-tooltip').remove();
+    if (isPlatformBrowser(this.platformId)) {
+      d3.select('body').selectAll('.chart-tooltip').remove();
+    }
   }
 }

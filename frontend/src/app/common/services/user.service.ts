@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import {Injectable} from '@angular/core';
+import {Injectable, Inject, PLATFORM_ID} from '@angular/core';
+import {isPlatformBrowser} from '@angular/common';
 import {UserModel} from '../models/user.model';
 import { PaginatedResponse } from '../models/pagination.model';
 import {environment} from '../../../environments/environment';
@@ -31,7 +32,10 @@ const badgeURL = `${environment.backendURL}/`;
   providedIn: 'root',
 })
 export class UserService {
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {}
 
   get(id: number): Observable<UserModel> {
     return this.http.get<UserModel>(`${environment.backendURL}/users/${id}`);
@@ -48,9 +52,11 @@ export class UserService {
   // Deprecated: Use AuthService.getUser() or AuthService.getCurrentUserValue()
   // Keeping for compatibility if needed, but better to refactor consumers
   getUserDetails(): UserModel | null {
-    const userStr = localStorage.getItem('USER_DETAILS');
-    if (userStr) {
-      return JSON.parse(userStr) as UserModel;
+    if (isPlatformBrowser(this.platformId)) {
+      const userStr = localStorage.getItem('USER_DETAILS');
+      if (userStr) {
+        return JSON.parse(userStr) as UserModel;
+      }
     }
     return null;
   }

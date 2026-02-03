@@ -1,4 +1,5 @@
-import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, OnDestroy, Inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { handleErrorSnackbar, handleSuccessSnackbar } from '../../utils/handleMessageSnackbar';
 import { AnalyticsService, TokenUsage, TokenBudgets, ActiveRoles, AssignedCreditsOverTime } from '../../common/services/analytics.service';
 import * as d3 from 'd3';
@@ -64,7 +65,8 @@ export class CreditsAnalyticsComponent implements OnInit, AfterViewInit, OnDestr
     private organizationService: OrganizationService,
     private creditsService: CreditsService,
     private snackBar: MatSnackBar,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    @Inject(PLATFORM_ID) private platformId: Object
   ) {
     this.isSuperAdmin = this.authService.isUserAdmin() ?? false;
   }
@@ -463,6 +465,8 @@ export class CreditsAnalyticsComponent implements OnInit, AfterViewInit, OnDestr
   }
 
   ngOnDestroy(): void {
-    d3.select('body').selectAll('.chart-tooltip').remove();
+    if (isPlatformBrowser(this.platformId)) {
+      d3.select('body').selectAll('.chart-tooltip').remove();
+    }
   }
 }

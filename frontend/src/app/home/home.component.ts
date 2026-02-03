@@ -24,7 +24,9 @@ import {
   OnDestroy,
   OnInit,
   ViewChild,
+  PLATFORM_ID
 } from '@angular/core';
+import {isPlatformBrowser} from '@angular/common';
 import { MatChipInputEvent } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconRegistry } from '@angular/material/icon';
@@ -254,6 +256,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     @Inject(WorkspaceStateService)
     private workspaceStateService: WorkspaceStateService,
     private imageStateService: ImageStateService,
+    @Inject(PLATFORM_ID) private platformId: Object
   ) {
     this.matIconRegistry
       .addSvgIcon(
@@ -323,7 +326,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     // This hook is called after the component's view has been initialized.
     // Now we can be sure that 'interBubble' is available.
-    if (this.interBubble && this.interBubble.nativeElement) {
+    if (this.interBubble && this.interBubble.nativeElement && isPlatformBrowser(this.platformId)) {
       this.move();
     } else {
       console.warn(
@@ -336,7 +339,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     if (typeof window !== 'undefined')
       window.removeEventListener('mousemove', this.onMouseMove);
 
-    if (this.animationFrameId) {
+    if (isPlatformBrowser(this.platformId) && this.animationFrameId) {
       cancelAnimationFrame(this.animationFrameId);
     }
   }

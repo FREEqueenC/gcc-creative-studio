@@ -132,3 +132,13 @@ class WorkspaceService:
             all_workspaces_map[w.id] = w
 
         return list(all_workspaces_map.values())
+
+    async def delete_workspace(self, workspace_id: int, user: UserModel) -> bool:
+        """
+        Deletes a specific workspace.
+        This action is restricted to the workspace owner.
+        """
+        workspace = await self.workspace_repo.get_by_id(workspace_id)
+        if not workspace or workspace.owner_id != user.id:
+            return False
+        return await self.workspace_repo.delete(workspace_id)

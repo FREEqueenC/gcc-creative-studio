@@ -517,18 +517,21 @@ class BrandGuidelineService:
 
         # Delete vectors from Vector Search
         # Delete Text Vectors
-        if guideline.source_pdf_gcs_uris:
-            # Assuming 1 chunk per URI, but might be more if we indexed rules separately.
-            # Using a safe range or querying would be better, but for now we rely on the chunk count.
-            text_vector_ids = [f"{guideline.id}_text_{i}" for i in range(len(guideline.source_pdf_gcs_uris))]
-            logger.info(f"Deleting {len(text_vector_ids)} text vectors for guideline {guideline.id}")
-            await asyncio.to_thread(self.vector_search_service.delete_vectors, text_vector_ids, index_type="text")
+        try:
+            if guideline.source_pdf_gcs_uris:
+                # Assuming 1 chunk per URI, but might be more if we indexed rules separately.
+                # Using a safe range or querying would be better, but for now we rely on the chunk count.
+                text_vector_ids = [f"{guideline.id}_text_{i}" for i in range(len(guideline.source_pdf_gcs_uris))]
+                logger.info(f"Deleting {len(text_vector_ids)} text vectors for guideline {guideline.id}")
+                await asyncio.to_thread(self.vector_search_service.delete_vectors, text_vector_ids, index_type="text")
 
-        # Delete Image Vectors
-        if guideline.reference_image_uris:
-            image_vector_ids = [f"{guideline.id}_image_{i}" for i in range(len(guideline.reference_image_uris))]
-            logger.info(f"Deleting {len(image_vector_ids)} image vectors for guideline {guideline.id}")
-            await asyncio.to_thread(self.vector_search_service.delete_vectors, image_vector_ids, index_type="image")
+            # Delete Image Vectors
+            if guideline.reference_image_uris:
+                image_vector_ids = [f"{guideline.id}_image_{i}" for i in range(len(guideline.reference_image_uris))]
+                logger.info(f"Deleting {len(image_vector_ids)} image vectors for guideline {guideline.id}")
+                await asyncio.to_thread(self.vector_search_service.delete_vectors, image_vector_ids, index_type="image")
+        except Exception as ve:
+            logger.warning(f"Failed to delete vectors during guideline cleanup (ignoring): {ve}")
 
         # Delete the Firestore document
         if guideline.id:

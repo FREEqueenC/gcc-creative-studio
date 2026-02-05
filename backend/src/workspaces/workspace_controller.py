@@ -95,3 +95,26 @@ async def invite_user(
             detail="Workspace or user to invite not found.",
         )
     return updated_workspace
+
+
+@router.delete(
+    "/{workspace_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete a Workspace",
+)
+async def delete_workspace(
+    workspace_id: int,
+    current_user: UserModel = Depends(get_current_user),
+    workspace_service: WorkspaceService = Depends(),
+):
+    """
+    Deletes a specific workspace.
+    This action is restricted to the workspace's OWNER.
+    """
+    deleted = await workspace_service.delete_workspace(workspace_id, current_user)
+    if not deleted:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Workspace not found or unauthorized.",
+        )
+    return

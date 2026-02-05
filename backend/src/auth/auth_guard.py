@@ -61,22 +61,25 @@ async def get_current_user(
 ) -> UserModel:
     """
     Dependency that handles the entire authentication and user provisioning flow.
-
-    1. Verifies the Firebase ID token.
-    2. Extracts user information (id, email).
-    3. Checks if a user document exists in Firestore.
-    4. If the user is new, creates their document ("Just-In-Time Provisioning").
-    5. Returns a Pydantic model with the user's data.
     """
     try:
         decoded_token = {}
-        if config_service.ENVIRONMENT == "local":
-            # --- Local: Use Firebase Auth ---
-            # Verifies the token using the standard Firebase Admin SDK method.
+        
+        # --- BYPASS: Special 'dummy' token for local development/testing ---
+        if token == "dummy" and config_service.ENVIRONMENT in ["local", "development"]:
+            logger.info("Using local authentication bypass for 'dummy' token.")
+            decoded_token = {
+                "email": "test@example.com",
+                "name": "Test User",
+                "picture": "",
+                "hd": ""
+            }
+        elif config_service.ENVIRONMENT in ["local", "development"]:
+            # --- Local: Use Firebase Auth (if token provided isn't 'dummy') ---
             logger.info("Verifying token using Firebase Admin SDK...")
             decoded_token = await asyncio.to_thread(auth.verify_id_token, token)
         else:
-            # --- Development/Production: Use Google Identity Platform (OIDC) ---
+            # --- Production: Use Google Identity Platform (OIDC) ---
             # Verifies the Google-issued OIDC ID token. The audience must be the
             # OAuth 2.0 client ID of the Identity Platform-protected resource.
             GOOGLE_TOKEN_AUDIENCE = config_service.GOOGLE_TOKEN_AUDIENCE

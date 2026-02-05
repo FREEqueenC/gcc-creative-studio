@@ -39,6 +39,7 @@ class GenerationModelEnum(str, Enum):
     IMAGEN_3_001 = "imagen-3.0-generate-001"
     IMAGEN_3_FAST = "imagen-3.0-fast-generate-001"
     IMAGEN_3_002 = "imagen-3.0-generate-002"
+    IMAGEN_3_CAPABILITY = "imagen-3.0-capability-001"
     IMAGEGEN_006 = "imagegeneration@006"
     IMAGEGEN_005 = "imagegeneration@005"
     IMAGEGEN_002 = "imagegeneration@002"

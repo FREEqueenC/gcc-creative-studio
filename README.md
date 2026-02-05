@@ -344,3 +344,24 @@ docker compose up
 ```
 
 As this uses volumes, and we use hot reload to start the services, every time you change something on the files the container will be refreshed with the changes.
+
+## 5. Branding Guideline Evaluation
+
+To verify that the system is correctly enforcing brand identity, you can run an automated evaluation pipeline. This pipeline uses a "Golden Dataset" of prompts and compares the generated images against brand guidelines using Gemini as a judge.
+
+### Running the Evaluation
+
+The evaluation script is designed to run within the backend container environment. Ensure your services are up and then run:
+
+```bash
+# Using Podman
+podman exec backend sh -c "python -m src.evaluation.run_evaluation --dataset src/evaluation/golden_dataset.json --workspace-id 1"
+```
+
+```bash
+# Using Docker
+docker exec backend sh -c "python -m src.evaluation.run_evaluation --dataset src/evaluation/golden_dataset.json --workspace-id 1"
+```
+
+### Guideline Setup
+The evaluation expects branding guidelines to be associated with a workspace. In the local development environment, the guidelines for **Workspace 1** are automatically initialized when the `bootstrap` script is run. This includes visual style summaries and color palettes derived from the `Cymbal Design Intro.pdf`.

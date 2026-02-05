@@ -127,6 +127,7 @@ class CreateImagenDto(BaseDto):
             GenerationModelEnum.IMAGEN_3_001,
             GenerationModelEnum.IMAGEN_3_002,
             GenerationModelEnum.IMAGEN_3_FAST,
+            GenerationModelEnum.IMAGEN_3_CAPABILITY,
             GenerationModelEnum.IMAGEN_4_FAST,
             GenerationModelEnum.IMAGEN_4_ULTRA,
             GenerationModelEnum.IMAGEN_4_001,
@@ -151,7 +152,10 @@ class CreateImagenDto(BaseDto):
         generated_inputs_count = (
             len(self.source_media_items) if self.source_media_items else 0
         )
-        total_inputs = source_assets_count + generated_inputs_count
+        # reference_image_gcs_uris should also count as inputs
+        refs_count = len(self.reference_image_gcs_uris) if self.reference_image_gcs_uris else 0
+        
+        total_inputs = source_assets_count + generated_inputs_count + refs_count
 
         is_gemini_3_pro = (
             self.generation_model == GenerationModelEnum.GEMINI_3_PRO_IMAGE_PREVIEW
@@ -218,11 +222,12 @@ class CreateImagenDto(BaseDto):
             allowed_editing_models = [
                 GenerationModelEnum.IMAGEN_3_FAST,
                 GenerationModelEnum.IMAGEN_3_002,
+                GenerationModelEnum.IMAGEN_3_CAPABILITY,
             ]
             if self.generation_model not in allowed_editing_models:
                 raise ValueError(
                     f"Model '{self.generation_model.value}' does not support image editing with Imagen. "
-                    "Please use 'imagen-3.0-fast-generate-001' or 'imagen-3.0-generate-002'."
+                    "Please use 'imagen-3.0-fast-generate-001', 'imagen-3.0-generate-002', or 'imagen-3.0-capability-001'."
                 )
 
         return self

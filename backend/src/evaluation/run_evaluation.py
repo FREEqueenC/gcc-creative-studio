@@ -14,262 +14,375 @@
 # limitations under the License.
 
 """
-CLI script for running brand evaluation against a golden dataset.
-This script now generates images using Imagen 3 before evaluating them.
-
-Usage:
-    python -m src.evaluation.run_evaluation --dataset path/to/golden_dataset.json
-    
-    # With custom threshold (default: 80)
-    python -m src.evaluation.run_evaluation --dataset golden_dataset.json --threshold 90
-    
-    # Save results to file
-    python -m src.evaluation.run_evaluation --dataset golden_dataset.json --output results.json
-
-Exit Codes:
-    0 - All tests passed (or met threshold)
-    1 - One or more tests failed
+Principal-Grade CLI script for running brand evaluation against a golden dataset.
+Handles workspace lifecycle, branding synchronization, parallel generation, and GCS archival.
 """
 
 import argparse
 import json
 import logging
 import sys
-import base64
-import os
-from dataclasses import asdict
+import time
+import httpx
+import uuid
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Any
+from concurrent.futures import ThreadPoolExecutor
 
-from google.genai import Client, types
-from src.evaluation.brand_evaluator import BrandEvaluator, ValidationResult, TestCase, EvaluationReport
-from src.multimodal.schema.gemini_model_setup import GeminiModelSetup
+from google.cloud import storage
+from src.evaluation.brand_evaluator import BrandEvaluator, ValidationResult, TestCase
+from src.config.config_service import config_service
+
+# --- CONFIGURATION & CONSTANTS ---
+DEFAULT_BACKEND_URL = "http://localhost:8080"
+DEFAULT_EVAL_MODEL = "gemini-3-pro-preview"
+DEFAULT_GEN_MODEL = "imagen-3.0-capability-001"
+DEFAULT_MAX_WORKERS = 5
+DEFAULT_POLL_RETRIES = 60
+DEFAULT_POLL_DELAY = 5
+AUTH_TOKEN = "dummy"  # Local bypass token
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("EvaluationRunner")
 
 
-def generate_image_for_test_case(
-    client: Client, 
-    test_case: TestCase, 
-    output_dir: Path,
-    model_id: str = "imagen-3.0-generate-001"
-) -> Optional[Path]:
-    """
-    Generates an image for a test case using the specified model.
-    """
-    try:
-        logger.info(f"Generating image for test {test_case.id}...")
+@dataclass
+class EvaluationConfig:
+    """Holds all configuration parameters for the evaluation run."""
+    dataset_path: Path
+    images_dir: Path
+    workspace_id: int
+    threshold: float
+    output_path: Optional[Path]
+    eval_model: str
+    gen_model: str
+    guideline_pdf: Optional[Path]
+    max_workers: int
+    backend_url: str = DEFAULT_BACKEND_URL
+
+
+class GcsManager:
+    """Helper for Google Cloud Storage operations."""
+    
+    def __init__(self, bucket_name: str):
+        self.client = storage.Client()
+        self.bucket = self.client.bucket(bucket_name)
+
+    def upload_file(self, local_path: Path, gcs_uri: str) -> bool:
+        """Uploads a local file to a GCS URI (gs://bucket/path)."""
+        try:
+            blob_name = gcs_uri.replace(f"gs://{self.bucket.name}/", "")
+            blob = self.bucket.blob(blob_name)
+            blob.upload_from_filename(str(local_path))
+            logger.info(f"Uploaded: {local_path.name} -> {gcs_uri}")
+            return True
+        except Exception as e:
+            logger.error(f"Failed GCS upload ({gcs_uri}): {e}")
+            return False
+
+    def download_file(self, gcs_uri: str, local_path: Path) -> bool:
+        """Downloads a file from GCS to a local path."""
+        try:
+            blob_name = gcs_uri.replace(f"gs://{self.bucket.name}/", "")
+            blob = self.bucket.blob(blob_name)
+            blob.download_to_filename(str(local_path))
+            return True
+        except Exception as e:
+            logger.error(f"Failed GCS download ({gcs_uri}): {e}")
+            return False
+
+
+class EvaluationClient:
+    """Handles communication with the GCC Creative Studio Backend API."""
+
+    def __init__(self, base_url: str, token: str):
+        self.base_url = base_url
+        self.token = token
+        self.client = httpx.Client(timeout=30.0)
+
+    def _get_url(self, path: str) -> str:
+        sep = "&" if "?" in path else "?"
+        return f"{self.base_url}{path}{sep}token={self.token}"
+
+    def ensure_workspace(self, workspace_id: int) -> int:
+        """Checks if a workspace exists, creates one if not."""
+        response = self.client.get(self._get_url("/api/workspaces"))
+        response.raise_for_status()
+        workspaces = response.json()
         
-        # Construct prompt with brand guidelines
-        guideline_text = test_case.guidelines.text
-        if test_case.guidelines.color_palette:
-            guideline_text += f"\nColor Palette: {', '.join(test_case.guidelines.color_palette)}"
-        if test_case.guidelines.visual_style:
-            guideline_text += f"\nVisual Style: {test_case.guidelines.visual_style}"
+        target = next((ws for ws in workspaces if ws["id"] == workspace_id), None)
+        if target:
+            logger.info(f"Using workspace {workspace_id}")
+            return workspace_id
+
+        logger.info(f"Workspace {workspace_id} not found. Creating dynamic evaluation workspace...")
+        payload = {
+            "name": f"Eval Workspace {uuid.uuid4().hex[:6]}",
+            "description": "Generated for branding evaluation pipeline"
+        }
+        res = self.client.post(self._get_url("/api/workspaces"), json=payload)
+        res.raise_for_status()
+        new_id = res.json()["id"]
+        logger.info(f"CREATED NEW WORKSPACE: {new_id}")
+        return new_id
+
+    def setup_branding(self, workspace_id: int, pdf_path: Path, gcs_uri: str) -> bool:
+        """Finalizes PDF upload and polls for processing completion."""
+        # 0. Check for existing completed guideline
+        try:
+            check_res = self.client.get(self._get_url(f"/api/brand-guidelines/workspace/{workspace_id}"))
+            if check_res.status_code == 200:
+                guideline = check_res.json()
+                if guideline.get("status") == "completed":
+                    logger.info(f"Workspace {workspace_id} already has a completed brand guideline. Skipping setup.")
+                    return True
+        except Exception:
+            pass # Not found or error, proceed with setup
+
+        # 1. Finalize
+
+        # Poll
+        logger.info(f"Polling for guideline processing (Workspace {workspace_id})...")
+        for i in range(120):
+            status_res = self.client.get(self._get_url(f"/api/brand-guidelines/workspace/{workspace_id}"))
+            status_res.raise_for_status()
+            guideline = status_res.json()
             
-        full_prompt = (
-            f"{test_case.original_prompt}\n\n"
-            f"Brand Guidelines:\n{guideline_text}"
-        )
-        
-        response = client.models.generate_images(
-            model=model_id,
-            prompt=full_prompt,
-            config=types.GenerateImagesConfig(
-                number_of_images=1,
-                aspect_ratio="1:1"
-            )
-        )
-        
-        if response.generated_images:
-            image_data = response.generated_images[0].image.image_bytes
-            output_path = output_dir / f"{test_case.id}.png"
+            status = guideline.get("status")
+            if status == "completed":
+                logger.info("✅ Branding processing finished.")
+                return True
+            if status == "failed":
+                raise RuntimeError(f"Guideline processing failed: {guideline.get('errorMessage')}")
             
-            with open(output_path, "wb") as f:
-                f.write(image_data)
-                
-            logger.info(f"Image saved to: {output_path}")
-            return output_path
-            
-        logger.warning(f"No images generated for {test_case.id}")
-        return None
+            if (i + 1) % 6 == 0:
+                logger.info(f"  ...still processing ({i+1}/120)")
+            time.sleep(10)
         
-    except Exception as e:
-        logger.error(f"Failed to generate image for {test_case.id}: {e}")
-        return None
+        return False
+
+    def generate_image(self, test_id: str, prompt: str, workspace_id: int, model_id: str, refs: list[str]) -> dict:
+        """Triggers image generation and returns the media item ID."""
+        payload = {
+            "prompt": prompt,
+            "use_brand_guidelines": True,
+            "workspace_id": workspace_id,
+            "generation_model": model_id,
+            "aspect_ratio": "1:1",
+            "reference_image_gcs_uris": refs if refs else None
+        }
+        res = self.client.post(self._get_url("/api/images/generate-images"), json=payload)
+        res.raise_for_status()
+        return res.json()
+
+    def poll_generation(self, media_id: int) -> dict:
+        """Polls for generation completion."""
+        for i in range(DEFAULT_POLL_RETRIES):
+            res = self.client.get(self._get_url(f"/api/gallery/item/{media_id}"))
+            res.raise_for_status()
+            item = res.json()
+            
+            if item.get("status") in ["completed", "failed"]:
+                return item
+            
+            time.sleep(DEFAULT_POLL_DELAY)
+        
+        return {"status": "timeout"}
+
+
+class EvaluationRunner:
+    """Orchestrates the evaluation lifecycle."""
+
+    def __init__(self, config: EvaluationConfig):
+        self.config = config
+        self.run_id = str(uuid.uuid4())
+        self.gcs_base = f"gs://{config_service.GENMEDIA_BUCKET}/evaluations/{self.run_id}"
+        self.gcs = GcsManager(config_service.GENMEDIA_BUCKET)
+        self.api = EvaluationClient(config.backend_url, AUTH_TOKEN)
+        self.evaluator = BrandEvaluator(model_id=config.eval_model)
+
+    def prepare_environment(self) -> int:
+        """Initializes workspace and branding guidelines."""
+        logger.info(f"Run ID: {self.run_id}")
+        logger.info(f"GCS Base: {self.gcs_base}")
+        
+        workspace_id = self.api.ensure_workspace(self.config.workspace_id)
+        
+        if self.config.guideline_pdf:
+            # 1. Archive PDF for the Judge (LLM-as-a-Judge)
+            self.gcs.upload_file(self.config.guideline_pdf, f"{self.gcs_base}/guidelines.pdf")
+            
+            # 2. Setup branding if needed
+            # Check for existing completed guideline first
+            is_branded = False
+            try:
+                check_res = self.api.client.get(self.api._get_url(f"/api/brand-guidelines/workspace/{workspace_id}"))
+                if check_res.status_code == 200:
+                    guideline = check_res.json()
+                    if guideline.get("status") == "completed":
+                        logger.info(f"Workspace {workspace_id} already has a completed brand guideline. Skipping backend setup.")
+                        is_branded = True
+            except Exception:
+                pass
+
+            if not is_branded:
+                # Backend Needs PDF in GCS for processing
+                upload_uri = f"gs://{config_service.GENMEDIA_BUCKET}/brand-guidelines/{workspace_id}/uploads/{uuid.uuid4()}/{self.config.guideline_pdf.name}"
+                self.gcs.upload_file(self.config.guideline_pdf, upload_uri)
+                self.api.setup_branding(workspace_id, self.config.guideline_pdf, upload_uri)
+            
+        return workspace_id
+
+    def run_test_case(self, test_case: TestCase, workspace_id: int) -> dict:
+        """Executes a single test case end-to-end."""
+        try:
+            # 1. Upload Refs
+            ref_uris = []
+            for i, p in enumerate(test_case.reference_image_paths):
+                path = Path(p)
+                if path.exists():
+                    uri = f"{self.gcs_base}/{test_case.id}/references/ref_{i}{path.suffix}"
+                    if self.gcs.upload_file(path, uri):
+                        ref_uris.append(uri)
+
+            # 2. Generate
+            media = self.api.generate_image(test_case.id, test_case.original_prompt, workspace_id, self.config.gen_model, ref_uris)
+            result_item = self.api.poll_generation(media["id"])
+            
+            if result_item["status"] != "completed":
+                return self._fail_result(test_case, f"Generation failed: {result_item.get('errorMessage')}")
+
+            # 3. Download & Archive
+            local_img = self.config.images_dir / f"{test_case.id}.png"
+            # Try presigned first
+            downloaded = False
+            if result_item.get("presignedUrls"):
+                try:
+                    img_res = httpx.get(result_item["presignedUrls"][0])
+                    img_res.raise_for_status()
+                    local_img.write_bytes(img_res.content)
+                    downloaded = True
+                except: pass
+            
+            if not downloaded and result_item.get("gcsUris"):
+                downloaded = self.gcs.download_file(result_item["gcsUris"][0], local_img)
+
+            if not downloaded:
+                return self._fail_result(test_case, "Failed to download generated image")
+
+            self.gcs.upload_file(local_img, f"{self.gcs_base}/{test_case.id}/generated.png")
+
+            # 4. Judge
+            judge_pdf = f"{self.gcs_base}/guidelines.pdf" if self.config.guideline_pdf else None
+            validation = self.evaluator.evaluate_image(test_case, str(local_img), guideline_pdf_path=judge_pdf)
+            
+            res = asdict(validation)
+            res["generated_image_gcs_uri"] = f"{self.gcs_base}/{test_case.id}/generated.png"
+            res["reference_image_gcs_uris"] = ref_uris
+            return res
+
+        except Exception as e:
+            logger.error(f"Test {test_case.id} failed: {e}")
+            return self._fail_result(test_case, str(e))
+
+    def _fail_result(self, test_case: TestCase, reason: str) -> dict:
+        return asdict(ValidationResult(
+            test_id=test_case.id,
+            image_path="N/A",
+            is_compliant=False,
+            score=0,
+            reasoning=reason,
+            issues=[reason],
+            expected_compliant=test_case.expected_compliant
+        ))
+
+    def execute(self):
+        """Runs the entire evaluation suite."""
+        workspace_id = self.prepare_environment()
+        
+        self.config.images_dir.mkdir(exist_ok=True, parents=True)
+        dataset = self.evaluator.load_golden_dataset(str(self.config.dataset_path))
+        logger.info(f"Starting parallel evaluation ({len(dataset.test_cases)} cases, {self.config.max_workers} workers)...")
+
+        with ThreadPoolExecutor(max_workers=self.config.max_workers) as executor:
+            futures = [executor.submit(self.run_test_case, tc, workspace_id) for tc in dataset.test_cases]
+            results = [f.result() for f in futures]
+
+        self._report(results)
+
+    def _report(self, results: list[dict]):
+        """Computes metrics and saves/archives results."""
+        total = len(results)
+        passed = sum(1 for r in results if r["passed"])
+        avg_score = sum(r["score"] for r in results) / total if total > 0 else 0
+        rate = (passed / total * 100) if total > 0 else 0
+
+        summary = {
+            "run_id": self.run_id,
+            "total_tests": total,
+            "passed_tests": passed,
+            "pass_rate": rate,
+            "average_score": avg_score,
+            "threshold": self.config.threshold,
+            "gcs_base": self.gcs_base
+        }
+
+        print("\n" + "="*40 + "\nEVALUATION COMPLETE\n" + "="*40)
+        print(json.dumps(summary, indent=2))
+        
+        full_output = {"summary": summary, "results": results}
+        
+        # Save & Archive
+        tmp_json = Path("/tmp/eval_results.json")
+        tmp_json.write_text(json.dumps(full_output, indent=2))
+        self.gcs.upload_file(tmp_json, f"{self.gcs_base}/results.json")
+        
+        if self.config.output_path:
+            self.config.output_path.write_text(json.dumps(full_output, indent=2))
+            logger.info(f"Local results saved to: {self.config.output_path}")
+
+        if rate < self.config.threshold:
+            print(f"\n✗ FAILED: Pass rate {rate:.1f}% below threshold {self.config.threshold}%")
+            sys.exit(1)
+        else:
+            print(f"\n✓ PASSED: Pass rate {rate:.1f}% meets threshold")
+            sys.exit(0)
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Run brand evaluation against a golden dataset."
-    )
-    parser.add_argument(
-        "--dataset",
-        type=str,
-        required=True,
-        help="Path to the golden dataset JSON file"
-    )
-    parser.add_argument(
-        "--threshold",
-        type=float,
-        default=80.0,
-        help="Minimum pass rate percentage to consider evaluation successful (default: 80)"
-    )
-    parser.add_argument(
-        "--output",
-        type=str,
-        default=None,
-        help="Optional path to save detailed results as JSON"
-    )
-    parser.add_argument(
-        "--eval-model",
-        type=str,
-        default="gemini-2.5-pro",
-        help="Gemini model ID to use for evaluation (default: gemini-2.5-pro)"
-    )
-    parser.add_argument(
-        "--gen-model",
-        type=str,
-        default="imagen-3.0-generate-001",
-        help="Imagen model ID to use for generation (default: imagen-3.0-generate-001)"
-    )
-    parser.add_argument(
-        "--verbose",
-        action="store_true",
-        help="Enable verbose output with detailed results"
-    )
-    
-    parser.add_argument(
-        "--images-dir",
-        type=str,
-        default="generated_images",
-        help="Directory to save generated images (default: generated_images)"
-    )
-    
+    parser = argparse.ArgumentParser(description="GCC Creative Studio Evaluation Pipeline")
+    parser.add_argument("--dataset", type=str, required=True, help="Golden dataset JSON")
+    parser.add_argument("--workspace-id", type=int, default=1, help="Target workspace")
+    parser.add_argument("--threshold", type=float, default=80.0, help="Pass rate threshold")
+    parser.add_argument("--output", type=str, help="Save JSON results locally")
+    parser.add_argument("--eval-model", type=str, default=DEFAULT_EVAL_MODEL)
+    parser.add_argument("--gen-model", type=str, default=DEFAULT_GEN_MODEL)
+    parser.add_argument("--guideline-pdf", type=str, help="Brand guideline PDF")
+    parser.add_argument("--max-workers", type=int, default=DEFAULT_MAX_WORKERS)
+    parser.add_argument("--images-dir", type=str, default="generated_images")
     args = parser.parse_args()
-    
-    # Validate dataset path
-    dataset_path = Path(args.dataset)
-    if not dataset_path.exists():
-        logger.error(f"Dataset file not found: {dataset_path}")
-        sys.exit(1)
-    
-    logger.info(f"Loading golden dataset from: {dataset_path}")
-    
+
+    config = EvaluationConfig(
+        dataset_path=Path(args.dataset),
+        images_dir=Path(args.images_dir),
+        workspace_id=args.workspace_id,
+        threshold=args.threshold,
+        output_path=Path(args.output) if args.output else None,
+        eval_model=args.eval_model,
+        gen_model=args.gen_model,
+        guideline_pdf=Path(args.guideline_pdf) if args.guideline_pdf else None,
+        max_workers=args.max_workers
+    )
+
+    runner = EvaluationRunner(config)
     try:
-        # Initialize clients
-        client = GeminiModelSetup.init()
-        evaluator = BrandEvaluator(model_id=args.eval_model)
-        
-        # Load dataset
-        golden_dataset = evaluator.load_golden_dataset(str(dataset_path))
-        logger.info(f"Found {len(golden_dataset.test_cases)} test cases")
-        
-        if len(golden_dataset.test_cases) == 0:
-            logger.warning("No test cases found in dataset")
-            sys.exit(0)
-            
-        # Create output directory for generated images
-        output_dir = Path(args.images_dir)
-        output_dir.mkdir(exist_ok=True, parents=True)
-        
-        # Run generation and evaluation
-        results = []
-        
-        for test_case in golden_dataset.test_cases:
-            # 1. Generate Image
-            generated_image_path = generate_image_for_test_case(
-                client, test_case, output_dir, model_id=args.gen_model
-            )
-            
-            if not generated_image_path:
-                logger.error(f"Skipping evaluation for {test_case.id} due to generation failure")
-                # Fail the test case if generation fails
-                results.append(ValidationResult(
-                    test_id=test_case.id,
-                    image_path="N/A",
-                    is_compliant=False,
-                    score=0,
-                    reasoning="Image generation failed",
-                    issues=["Generation failed"],
-                    expected_compliant=test_case.expected_compliant
-                ))
-                continue
-            
-            # 2. Evaluate Image
-            result = evaluator.evaluate_image(test_case, str(generated_image_path))
-            results.append(result)
-            
-        # Compute metrics
-        report = evaluator.compute_metrics(results)
-        
-        # Print summary
-        print("\n" + "=" * 60)
-        print("BRAND EVALUATION REPORT")
-        print("=" * 60)
-        print(f"Total Tests:    {report.total_tests}")
-        print(f"Passed:         {report.passed_tests}")
-        print(f"Failed:         {report.failed_tests}")
-        print(f"Pass Rate:      {report.pass_rate:.1f}%")
-        print(f"Average Score:  {report.average_score:.1f}/100")
-        print(f"Threshold:      {args.threshold}%")
-        print("=" * 60)
-        
-        # Print detailed results if verbose
-        if args.verbose:
-            print("\nDETAILED RESULTS:")
-            print("-" * 60)
-            for result in report.results:
-                status = "✓ PASS" if result.passed else "✗ FAIL"
-                print(f"\n[{status}] Test: {result.test_id}")
-                print(f"  Image: {result.image_path}")
-                print(f"  Score: {result.score}/100")
-                print(f"  Compliant: {result.is_compliant} (Expected: {result.expected_compliant})")
-                
-                if result.guideline_checks:
-                    print(f"\n  Guideline Checks:")
-                    for check in result.guideline_checks:
-                        check_status = "✓" if check.status == "Pass" else "✗" if check.status == "Fail" else "?"
-                        print(f"    [{check_status}] {check.criteria}: {check.explanation}")
-                
-                if result.issues:
-                    print(f"\n  Issues: {', '.join(result.issues)}")
-                if result.reasoning and not result.guideline_checks: # Fallback if no detailed checks
-                     print(f"  Reasoning: {result.reasoning[:200]}...")
-        
-        # Save results to file if requested
-        if args.output:
-            output_path = Path(args.output)
-            output_data = {
-                "summary": {
-                    "total_tests": report.total_tests,
-                    "passed_tests": report.passed_tests,
-                    "failed_tests": report.failed_tests,
-                    "pass_rate": report.pass_rate,
-                    "average_score": report.average_score,
-                    "threshold": args.threshold,
-                    "all_passed": report.all_passed,
-                },
-                "results": [asdict(r) for r in report.results]
-            }
-            with open(output_path, "w") as f:
-                json.dump(output_data, f, indent=2)
-            logger.info(f"Results saved to: {output_path}")
-        
-        # Determine exit code based on threshold
-        if report.pass_rate >= args.threshold:
-            print(f"\n✓ EVALUATION PASSED (Pass rate {report.pass_rate:.1f}% >= {args.threshold}%)")
-            sys.exit(0)
-        else:
-            print(f"\n✗ EVALUATION FAILED (Pass rate {report.pass_rate:.1f}% < {args.threshold}%)")
-            sys.exit(1)
-            
+        runner.execute()
     except Exception as e:
-        logger.error(f"Evaluation failed with error: {e}")
+        logger.error(f"Critical evaluation failure: {e}")
         sys.exit(1)
 
 

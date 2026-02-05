@@ -3,40 +3,17 @@
     {
       "id": "test_001_cymbal_logo",
       "reference_image_paths": [
-        "/Users/switon/dev/GoogleCloudPlatform/gcc-creative-studio/backend/bootstrap/assets/media-template/cymbal_logo.png"
+        "/app/bootstrap/assets/media-template/cymbal-suv-adventure-local-thumbnail.png"
       ],
-      "original_prompt": "Generate a brand logo for Cymbal",
-      "guidelines": {
-        "text": "Logo must be clean, modern, and professional. Should use brand colors. Must be easily recognizable and suitable for digital use.",
-        "color_palette": ["#4285F4", "#DB4437", "#F4B400", "#0F9D58"],
-        "visual_style": "Modern, clean, geometric design"
-      },
+      "original_prompt": "Add a brand logo for Cymbal to the product in the image",
       "expected_compliant": true
     },
     {
       "id": "test_002_product_shot",
       "reference_image_paths": [
-        "/Users/switon/dev/GoogleCloudPlatform/gcc-creative-studio/backend/bootstrap/assets/media-template/cymbal_vaccum.png"
+        "/app/bootstrap/assets/media-template/r2v-orbital-render-2-local-thumbnail.png"
       ],
-      "original_prompt": "Create a product photography shot of a vacuum cleaner",
-      "guidelines": {
-        "text": "Product images must show the product clearly. Good lighting required. Product should be the main focus.",
-        "color_palette": ["#FFFFFF", "#000000", "#4285F4"],
-        "visual_style": "Clean product photography, studio quality"
-      },
-      "expected_compliant": true
-    },
-    {
-      "id": "test_003_chocolate_product",
-      "reference_image_paths": [
-        "/Users/switon/dev/GoogleCloudPlatform/gcc-creative-studio/backend/bootstrap/assets/media-template/cymbal_chocolate.png"
-      ],
-      "original_prompt": "Create a chocolate product image for gourmet brand",
-      "guidelines": {
-        "text": "Food imagery should be appetizing and high quality. Warm tones preferred for chocolate products.",
-        "color_palette": ["#8B4513", "#D2691E", "#FFD700"],
-        "visual_style": "Premium food photography, rich and inviting"
-      },
+      "original_prompt": "Add a brand logo for Cymbal to the product in the image",
       "expected_compliant": true
     }
   ]

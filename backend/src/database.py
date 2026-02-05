@@ -94,7 +94,11 @@ async def get_connection():
     """
     Helper function to get a connection object for the AsyncEngine.
     """
-    if config_service.USE_CLOUD_SQL_AUTH_PROXY:
+    if (
+        not config_service.INSTANCE_CONNECTION_NAME 
+        or config_service.ENVIRONMENT in ["local", "development"]
+        or config_service.USE_CLOUD_SQL_AUTH_PROXY
+    ):
         import asyncpg
         conn = await asyncpg.connect(
             user=config_service.DB_USER,
@@ -124,7 +128,11 @@ async def cleanup_connector():
 
 
 # Create the Async Engine
-if config_service.INSTANCE_CONNECTION_NAME and not config_service.USE_CLOUD_SQL_AUTH_PROXY:
+if (
+    config_service.INSTANCE_CONNECTION_NAME 
+    and config_service.ENVIRONMENT not in ["local", "development"]
+    and not config_service.USE_CLOUD_SQL_AUTH_PROXY
+):
     # Use the Cloud SQL Python Connector
     engine = create_async_engine(
         "postgresql+asyncpg://",
@@ -162,6 +170,7 @@ class WorkerDatabase:
         # Check if we need to use the Cloud SQL Connector
         if (
             config_service.INSTANCE_CONNECTION_NAME
+            and config_service.ENVIRONMENT not in ["local", "development"]
             and not config_service.USE_CLOUD_SQL_AUTH_PROXY
         ):
             import asyncio

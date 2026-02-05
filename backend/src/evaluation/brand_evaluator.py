@@ -46,7 +46,7 @@ class TestCase(BaseModel):
     id: str = Field(description="Unique identifier for this test case")
     reference_image_paths: List[str] = Field(default_factory=list, description="Paths or GCS URIs to reference images (if any)")
     original_prompt: str = Field(description="The prompt used to generate the image")
-    guidelines: Guidelines = Field(description="Brand guidelines to check against")
+    guidelines: Optional[Guidelines] = Field(default=None, description="Optional text-based brand guidelines")
     expected_compliant: bool = Field(default=True, description="Whether this image is expected to be compliant")
 
 
@@ -119,24 +119,32 @@ class BrandEvaluator:
         self.model_id = model_id or "gemini-2.5-pro"
         logger.info(f"BrandEvaluator initialized with model: {self.model_id}")
     
-    def _build_evaluation_prompt(self, guidelines: Guidelines, original_prompt: str) -> str:
+    def _build_evaluation_prompt(self, original_prompt: str, guidelines: Optional[Guidelines] = None, has_pdf: bool = False) -> str:
         """Build the evaluation prompt for the LLM-as-a-Judge."""
-        guideline_parts = [guidelines.text]
         
-        if guidelines.color_palette:
-            colors = ", ".join(guidelines.color_palette)
-            guideline_parts.append(f"Color Palette: {colors}")
+        instructions = (
+            "You are the Brand Validator Agent. Your task is to audit the provided image against the branding guidelines.\n"
+            "Determine if the image complies with the visual style, color palette, and other rules defined in the guidelines.\n"
+            "Also check if it faithfully represents the original user prompt.\n"
+            "Calculate final score based on general adherence of the generated image to the guidelines.\n\n"
+        )
+
+        if has_pdf:
+            instructions += "--- BRAND GUIDELINES SOURCE ---\nRefer to the attached PDF document for the official branding guidelines.\n\n"
         
-        if guidelines.visual_style:
-            guideline_parts.append(f"Visual Style: {guidelines.visual_style}")
-        
-        guidelines_text = "\n".join(guideline_parts)
-        
+        if guidelines:
+            guideline_parts = [guidelines.text]
+            if guidelines.color_palette:
+                colors = ", ".join(guidelines.color_palette)
+                guideline_parts.append(f"Color Palette: {colors}")
+            if guidelines.visual_style:
+                guideline_parts.append(f"Visual Style: {guidelines.visual_style}")
+            
+            guidelines_text = "\n".join(guideline_parts)
+            instructions += f"--- SUPPLEMENTAL GUIDELINES ---\n{guidelines_text}\n\n"
+
         prompt = (
-            "You are the Brand Validator Agent. Your task is to audit the provided image against the following brand guidelines.\n"
-            "Determine if the image complies with the visual style, color palette, and other rules.\n"
-            "Also check if it faithfully represents the original user prompt.\n\n"
-            f"--- BRAND GUIDELINES ---\n{guidelines_text}\n----------------------\n\n"
+            instructions +
             f"--- ORIGINAL PROMPT ---\n{original_prompt}\n----------------------\n\n"
             "Provide your assessment in the following JSON format:\n"
             "{\n"
@@ -160,9 +168,9 @@ class BrandEvaluator:
         )
         return prompt
     
-    def _get_mime_type(self, image_path: str) -> str:
+    def _get_mime_type(self, file_path: str) -> str:
         """Determine MIME type from file extension."""
-        path_lower = image_path.lower()
+        path_lower = file_path.lower()
         if path_lower.endswith((".jpg", ".jpeg")):
             return "image/jpeg"
         elif path_lower.endswith(".png"):
@@ -171,34 +179,37 @@ class BrandEvaluator:
             return "image/gif"
         elif path_lower.endswith(".webp"):
             return "image/webp"
+        elif path_lower.endswith(".pdf"):
+            return "application/pdf"
         return "image/png"  # Default
     
-    def _load_image_part(self, image_path: str) -> types.Part:
-        """Load an image as a Part object for Gemini."""
-        if image_path.startswith("gs://"):
+    def _load_file_part(self, file_path: str) -> types.Part:
+        """Load a file as a Part object for Gemini."""
+        if file_path.startswith("gs://"):
             # GCS URI
             return types.Part.from_uri(
-                file_uri=image_path, 
-                mime_type=self._get_mime_type(image_path)
+                file_uri=file_path, 
+                mime_type=self._get_mime_type(file_path)
             )
         else:
             # Local file
-            local_path = Path(image_path)
+            local_path = Path(file_path)
             if not local_path.exists():
-                raise FileNotFoundError(f"Image not found: {image_path}")
+                raise FileNotFoundError(f"File not found: {file_path}")
             
             with open(local_path, "rb") as f:
-                image_bytes = f.read()
+                file_bytes = f.read()
             
             return types.Part.from_bytes(
-                data=image_bytes,
-                mime_type=self._get_mime_type(image_path)
+                data=file_bytes,
+                mime_type=self._get_mime_type(file_path)
             )
     
     def evaluate_image(
         self, 
         test_case: TestCase,
-        image_path: str
+        image_path: str,
+        guideline_pdf_path: Optional[str] = None
     ) -> ValidationResult:
         """
         Evaluate a single image against brand guidelines.
@@ -206,6 +217,7 @@ class BrandEvaluator:
         Args:
             test_case: The test case containing guidelines and expectations.
             image_path: Path to the image to evaluate (generated or original).
+            guideline_pdf_path: Optional path to a PDF with brand guidelines.
             
         Returns:
             ValidationResult with compliance status, score, and reasoning.
@@ -213,15 +225,22 @@ class BrandEvaluator:
         logger.info(f"Evaluating test case: {test_case.id} with image: {image_path}")
         
         try:
-            image_part = self._load_image_part(image_path)
+            contents = [self._load_file_part(image_path)]
+            
+            if guideline_pdf_path:
+                contents.append(self._load_file_part(guideline_pdf_path))
+                logger.info(f"Using guideline PDF: {guideline_pdf_path}")
+
             prompt = self._build_evaluation_prompt(
-                test_case.guidelines, 
-                test_case.original_prompt
+                test_case.original_prompt,
+                test_case.guidelines,
+                has_pdf=bool(guideline_pdf_path)
             )
+            contents.append(prompt)
             
             response = self.client.models.generate_content(
                 model=self.model_id,
-                contents=[image_part, prompt],
+                contents=contents,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json"
                 )

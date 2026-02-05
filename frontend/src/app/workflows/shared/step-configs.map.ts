@@ -21,6 +21,7 @@ import { GENERATE_IMAGE_STEP_CONFIG } from '../workflow-editor/step-components/s
 import { GENERATE_TEXT_STEP_CONFIG } from '../workflow-editor/step-components/step-configs/generate-text-step.config';
 import { GENERATE_VIDEO_STEP_CONFIG } from '../workflow-editor/step-components/step-configs/generate-video-step.config';
 import { VIRTUAL_TRY_ON_STEP_CONFIG } from '../workflow-editor/step-components/step-configs/virtual-try-on-step.config';
+import { VISUALIZE_ASSETS_STEP_CONFIG } from '../workflow-editor/step-components/step-configs/visualize-assets-step.config';
 import { NodeTypes } from '../workflow.models';
 
 export const STEP_CONFIGS_MAP = {
@@ -31,4 +32,5 @@ export const STEP_CONFIGS_MAP = {
   [NodeTypes.GENERATE_VIDEO]: GENERATE_VIDEO_STEP_CONFIG,
   [NodeTypes.VIRTUAL_TRY_ON]: VIRTUAL_TRY_ON_STEP_CONFIG,
   [NodeTypes.GENERATE_AUDIO]: GENERATE_AUDIO_STEP_CONFIG,
+  [NodeTypes.VISUALIZE_ASSETS]: VISUALIZE_ASSETS_STEP_CONFIG,
 };

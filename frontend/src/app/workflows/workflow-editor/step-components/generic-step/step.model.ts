@@ -18,10 +18,11 @@
 export interface StepInput {
   name: string;
   label: string;
-  type: 'text' | 'textarea' | 'select' | 'image' | 'video' | 'audio';
+  type: 'text' | 'textarea' | 'select' | 'image' | 'video' | 'audio' | 'asset';
   options?: { value: string; label: string }[];
   required: boolean;
   hidden?: boolean;
+  isArray?: boolean;
 }
 
 export interface StepSetting {

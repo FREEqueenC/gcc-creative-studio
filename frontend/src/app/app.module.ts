@@ -105,6 +105,7 @@ import { GenericStepComponent } from './workflows/workflow-editor/step-component
 import { WorkflowEditorComponent } from './workflows/workflow-editor/workflow-editor.component';
 import { WorkflowListComponent } from './workflows/workflow-list/workflow-list.component';
 import { WorkflowStatusPipe } from './workflows/workflow-status.pipe';
+import { WorkflowFormService } from './workflows/workflow-editor/workflow-form.service';
 import { RouterModule } from '@angular/router';
 @NgModule({
   declarations: [
@@ -205,6 +206,7 @@ import { RouterModule } from '@angular/router';
       provide: UserTrackingService, // Automatically track user interactions
     },
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
+    WorkflowFormService,
   ],
   bootstrap: [AppComponent],
 })

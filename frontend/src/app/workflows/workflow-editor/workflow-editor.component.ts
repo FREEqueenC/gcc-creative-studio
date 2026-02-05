@@ -53,7 +53,7 @@ import { WorkflowFormService } from './workflow-form.service';
   selector: 'app-workflow-editor',
   templateUrl: './workflow-editor.component.html',
   styleUrls: ['./workflow-editor.component.scss'],
-  providers: [WorkflowFormService],
+  providers: [],
 })
 export class WorkflowEditorComponent implements OnInit, OnDestroy {
   // --- Component Mode & State ---

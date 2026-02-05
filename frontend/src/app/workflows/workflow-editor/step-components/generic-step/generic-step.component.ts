@@ -303,6 +303,9 @@ onReferenceImageDrop(event: DragEvent, inputName: string): void {
   }
 
   private updateCompatibleOutputs(): void {
+    if (!this.localConfig || !this.availableOutputs) {
+      return;
+    }
     this.localConfig.inputs.forEach(input => {
       this.compatibleOutputs[input.name] = this.availableOutputs.filter(
         output => (output.type === input.type) || (output.type === "text" && input.type === "textarea") || (output.type === 'image' && input.type === 'image')

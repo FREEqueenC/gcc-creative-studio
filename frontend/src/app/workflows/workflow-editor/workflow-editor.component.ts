@@ -350,18 +350,44 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
 
   private clearDependents(deletedStepId: string) {
     this.stepsArray.controls.forEach(stepControl => {
-      const inputs = stepControl.get('inputs') as FormGroup;
-      if (!inputs) return;
+      // Check if stepControl and its 'inputs' are valid
+      if (stepControl && stepControl.get('inputs')) {
+        const inputs = stepControl.get('inputs') as FormGroup;
 
-      Object.keys(inputs.controls).forEach(inputKey => {
-        const control = inputs.get(inputKey);
-        const value = control?.value;
-        if (value && typeof value === 'object' && value.step === deletedStepId) {
-          control?.setValue(null);
-          control?.markAsDirty();
-          control?.updateValueAndValidity();
-        }
-      });
+        Object.keys(inputs.controls).forEach(inputKey => {
+          const control = inputs.get(inputKey);
+          if (control) {
+            const value = control.value;
+
+            // Handle single reference
+            if (
+              value &&
+              typeof value === 'object' &&
+              !Array.isArray(value) &&
+              value.step === deletedStepId
+            ) {
+              control.setValue(null);
+              control.markAsDirty();
+            }
+            // Handle multiple references (array)
+            else if (Array.isArray(value)) {
+              const updatedValue = value.filter(
+                (item) =>
+                  !(
+                    item &&
+                    typeof item === 'object' &&
+                    item.step === deletedStepId
+                  ),
+              );
+
+              if (updatedValue.length < value.length) {
+                control.setValue(updatedValue.length > 0 ? updatedValue : null);
+                control.markAsDirty();
+              }
+            }
+          }
+        });
+      }
     });
   }
 
@@ -616,21 +642,29 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
     this.isLoading = true;
 
     // Fetch once immediately, then start polling (or just start polling, but this keeps UI snappy)
-    this.workflowService.getExecutionDetails(this.workflowId, executionId).subscribe({
-      next: (details) => {
-        this.handleExecutionUpdate(details);
-        this.isLoading = false;
+    const details$ = this.workflowService.getExecutionDetails(
+      this.workflowId,
+      executionId,
+    );
+    if (details$) {
+      details$.subscribe({
+        next: (details) => {
+          this.handleExecutionUpdate(details);
+          this.isLoading = false;
 
-        if (details.state === 'ACTIVE') {
-          this.startPollingExecution(this.workflowId!, executionId);
-        }
-      },
-      error: (err) => {
-        console.error('Failed to load execution details', err);
-        handleErrorSnackbar(this.snackBar, err, 'Load execution details');
-        this.isLoading = false;
-      }
-    });
+          if (details.state === 'ACTIVE') {
+            this.startPollingExecution(this.workflowId!, executionId);
+          }
+        },
+        error: (err) => {
+          console.error('Failed to load execution details', err);
+          handleErrorSnackbar(this.snackBar, err, 'Load execution details');
+          this.isLoading = false;
+        },
+      });
+    } else {
+      this.startPollingExecution(this.workflowId, executionId);
+    }
   }
 
   private startPollingExecution(workflowId: string, executionId: string): void {

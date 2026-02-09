@@ -61,6 +61,10 @@ export class BatchExecutionModalComponent {
       header: true,
       skipEmptyLines: true,
       complete: (result: any) => {
+        if (result.errors.length > 0) {
+          this.validationErrors = result.errors.map((err: Papa.ParseError) => `CSV Parse Error: ${err.message}`);
+          return;
+        }
         this.headers = result.meta.fields || [];
         this.parsedItems = result.data;
         this.validateHeaders();

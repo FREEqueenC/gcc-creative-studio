@@ -211,6 +211,7 @@ describe('WorkflowEditorComponent', () => {
     });
 
     it('should handle error during data loading', () => {
+      spyOn(console, 'error');
       mockActivatedRoute.paramMap = of({
         get: (key: string) => (key === 'workflowId' ? '1' : null),
       });
@@ -353,6 +354,7 @@ describe('WorkflowEditorComponent', () => {
     });
 
     it('should handle save failure', () => {
+      spyOn(console, 'error');
       component.mode = EditorMode.Create;
 
       mockWorkflowService.createWorkflow.and.returnValue(
@@ -462,6 +464,7 @@ describe('WorkflowEditorComponent', () => {
     });
 
     it('should handle execution start failure', () => {
+      spyOn(console, 'error');
       const dialogRefSpy = jasmine.createSpyObj({
         afterClosed: of({ inputs: {} }),
       });

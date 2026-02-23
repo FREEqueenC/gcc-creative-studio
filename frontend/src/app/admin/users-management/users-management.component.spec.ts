@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
-import { MaterialModule } from '../../common/material.module';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import {MaterialModule} from '../../common/material.module';
+import {NoopAnimationsModule} from '@angular/platform-browser/animations';
 
 import {UsersManagementComponent} from './users-management.component';
 

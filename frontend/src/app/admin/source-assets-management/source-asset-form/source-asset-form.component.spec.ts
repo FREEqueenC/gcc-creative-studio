@@ -14,241 +14,56 @@
  * limitations under the License.
  */
 
+import {ComponentFixture, TestBed} from '@angular/core/testing';
 
+import {ReactiveFormsModule} from '@angular/forms';
 
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import {MatDialogRef, MAT_DIALOG_DATA} from '@angular/material/dialog';
 
-import { ReactiveFormsModule } from '@angular/forms';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
 
-import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import {MatSelectModule} from '@angular/material/select';
 
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import {NoopAnimationsModule} from '@angular/platform-browser/animations';
 
-import { MatSelectModule } from '@angular/material/select';
+import {SourceAssetFormComponent} from './source-asset-form.component';
 
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-
-
-
-import { SourceAssetFormComponent } from './source-asset-form.component';
-
-import { MaterialModule } from '../../../common/material.module';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+import {MaterialModule} from '../../../common/material.module';
 
 describe('SourceAssetFormComponent', () => {
-
-
-
-
-
-
-
   let component: SourceAssetFormComponent;
-
-
-
-
-
-
 
   let fixture: ComponentFixture<SourceAssetFormComponent>;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   beforeEach(async () => {
-
-
-
-
-
-
-
     await TestBed.configureTestingModule({
-
-
-
-
-
-
-
       declarations: [SourceAssetFormComponent],
 
-
-
-
-
-
-
       imports: [
-
-
-
-
-
-
-
         ReactiveFormsModule,
-
-
-
-
-
-
 
         HttpClientTestingModule,
 
-
-
-
-
-
-
         MaterialModule,
-
-
-
-
-
-
 
         NoopAnimationsModule,
 
-
-
-
-
-
-
-        MatSelectModule
-
-
-
-
-
-
-
+        MatSelectModule,
       ],
 
-
-
-
-
-
-
       providers: [
+        {provide: MatDialogRef, useValue: {}},
 
-
-
-
-
-
-
-        { provide: MatDialogRef, useValue: {} },
-
-
-
-
-
-
-
-        { provide: MAT_DIALOG_DATA, useValue: { asset: {} } }
-
-
-
-
-
-
-
-      ]
-
-
-
-
-
-
-
+        {provide: MAT_DIALOG_DATA, useValue: {asset: {}}},
+      ],
     }).compileComponents();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     fixture = TestBed.createComponent(SourceAssetFormComponent);
 
-
-
-
-
-
-
     component = fixture.componentInstance;
 
-
-
-
-
-
-
     fixture.detectChanges();
-
-
-
-
-
-
-
   });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
   it('should create', () => {
     expect(component).toBeTruthy();

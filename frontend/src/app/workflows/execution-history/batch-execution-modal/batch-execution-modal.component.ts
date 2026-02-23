@@ -1,15 +1,15 @@
-import { Component, Inject } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import {Component, Inject} from '@angular/core';
+import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
 import * as Papa from 'papaparse';
-import { take } from 'rxjs/operators';
-import { WorkspaceStateService } from '../../../services/workspace/workspace-state.service';
-import { BatchItemResult, WorkflowModel } from '../../workflow.models';
-import { WorkflowService } from '../../workflow.service';
+import {take} from 'rxjs/operators';
+import {WorkspaceStateService} from '../../../services/workspace/workspace-state.service';
+import {BatchItemResult, WorkflowModel} from '../../workflow.models';
+import {WorkflowService} from '../../workflow.service';
 
 @Component({
   selector: 'app-batch-execution-modal',
   templateUrl: './batch-execution-modal.component.html',
-  styleUrls: ['./batch-execution-modal.component.scss']
+  styleUrls: ['./batch-execution-modal.component.scss'],
 })
 export class BatchExecutionModalComponent {
   workflow: WorkflowModel;
@@ -25,15 +25,15 @@ export class BatchExecutionModalComponent {
 
   // Validation State
   expectedInputs: string[] = [];
-  columnMapping: { [csvHeader: string]: string | null } = {}; // Header -> InputName or null (ignored)
+  columnMapping: {[csvHeader: string]: string | null} = {}; // Header -> InputName or null (ignored)
   missingInputs: string[] = [];
   isValid = false;
 
   constructor(
     public dialogRef: MatDialogRef<BatchExecutionModalComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: { workflow: WorkflowModel },
+    @Inject(MAT_DIALOG_DATA) public data: {workflow: WorkflowModel},
     private workflowService: WorkflowService,
-    private workspaceStateService: WorkspaceStateService
+    private workspaceStateService: WorkspaceStateService,
   ) {
     this.workflow = data.workflow;
     this.extractExpectedInputs();
@@ -42,7 +42,9 @@ export class BatchExecutionModalComponent {
   extractExpectedInputs() {
     // Find the first user_input step (or all of them?)
     // Usually there's only one 'user_input' node that acts as the trigger/form.
-    const userInputStep = this.workflow.steps.find(s => s.type === 'user_input');
+    const userInputStep = this.workflow.steps.find(
+      s => s.type === 'user_input',
+    );
     if (userInputStep && userInputStep.outputs) {
       this.expectedInputs = Object.keys(userInputStep.outputs);
     }
@@ -62,7 +64,9 @@ export class BatchExecutionModalComponent {
       skipEmptyLines: true,
       complete: (result: any) => {
         if (result.errors.length > 0) {
-          this.validationErrors = result.errors.map((err: Papa.ParseError) => `CSV Parse Error: ${err.message}`);
+          this.validationErrors = result.errors.map(
+            (err: Papa.ParseError) => `CSV Parse Error: ${err.message}`,
+          );
           return;
         }
         this.headers = result.meta.fields || [];
@@ -71,7 +75,7 @@ export class BatchExecutionModalComponent {
       },
       error: (error: any) => {
         this.validationErrors = [`CSV Parse Error: ${error.message}`];
-      }
+      },
     });
   }
 
@@ -82,7 +86,7 @@ export class BatchExecutionModalComponent {
     this.isValid = false;
 
     if (this.parsedItems.length === 0) {
-      this.validationErrors.push("CSV is empty");
+      this.validationErrors.push('CSV is empty');
       return;
     }
 
@@ -114,7 +118,9 @@ export class BatchExecutionModalComponent {
     });
 
     if (this.missingInputs.length > 0) {
-      this.validationErrors.push(`Missing required columns: ${this.missingInputs.join(', ')}`);
+      this.validationErrors.push(
+        `Missing required columns: ${this.missingInputs.join(', ')}`,
+      );
     }
 
     if (this.validationErrors.length === 0) {
@@ -138,7 +144,7 @@ export class BatchExecutionModalComponent {
       .pipe(take(1))
       .subscribe(workspaceId => {
         if (!workspaceId) {
-          this.validationErrors.push("No active workspace found.");
+          this.validationErrors.push('No active workspace found.');
           this.isProcessing = false;
           return;
         }
@@ -147,7 +153,7 @@ export class BatchExecutionModalComponent {
         // We strictly use the mapping to construct args
         const items = this.parsedItems.map((row, index) => {
           const args: any = {
-            workspace_id: workspaceId
+            workspace_id: workspaceId,
           };
 
           // Only include mapped columns
@@ -160,22 +166,24 @@ export class BatchExecutionModalComponent {
 
           return {
             row_index: index,
-            args: args
+            args: args,
           };
         });
 
-        this.workflowService.batchExecuteWorkflow(this.workflow.id, items).subscribe({
-          next: (response) => {
-            this.results = response.results;
-            this.isProcessing = false;
-          },
-          error: (err) => {
-            console.error('Batch execution failed', err);
-            // Handle global failure?
-            this.validationErrors.push(`Server Error: ${err.message}`);
-            this.isProcessing = false;
-          }
-        });
+        this.workflowService
+          .batchExecuteWorkflow(this.workflow.id, items)
+          .subscribe({
+            next: response => {
+              this.results = response.results;
+              this.isProcessing = false;
+            },
+            error: err => {
+              console.error('Batch execution failed', err);
+              // Handle global failure?
+              this.validationErrors.push(`Server Error: ${err.message}`);
+              this.isProcessing = false;
+            },
+          });
       });
   }
 

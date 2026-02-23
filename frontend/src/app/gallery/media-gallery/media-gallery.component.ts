@@ -28,18 +28,18 @@ import {
   Inject,
   PLATFORM_ID,
 } from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
-import { MatCheckboxChange } from '@angular/material/checkbox';
-import { MatIconRegistry } from '@angular/material/icon';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { Subscription, fromEvent } from 'rxjs';
-import { debounceTime } from 'rxjs/operators';
-import { MediaItemSelection } from '../../common/components/image-selector/image-selector.component';
-import { MODEL_CONFIGS } from '../../common/config/model-config';
-import { JobStatus, MediaItem } from '../../common/models/media-item.model';
-import { GallerySearchDto } from '../../common/models/search.model';
-import { UserService } from '../../common/services/user.service';
-import { GalleryService } from '../gallery.service';
+import {isPlatformBrowser} from '@angular/common';
+import {MatCheckboxChange} from '@angular/material/checkbox';
+import {MatIconRegistry} from '@angular/material/icon';
+import {DomSanitizer, SafeResourceUrl} from '@angular/platform-browser';
+import {Subscription, fromEvent} from 'rxjs';
+import {debounceTime} from 'rxjs/operators';
+import {MediaItemSelection} from '../../common/components/image-selector/image-selector.component';
+import {MODEL_CONFIGS} from '../../common/config/model-config';
+import {JobStatus, MediaItem} from '../../common/models/media-item.model';
+import {GallerySearchDto} from '../../common/models/search.model';
+import {UserService} from '../../common/services/user.service';
+import {GalleryService} from '../gallery.service';
 
 @Component({
   selector: 'app-media-gallery',
@@ -78,8 +78,8 @@ export class MediaGalleryComponent implements OnInit, OnDestroy, AfterViewInit {
     value: config.value,
     viewValue: config.viewValue.replace('\n', ''), // Remove newlines for dropdown
   }));
-  private autoSlideIntervals: { [id: string]: any } = {};
-  public currentImageIndices: { [id: string]: number } = {};
+  private autoSlideIntervals: {[id: string]: any} = {};
+  public currentImageIndices: {[id: string]: number} = {};
   public hoveredVideoId: number | null = null;
   public hoveredAudioId: number | null = null;
 
@@ -92,7 +92,7 @@ export class MediaGalleryComponent implements OnInit, OnDestroy, AfterViewInit {
     private userService: UserService,
     private elementRef: ElementRef,
     private ngZone: NgZone,
-    @Inject(PLATFORM_ID) platformId: Object
+    @Inject(PLATFORM_ID) platformId: Object,
   ) {
     this.isBrowser = isPlatformBrowser(platformId);
     this.matIconRegistry
@@ -146,8 +146,8 @@ export class MediaGalleryComponent implements OnInit, OnDestroy, AfterViewInit {
       });
 
     if (this.isBrowser) {
-        this.handleResize();
-        this.resizeSubscription = fromEvent(window, 'resize')
+      this.handleResize();
+      this.resizeSubscription = fromEvent(window, 'resize')
         .pipe(debounceTime(200))
         .subscribe(() => this.handleResize());
     }
@@ -170,16 +170,15 @@ export class MediaGalleryComponent implements OnInit, OnDestroy, AfterViewInit {
     this._hostVisibilityObserver.observe(this.elementRef.nativeElement);
   }
 
-
   ngOnDestroy(): void {
     this.stopAudio();
     if (this.isBrowser) {
-        // Force pause any lingering audio elements to prevent them from playing after component destruction
-        const audios = this.elementRef.nativeElement.querySelectorAll('audio');
-        audios.forEach((a: HTMLAudioElement) => {
+      // Force pause any lingering audio elements to prevent them from playing after component destruction
+      const audios = this.elementRef.nativeElement.querySelectorAll('audio');
+      audios.forEach((a: HTMLAudioElement) => {
         a.pause();
         a.src = '';
-        });
+      });
     }
 
     this.imagesSubscription?.unsubscribe();
@@ -271,7 +270,7 @@ export class MediaGalleryComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.isSelectionMode) {
       const selectedIndex = this.currentImageIndices[mediaItem.id] || 0;
       // Emit the full media item and the selected index
-      this.mediaItemSelected.emit({ mediaItem, selectedIndex });
+      this.mediaItemSelected.emit({mediaItem, selectedIndex});
     }
   }
 
@@ -382,7 +381,7 @@ export class MediaGalleryComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private updateColumns(): void {
-    this.columns = Array.from({ length: this.numColumns }, () => []);
+    this.columns = Array.from({length: this.numColumns}, () => []);
     this.images.forEach((image, index) => {
       this.columns[index % this.numColumns].push(image);
     });
@@ -392,7 +391,7 @@ export class MediaGalleryComponent implements OnInit, OnDestroy, AfterViewInit {
     // Reset local component state for a new search to show the main loader
     this.images = [];
 
-    const filters: GallerySearchDto = { limit: 20 };
+    const filters: GallerySearchDto = {limit: 20};
     if (this.userEmailFilter) {
       filters['userEmail'] = this.userEmailFilter;
     }

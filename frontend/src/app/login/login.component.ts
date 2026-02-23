@@ -20,9 +20,9 @@ import {Router} from '@angular/router';
 import {AuthService} from './../common/services/auth.service';
 import {UserModel} from './../common/models/user.model';
 import {MatSnackBar} from '@angular/material/snack-bar';
-import { NotificationService } from '../common/services/notification.service';
-import { environment } from '../../environments/environment';
-import { isPlatformBrowser } from '@angular/common';
+import {NotificationService} from '../common/services/notification.service';
+import {environment} from '../../environments/environment';
+import {isPlatformBrowser} from '@angular/common';
 
 const HOME_ROUTE = '/';
 
@@ -48,7 +48,7 @@ export class LoginComponent {
     private router: Router,
     public ngZone: NgZone,
     private notificationService: NotificationService,
-    @Inject(PLATFORM_ID) platformId: Object
+    @Inject(PLATFORM_ID) platformId: Object,
   ) {
     this.isBrowser = isPlatformBrowser(platformId);
     this.provider.setCustomParameters({
@@ -86,7 +86,7 @@ export class LoginComponent {
           } else {
             this.handleLoginError(
               error.message ||
-              error ||
+                error ||
                 'An unexpected error occurred during sign-in. Please try again.',
             );
           }
@@ -115,8 +115,8 @@ export class LoginComponent {
             this.handleLoginError(error.message);
           } else {
             this.handleLoginError(
-             error.message ||
-             error ||
+              error.message ||
+                error ||
                 'An unexpected error occurred during sign-in. Please try again.',
             );
           }
@@ -128,7 +128,13 @@ export class LoginComponent {
 
   private handleLoginError(message: string, postErrorAction?: () => void) {
     this.loader = false;
-    this.notificationService.show(message, 'error', 'cross-in-circle-white', undefined, 20000);
+    this.notificationService.show(
+      message,
+      'error',
+      'cross-in-circle-white',
+      undefined,
+      20000,
+    );
     if (postErrorAction) {
       postErrorAction();
     }
@@ -136,7 +142,7 @@ export class LoginComponent {
 
   redirect(user: UserModel) {
     if (this.isBrowser) {
-        localStorage.setItem('USER_DETAILS', JSON.stringify(user));
+      localStorage.setItem('USER_DETAILS', JSON.stringify(user));
     }
     this.loader = false;
     void this.router.navigate([HOME_ROUTE]);

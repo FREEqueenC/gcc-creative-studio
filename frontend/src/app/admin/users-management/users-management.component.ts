@@ -19,17 +19,16 @@ import {MatTableDataSource} from '@angular/material/table';
 import {MatPaginator, PageEvent} from '@angular/material/paginator';
 import {MatSort} from '@angular/material/sort';
 import {Subject, firstValueFrom} from 'rxjs';
-import {
-  debounceTime,
-  distinctUntilChanged,
-  takeUntil,
-} from 'rxjs/operators';
+import {debounceTime, distinctUntilChanged, takeUntil} from 'rxjs/operators';
 import {UserService, PaginatedResponse} from './user.service';
 import {MatDialog} from '@angular/material/dialog';
 import {UserFormComponent} from './user-form.component';
 import {MatSnackBar} from '@angular/material/snack-bar';
 import {UserModel, UserRolesEnum} from '../../common/models/user.model';
-import { handleErrorSnackbar, handleSuccessSnackbar } from '../../utils/handleMessageSnackbar';
+import {
+  handleErrorSnackbar,
+  handleSuccessSnackbar,
+} from '../../utils/handleMessageSnackbar';
 
 @Component({
   selector: 'app-users-management',
@@ -104,11 +103,7 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
 
     try {
       const finalResponse = await firstValueFrom(
-        this.userService.getUsers(
-          this.limit,
-          this.currentFilter,
-          offset,
-        ),
+        this.userService.getUsers(this.limit, this.currentFilter, offset),
       );
 
       this.dataSource.data = finalResponse.data;

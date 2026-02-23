@@ -14,131 +14,50 @@
  * limitations under the License.
  */
 
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
-import { FormsModule } from '@angular/forms';
+import {FormsModule} from '@angular/forms';
 
+import {MediaGalleryComponent} from './media-gallery.component';
 
+import {MaterialModule} from '../../common/material.module';
 
+import {NoopAnimationsModule} from '@angular/platform-browser/animations';
 
+import {Firestore} from '@angular/fire/firestore';
 
-
-
-import { MediaGalleryComponent } from './media-gallery.component';
-
-
-
-import { MaterialModule } from '../../common/material.module';
-
-
-
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-
-
-
-import { Firestore } from '@angular/fire/firestore';
-
-
-
-import { MatIconTestingModule } from '@angular/material/icon/testing';
-
-
-
-
-
-
+import {MatIconTestingModule} from '@angular/material/icon/testing';
 
 describe('MediaGalleryComponent', () => {
-
-
-
   let component: MediaGalleryComponent;
-
-
 
   let fixture: ComponentFixture<MediaGalleryComponent>;
 
-
-
-
-
-
-
   beforeEach(async () => {
-
-
-
     await TestBed.configureTestingModule({
-
-
-
       declarations: [MediaGalleryComponent],
 
+      imports: [
+        HttpClientTestingModule,
 
+        FormsModule,
 
-            imports: [
-
-
-
-      
-
-
-
-              HttpClientTestingModule,
-
-
-
-              FormsModule,
-
-
-
-              MaterialModule,
-
-
+        MaterialModule,
 
         NoopAnimationsModule,
 
-
-
-        MatIconTestingModule
-
-
-
+        MatIconTestingModule,
       ],
 
-
-
-      providers: [{ provide: Firestore, useValue: {} }],
-
-
-
+      providers: [{provide: Firestore, useValue: {}}],
     }).compileComponents();
-
-
-
-
-
-
 
     fixture = TestBed.createComponent(MediaGalleryComponent);
 
-
-
     component = fixture.componentInstance;
 
-
-
     fixture.detectChanges();
-
-
-
   });
-
-
-
-
-
-
 
   it('should create', () => {
     expect(component).toBeTruthy();

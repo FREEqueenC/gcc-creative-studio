@@ -1,42 +1,42 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { VideoComponent } from './video.component';
-import { NO_ERRORS_SCHEMA, Injector } from '@angular/core';
-import { MatIconRegistry } from '@angular/material/icon';
-import { DomSanitizer } from '@angular/platform-browser';
-import { SearchService } from '../services/search/search.service';
-import { Router } from '@angular/router';
-import { MatSnackBar } from '@angular/material/snack-bar';
-import { MatDialog } from '@angular/material/dialog';
-import { HttpClient } from '@angular/common/http';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { WorkspaceStateService } from '../services/workspace/workspace-state.service';
+import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {VideoComponent} from './video.component';
+import {NO_ERRORS_SCHEMA, Injector} from '@angular/core';
+import {MatIconRegistry} from '@angular/material/icon';
+import {DomSanitizer} from '@angular/platform-browser';
+import {SearchService} from '../services/search/search.service';
+import {Router} from '@angular/router';
+import {MatSnackBar} from '@angular/material/snack-bar';
+import {MatDialog} from '@angular/material/dialog';
+import {HttpClient} from '@angular/common/http';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
+import {WorkspaceStateService} from '../services/workspace/workspace-state.service';
 import {
   SourceAssetResponseDto,
   SourceAssetService,
 } from '../common/services/source-asset.service';
-import { VideoStateService } from '../services/video-state.service';
-import { of } from 'rxjs';
-import { MatChipInputEvent } from '@angular/material/chips';
-import { MediaItem } from '../common/models/media-item.model';
+import {VideoStateService} from '../services/video-state.service';
+import {of} from 'rxjs';
+import {MatChipInputEvent} from '@angular/material/chips';
+import {MediaItem} from '../common/models/media-item.model';
 import {
   EnrichedSourceAsset,
   AspectRatioEnum,
   StyleEnum,
 } from '../fun-templates/media-template.model';
 
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { FlowPromptBoxComponent } from '../common/components/flow-prompt-box/flow-prompt-box.component';
-import { AppInjector, setAppInjector } from '../app-injector';
-import { NotificationService } from '../common/services/notification.service';
-import { MatIconTestingModule } from '@angular/material/icon/testing';
+import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
+import {MatIconModule} from '@angular/material/icon';
+import {MatButtonModule} from '@angular/material/button';
+import {MatMenuModule} from '@angular/material/menu';
+import {MatTooltipModule} from '@angular/material/tooltip';
+import {MatChipsModule} from '@angular/material/chips';
+import {MatFormFieldModule} from '@angular/material/form-field';
+import {MatSlideToggleModule} from '@angular/material/slide-toggle';
+import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
+import {FlowPromptBoxComponent} from '../common/components/flow-prompt-box/flow-prompt-box.component';
+import {AppInjector, setAppInjector} from '../app-injector';
+import {NotificationService} from '../common/services/notification.service';
+import {MatIconTestingModule} from '@angular/material/icon/testing';
 
 describe('VideoComponent', () => {
   let component: VideoComponent;
@@ -63,16 +63,21 @@ describe('VideoComponent', () => {
         'getRandomPrompt',
         'clearActiveVideoJob',
       ],
-      { activeVideoJob$: of(null), videoPrompt: '' },
+      {activeVideoJob$: of(null), videoPrompt: ''},
     );
-    mockRouter = jasmine.createSpyObj('Router', ['getCurrentNavigation', 'navigate']);
+    mockRouter = jasmine.createSpyObj('Router', [
+      'getCurrentNavigation',
+      'navigate',
+    ]);
     mockSnackBar = jasmine.createSpyObj('MatSnackBar', ['open']);
     mockDialog = jasmine.createSpyObj('MatDialog', ['open']);
     mockHttpClient = jasmine.createSpyObj('HttpClient', ['get']);
     mockWorkspaceStateService = jasmine.createSpyObj('WorkspaceStateService', [
       'getActiveWorkspaceId',
     ]);
-    mockSourceAssetService = jasmine.createSpyObj('SourceAssetService', ['uploadAsset']);
+    mockSourceAssetService = jasmine.createSpyObj('SourceAssetService', [
+      'uploadAsset',
+    ]);
     mockVideoStateService = jasmine.createSpyObj('VideoStateService', [
       'getState',
       'updateState',
@@ -95,7 +100,9 @@ describe('VideoComponent', () => {
     mockDomSanitizer.bypassSecurityTrustResourceUrl.and.callFake(
       (value: string) => value,
     );
-    mockDomSanitizer.bypassSecurityTrustHtml.and.callFake((value: string) => value);
+    mockDomSanitizer.bypassSecurityTrustHtml.and.callFake(
+      (value: string) => value,
+    );
     mockVideoStateService.getState.and.returnValue({} as any);
 
     await TestBed.configureTestingModule({
@@ -115,16 +122,16 @@ describe('VideoComponent', () => {
         MatIconTestingModule,
       ],
       providers: [
-        { provide: SearchService, useValue: mockSearchService },
-        { provide: Router, useValue: mockRouter },
-        { provide: MatSnackBar, useValue: mockSnackBar },
-        { provide: MatDialog, useValue: mockDialog },
-        { provide: HttpClient, useValue: mockHttpClient },
-        { provide: WorkspaceStateService, useValue: mockWorkspaceStateService },
-        { provide: SourceAssetService, useValue: mockSourceAssetService },
-        { provide: VideoStateService, useValue: mockVideoStateService },
-        { provide: DomSanitizer, useValue: mockDomSanitizer },
-        { provide: NotificationService, useValue: mockNotificationService },
+        {provide: SearchService, useValue: mockSearchService},
+        {provide: Router, useValue: mockRouter},
+        {provide: MatSnackBar, useValue: mockSnackBar},
+        {provide: MatDialog, useValue: mockDialog},
+        {provide: HttpClient, useValue: mockHttpClient},
+        {provide: WorkspaceStateService, useValue: mockWorkspaceStateService},
+        {provide: SourceAssetService, useValue: mockSourceAssetService},
+        {provide: VideoStateService, useValue: mockVideoStateService},
+        {provide: DomSanitizer, useValue: mockDomSanitizer},
+        {provide: NotificationService, useValue: mockNotificationService},
       ],
       schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();
@@ -239,7 +246,7 @@ describe('VideoComponent', () => {
     it('should add a negative phrase', () => {
       const event = {
         value: ' blurry ',
-        chipInput: { clear: () => {} },
+        chipInput: {clear: () => {}},
       } as MatChipInputEvent;
       spyOn(event.chipInput, 'clear');
       component.addNegativePhrase(event);
@@ -260,9 +267,7 @@ describe('VideoComponent', () => {
 
   describe('Search Term', () => {
     beforeEach(() => {
-      mockWorkspaceStateService.getActiveWorkspaceId.and.returnValue(
-        10000,
-      );
+      mockWorkspaceStateService.getActiveWorkspaceId.and.returnValue(10000);
     });
 
     it('should not search if prompt is empty and not in extension mode', () => {
@@ -289,8 +294,8 @@ describe('VideoComponent', () => {
     it('should call concatenateVideos in concatenate mode', () => {
       component.isConcatenateMode = true;
       component.sourceMediaItems = [
-        { mediaItemId: 1, mediaIndex: 0, role: 'video_source' },
-        { mediaItemId: 2, mediaIndex: 0, role: 'video_source' },
+        {mediaItemId: 1, mediaIndex: 0, role: 'video_source'},
+        {mediaItemId: 2, mediaIndex: 0, role: 'video_source'},
       ];
       mockSearchService.concatenateVideos.and.returnValue(of({} as MediaItem));
       component.searchTerm();
@@ -300,7 +305,7 @@ describe('VideoComponent', () => {
     it('should show snackbar if less than two videos for concatenation', () => {
       component.isConcatenateMode = true;
       component.sourceMediaItems = [
-        { mediaItemId: 1, mediaIndex: 0, role: 'video_source' },
+        {mediaItemId: 1, mediaIndex: 0, role: 'video_source'},
         null,
       ];
       component.searchTerm();
@@ -372,14 +377,14 @@ describe('VideoComponent', () => {
     it('should build payload correctly for Ingredients to Video mode', () => {
       component.currentMode = 'Ingredients to Video';
       component.searchRequest.prompt = 'a cat';
-      component.referenceImages = [{ sourceAssetId: 123, previewUrl: 'url' }];
+      component.referenceImages = [{sourceAssetId: 123, previewUrl: 'url'}];
       component.referenceImagesType = 'STYLE';
       mockSearchService.startVeoGeneration.and.returnValue(of({} as MediaItem));
 
       component.searchTerm();
 
       const expectedPayload = jasmine.objectContaining({
-        referenceImages: [{ assetId: 123, referenceType: 'STYLE' }],
+        referenceImages: [{assetId: 123, referenceType: 'STYLE'}],
       });
 
       expect(mockSearchService.startVeoGeneration).toHaveBeenCalledWith(
@@ -391,7 +396,9 @@ describe('VideoComponent', () => {
   describe('Prompt Helpers', () => {
     it('should rewrite prompt', () => {
       component.searchRequest.prompt = 'old prompt';
-      mockSearchService.rewritePrompt.and.returnValue(of({ prompt: 'new prompt' }));
+      mockSearchService.rewritePrompt.and.returnValue(
+        of({prompt: 'new prompt'}),
+      );
       component.rewritePrompt();
       expect(component.searchRequest.prompt).toBe('new prompt');
       expect(mockVideoStateService.updateState).toHaveBeenCalled();
@@ -399,7 +406,7 @@ describe('VideoComponent', () => {
 
     it('should get random prompt', () => {
       mockSearchService.getRandomPrompt.and.returnValue(
-        of({ prompt: 'random prompt' }),
+        of({prompt: 'random prompt'}),
       );
       component.getRandomPrompt();
       expect(component.searchRequest.prompt).toBe('random prompt');
@@ -431,7 +438,7 @@ describe('VideoComponent', () => {
     it('should open image selector and process image result', () => {
       const dialogRefSpyObj = jasmine.createSpyObj({
         afterClosed: of({
-          mediaItem: { id: 1, mimeType: 'image/png', presignedUrls: ['url1'] },
+          mediaItem: {id: 1, mimeType: 'image/png', presignedUrls: ['url1']},
           selectedIndex: 0,
         }),
         close: null,
@@ -474,7 +481,9 @@ describe('VideoComponent', () => {
         mediaIndex: 0,
         role: 'video_extension_source',
       });
-      expect((component as any)._showModeNotification).toHaveBeenCalledWith('extend');
+      expect((component as any)._showModeNotification).toHaveBeenCalledWith(
+        'extend',
+      );
     });
 
     it('should clear input', () => {
@@ -542,7 +551,7 @@ describe('VideoComponent', () => {
       component.image1Preview = 'some-preview';
       spyOn(component, 'selectModel').and.callThrough();
       spyOn(component as any, 'updateModeAndNotify').and.callThrough();
-      component.referenceImages.push({ sourceAssetId: 1, previewUrl: 'url' });
+      component.referenceImages.push({sourceAssetId: 1, previewUrl: 'url'});
 
       // This is called internally by openImageSelectorForReference etc.
       (component as any).handleReferenceImageAdded();
@@ -561,7 +570,7 @@ describe('VideoComponent', () => {
     it('should clear a reference image', () => {
       const event = new MouseEvent('click');
       spyOn(event, 'stopPropagation');
-      component.referenceImages = [{ sourceAssetId: 1, previewUrl: 'url' }];
+      component.referenceImages = [{sourceAssetId: 1, previewUrl: 'url'}];
       component.clearReferenceImage(0, event);
       expect(component.referenceImages.length).toBe(0);
       expect(event.stopPropagation).toHaveBeenCalled();
@@ -596,7 +605,9 @@ describe('VideoComponent', () => {
         startImagePreviewUrl: 'remix-preview.url',
       };
       (component as any).applyRemixState(remixState);
-      expect(component.sourceMediaItems[0]).toEqual(remixState.sourceMediaItems[0]);
+      expect(component.sourceMediaItems[0]).toEqual(
+        remixState.sourceMediaItems[0],
+      );
       expect(component.image1Preview).toBe('remix-preview.url');
       expect((component as any)['_input1IsVideo']).toBeTrue();
       expect(component.isExtensionMode).toBeTrue();

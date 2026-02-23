@@ -38,13 +38,16 @@ import {
   NgClass,
   NgOptimizedImage,
 } from '@angular/common';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSliderModule } from '@angular/material/slider';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { handleErrorSnackbar, handleSuccessSnackbar } from '../../../utils/handleMessageSnackbar';
+import {MatButtonModule} from '@angular/material/button';
+import {MatIconModule} from '@angular/material/icon';
+import {MatMenuModule} from '@angular/material/menu';
+import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
+import {MatSliderModule} from '@angular/material/slider';
+import {MatTooltipModule} from '@angular/material/tooltip';
+import {
+  handleErrorSnackbar,
+  handleSuccessSnackbar,
+} from '../../../utils/handleMessageSnackbar';
 
 @Component({
   selector: 'app-media-lightbox',
@@ -275,7 +278,11 @@ export class MediaLightboxComponent
 
   copyLink(): void {
     if (!this.mediaItem?.id) {
-      handleErrorSnackbar(this.snackBar, { message: 'Cannot generate link: Media item has no ID.' }, 'Copy Link');
+      handleErrorSnackbar(
+        this.snackBar,
+        {message: 'Cannot generate link: Media item has no ID.'},
+        'Copy Link',
+      );
       return;
     }
 

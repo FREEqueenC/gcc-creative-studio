@@ -14,11 +14,22 @@
  * limitations under the License.
  */
 
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Subscription } from 'rxjs';
-import { ASPECT_RATIO_LABELS, MODEL_CONFIGS } from '../../../../common/config/model-config';
-import { StepConfig } from './step.model';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnChanges,
+  OnInit,
+  Output,
+  SimpleChanges,
+} from '@angular/core';
+import {FormBuilder, FormGroup, Validators} from '@angular/forms';
+import {Subscription} from 'rxjs';
+import {
+  ASPECT_RATIO_LABELS,
+  MODEL_CONFIGS,
+} from '../../../../common/config/model-config';
+import {StepConfig} from './step.model';
 
 @Component({
   selector: 'app-generic-step',
@@ -27,33 +38,47 @@ import { StepConfig } from './step.model';
 })
 export class GenericStepComponent implements OnInit, OnChanges {
   isStepOutputReference(item: any): boolean {
-    return item && typeof item === 'object' && !Array.isArray(item) && 'step' in item && 'output' in item;
+    return (
+      item &&
+      typeof item === 'object' &&
+      !Array.isArray(item) &&
+      'step' in item &&
+      'output' in item
+    );
   }
   getLinkedOutputLabel(item: any): string {
-    const matchingOutput = this.availableOutputs.find(out =>
-      out.value && out.value.step === item.step && out.value.output === item.output
+    const matchingOutput = this.availableOutputs.find(
+      out =>
+        out.value &&
+        out.value.step === item.step &&
+        out.value.output === item.output,
     );
     return matchingOutput ? matchingOutput.label : 'Linked Output';
   }
   clearReferenceImage(inputName: string, index: number): void {
     const images = this.referenceImages[inputName];
-    if (images && Array.isArray(images) && index >= 0 && index < images.length) {
+    if (
+      images &&
+      Array.isArray(images) &&
+      index >= 0 &&
+      index < images.length
+    ) {
       const updatedImages = [...images];
       updatedImages.splice(index, 1);
       this.stepForm.get('inputs')?.get(inputName)?.setValue(updatedImages);
     }
   }
-openImageSelectorForReference(inputName: string, type: string): void {
+  openImageSelectorForReference(inputName: string, type: string): void {
     // TODO: Implement image selector logic, possibly by emitting an event
   }
 
-addLinkedOutput(inputName: string, output: any): void {
+  addLinkedOutput(inputName: string, output: any): void {
     const current = this.referenceImages[inputName] || [];
     const updated = [...current, output.value];
     this.stepForm.get('inputs')?.get(inputName)?.setValue(updated);
   }
 
-onReferenceImageDrop(event: DragEvent, inputName: string): void {
+  onReferenceImageDrop(event: DragEvent, inputName: string): void {
     // TODO: Implement drag-and-drop logic
   }
   @Input() stepForm!: FormGroup;
@@ -70,17 +95,15 @@ onReferenceImageDrop(event: DragEvent, inputName: string): void {
   currentMaxReferenceImages = 1;
 
   isCollapsed = true;
-  inputModes: { [key: string]: 'fixed' | 'linked' | 'mixed' } = {};
-  compatibleOutputs: { [key: string]: any[] } = {};
-  get referenceImages(): { [key: string]: any[] } {
+  inputModes: {[key: string]: 'fixed' | 'linked' | 'mixed'} = {};
+  compatibleOutputs: {[key: string]: any[]} = {};
+  get referenceImages(): {[key: string]: any[]} {
     const inputs = this.stepForm.get('inputs');
     return inputs ? inputs.value : {};
   }
   compareFn!: (o1: any, o2: any) => boolean;
 
-  constructor(
-    private fb: FormBuilder,
-  ) { }
+  constructor(private fb: FormBuilder) {}
 
   ngOnInit(): void {
     this.initializeStepState();
@@ -130,7 +153,12 @@ onReferenceImageDrop(event: DragEvent, inputName: string): void {
 
       // Determine if the input is linked (StepOutputReference)
       // It must be an object, not an array, and have 'step' and 'output' properties
-      const isLinked = value && typeof value === 'object' && !Array.isArray(value) && 'step' in value && 'output' in value;
+      const isLinked =
+        value &&
+        typeof value === 'object' &&
+        !Array.isArray(value) &&
+        'step' in value &&
+        'output' in value;
 
       if (isLinked) {
         this.inputModes[input.name] = 'linked';
@@ -145,7 +173,10 @@ onReferenceImageDrop(event: DragEvent, inputName: string): void {
     if (settings) {
       this.config.settings.forEach(setting => {
         if (!settings.contains(setting.name)) {
-          settings.addControl(setting.name, this.fb.control(setting.defaultValue));
+          settings.addControl(
+            setting.name,
+            this.fb.control(setting.defaultValue),
+          );
         }
       });
 
@@ -155,9 +186,11 @@ onReferenceImageDrop(event: DragEvent, inputName: string): void {
         if (this.settingsSubscription) {
           this.settingsSubscription.unsubscribe();
         }
-        this.settingsSubscription = modelControl?.valueChanges.subscribe(value => {
-          this.updateDynamicConfig(value);
-        });
+        this.settingsSubscription = modelControl?.valueChanges.subscribe(
+          value => {
+            this.updateDynamicConfig(value);
+          },
+        );
 
         // Initial update
         this.updateDynamicConfig(modelControl?.value);
@@ -179,7 +212,7 @@ onReferenceImageDrop(event: DragEvent, inputName: string): void {
     if (outputs) {
       this.localConfig.outputs.forEach(output => {
         if (!outputs.contains(output.name)) {
-          outputs.addControl(output.name, this.fb.control({ type: output.type }));
+          outputs.addControl(output.name, this.fb.control({type: output.type}));
         }
       });
     }
@@ -200,17 +233,26 @@ onReferenceImageDrop(event: DragEvent, inputName: string): void {
 
     // 1. Update Aspect Ratio options
     if (modelMeta.supportedAspectRatios) {
-      const aspectRatioSetting = this.localConfig.settings.find(s => s.name === 'aspect_ratio');
+      const aspectRatioSetting = this.localConfig.settings.find(
+        s => s.name === 'aspect_ratio',
+      );
       if (aspectRatioSetting) {
         // Generate options dynamically using ASPECT_RATIO_LABELS
-        aspectRatioSetting.options = modelMeta.supportedAspectRatios.map(ratio => ({
-          value: ratio,
-          label: ASPECT_RATIO_LABELS[ratio] || ratio
-        }));
+        aspectRatioSetting.options = modelMeta.supportedAspectRatios.map(
+          ratio => ({
+            value: ratio,
+            label: ASPECT_RATIO_LABELS[ratio] || ratio,
+          }),
+        );
 
         // Reset value if current value is invalid
-        const currentAspectRatio = this.stepForm.get('settings.aspect_ratio')?.value;
-        if (currentAspectRatio && !modelMeta.supportedAspectRatios.includes(currentAspectRatio)) {
+        const currentAspectRatio = this.stepForm.get(
+          'settings.aspect_ratio',
+        )?.value;
+        if (
+          currentAspectRatio &&
+          !modelMeta.supportedAspectRatios.includes(currentAspectRatio)
+        ) {
           // Set to first available option
           const firstOption = aspectRatioSetting.options?.[0]?.value;
           if (firstOption) {
@@ -222,18 +264,22 @@ onReferenceImageDrop(event: DragEvent, inputName: string): void {
 
     // 2. Update Generation Mode (input_mode)
     if (modelMeta.supportedModes) {
-      const modeSetting = this.localConfig.settings.find(s => s.name === 'input_mode');
+      const modeSetting = this.localConfig.settings.find(
+        s => s.name === 'input_mode',
+      );
       if (modeSetting) {
         modeSetting.options = modelMeta.supportedModes.map(mode => ({
           value: mode,
-          label: mode
+          label: mode,
         }));
 
         // Default to first mode if current is invalid
         const currentMode = this.stepForm.get('settings.input_mode')?.value;
         if (!currentMode || !modelMeta.supportedModes.includes(currentMode)) {
           // Prefer 'Text to Video' if available, else first
-          const defaultMode = modelMeta.supportedModes.includes('Text to Video') ? 'Text to Video' : modelMeta.supportedModes[0];
+          const defaultMode = modelMeta.supportedModes.includes('Text to Video')
+            ? 'Text to Video'
+            : modelMeta.supportedModes[0];
           this.stepForm.get('settings.input_mode')?.setValue(defaultMode);
         }
       }
@@ -268,7 +314,10 @@ onReferenceImageDrop(event: DragEvent, inputName: string): void {
 
     this.localConfig.inputs.forEach(input => {
       // Logic for specific inputs
-      if (this.localConfig.type === 'generate-video' && (input.name === 'input_images' || input.name === 'reference_images')) {
+      if (
+        this.localConfig.type === 'generate-video' &&
+        (input.name === 'input_images' || input.name === 'reference_images')
+      ) {
         const showIngredients = currentMode === 'Ingredients to Video';
 
         if (showIngredients && maxRefs > 0) {
@@ -308,16 +357,16 @@ onReferenceImageDrop(event: DragEvent, inputName: string): void {
     }
     this.localConfig.inputs.forEach(input => {
       this.compatibleOutputs[input.name] = this.availableOutputs.filter(
-        output => (output.type === input.type) || (output.type === "text" && input.type === "textarea") || (output.type === 'image' && input.type === 'image')
+        output =>
+          output.type === input.type ||
+          (output.type === 'text' && input.type === 'textarea') ||
+          (output.type === 'image' && input.type === 'image'),
       );
     });
   }
 
   toggleInputMode(inputName: string, mode: 'fixed' | 'linked' | 'mixed') {
     this.inputModes[inputName] = mode;
-    this.stepForm
-      .get('inputs')
-      ?.get(inputName)
-      ?.setValue(null);
+    this.stepForm.get('inputs')?.get(inputName)?.setValue(null);
   }
 }

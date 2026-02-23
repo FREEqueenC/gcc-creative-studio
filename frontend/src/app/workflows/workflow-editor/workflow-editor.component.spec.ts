@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import {CdkDragDrop, DragDropModule} from '@angular/cdk/drag-drop';
+import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {
   AbstractControl,
   FormArray,
@@ -23,11 +23,11 @@ import {
   FormGroup,
   ReactiveFormsModule,
 } from '@angular/forms';
-import { MatDialog } from '@angular/material/dialog';
-import { MatSnackBar } from '@angular/material/snack-bar';
-import { ActivatedRoute, Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
-import { MediaResolutionService } from '../shared/media-resolution.service';
+import {MatDialog} from '@angular/material/dialog';
+import {MatSnackBar} from '@angular/material/snack-bar';
+import {ActivatedRoute, Router} from '@angular/router';
+import {of, throwError} from 'rxjs';
+import {MediaResolutionService} from '../shared/media-resolution.service';
 import {
   NodeTypes,
   StepStatusEnum,
@@ -35,19 +35,19 @@ import {
   WorkflowModel,
   WorkflowUpdateDto,
 } from '../workflow.models';
-import { WorkflowService } from '../workflow.service';
-import { AddStepModalComponent } from './add-step-modal/add-step-modal.component';
-import { RunWorkflowModalComponent } from './run-workflow-modal/run-workflow-modal.component';
-import { EditorMode, WorkflowEditorComponent } from './workflow-editor.component';
-import { WorkflowFormService } from './workflow-form.service';
-import { MatOptionModule } from '@angular/material/core';
-import { MatSelectModule } from '@angular/material/select';
-import { MatIconModule } from '@angular/material/icon';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { WorkflowStatusPipe } from '../workflow-status.pipe';
-import { GenericStepComponent } from './step-components/generic-step/generic-step.component';
+import {WorkflowService} from '../workflow.service';
+import {AddStepModalComponent} from './add-step-modal/add-step-modal.component';
+import {RunWorkflowModalComponent} from './run-workflow-modal/run-workflow-modal.component';
+import {EditorMode, WorkflowEditorComponent} from './workflow-editor.component';
+import {WorkflowFormService} from './workflow-form.service';
+import {MatOptionModule} from '@angular/material/core';
+import {MatSelectModule} from '@angular/material/select';
+import {MatIconModule} from '@angular/material/icon';
+import {MatFormFieldModule} from '@angular/material/form-field';
+import {MatInputModule} from '@angular/material/input';
+import {NoopAnimationsModule} from '@angular/platform-browser/animations';
+import {WorkflowStatusPipe} from '../workflow-status.pipe';
+import {GenericStepComponent} from './step-components/generic-step/generic-step.component';
 
 describe('WorkflowEditorComponent', () => {
   let component: WorkflowEditorComponent;
@@ -90,8 +90,8 @@ describe('WorkflowEditorComponent', () => {
       ['resolveMediaUrls'],
     );
     mockActivatedRoute = {
-      paramMap: of({ get: (key: string) => null }),
-      queryParamMap: of({ get: (key: string) => null }),
+      paramMap: of({get: (key: string) => null}),
+      queryParamMap: of({get: (key: string) => null}),
     };
 
     // Mock form service properties
@@ -140,13 +140,13 @@ describe('WorkflowEditorComponent', () => {
       ],
 
       providers: [
-        { provide: WorkflowFormService, useValue: mockWorkflowFormService },
-        { provide: WorkflowService, useValue: mockWorkflowService },
-        { provide: ActivatedRoute, useValue: mockActivatedRoute },
-        { provide: Router, useValue: mockRouter },
-        { provide: MatDialog, useValue: mockMatDialog },
-        { provide: MatSnackBar, useValue: mockMatSnackBar },
-        { provide: MediaResolutionService, useValue: mockMediaResolutionService },
+        {provide: WorkflowFormService, useValue: mockWorkflowFormService},
+        {provide: WorkflowService, useValue: mockWorkflowService},
+        {provide: ActivatedRoute, useValue: mockActivatedRoute},
+        {provide: Router, useValue: mockRouter},
+        {provide: MatDialog, useValue: mockMatDialog},
+        {provide: MatSnackBar, useValue: mockMatSnackBar},
+        {provide: MediaResolutionService, useValue: mockMediaResolutionService},
       ],
     }).compileComponents();
     fixture = TestBed.createComponent(WorkflowEditorComponent);
@@ -262,7 +262,7 @@ describe('WorkflowEditorComponent', () => {
     });
 
     it('should call form service to move a step', () => {
-      const event = { previousIndex: 0, currentIndex: 1 } as CdkDragDrop<
+      const event = {previousIndex: 0, currentIndex: 1} as CdkDragDrop<
         string[]
       >;
 
@@ -321,14 +321,14 @@ describe('WorkflowEditorComponent', () => {
       component.save();
 
       expect(mockWorkflowService.createWorkflow).toHaveBeenCalledWith(
-        jasmine.objectContaining({ name: 'Untitled Workflow', description: '' }),
+        jasmine.objectContaining({name: 'Untitled Workflow', description: ''}),
       );
 
       expect(component.workflowId).toBe('newId');
 
       expect(mockRouter.navigate).toHaveBeenCalledWith(
         ['/workflows', 'edit', 'newId'],
-        { replaceUrl: true },
+        {replaceUrl: true},
       );
 
       expect(component.mode as any).toBe(EditorMode.Edit);
@@ -339,17 +339,17 @@ describe('WorkflowEditorComponent', () => {
 
       component.workflowId = 'existingId';
 
-      component.workflowForm.patchValue({ id: 'existingId' });
+      component.workflowForm.patchValue({id: 'existingId'});
 
       mockWorkflowService.updateWorkflow.and.returnValue(
-        of({ message: 'Workflow updated' }),
+        of({message: 'Workflow updated'}),
       );
 
       component.save();
 
       expect(mockWorkflowService.updateWorkflow).toHaveBeenCalledWith(
         'existingId',
-        jasmine.objectContaining({ name: 'Untitled Workflow', description: '' }),
+        jasmine.objectContaining({name: 'Untitled Workflow', description: ''}),
       );
     });
 
@@ -358,7 +358,7 @@ describe('WorkflowEditorComponent', () => {
       component.mode = EditorMode.Create;
 
       mockWorkflowService.createWorkflow.and.returnValue(
-        throwError(() => ({ error: { message: 'Creation failed' } })),
+        throwError(() => ({error: {message: 'Creation failed'}})),
       );
 
       component.save();
@@ -371,7 +371,7 @@ describe('WorkflowEditorComponent', () => {
 
       component.workflowId = 'wf1';
 
-      const dialogRefSpy = jasmine.createSpyObj({ afterClosed: of(null) });
+      const dialogRefSpy = jasmine.createSpyObj({afterClosed: of(null)});
 
       mockMatDialog.open.and.returnValue(dialogRefSpy);
 
@@ -388,24 +388,24 @@ describe('WorkflowEditorComponent', () => {
 
       component.workflowId = 'wf1';
 
-      component.workflowForm.patchValue({ id: 'wf1' });
+      component.workflowForm.patchValue({id: 'wf1'});
 
       mockWorkflowService.updateWorkflow.and.returnValue(
-        of({ message: 'Workflow updated' }),
+        of({message: 'Workflow updated'}),
       );
 
       const dialogRefSpy = jasmine.createSpyObj({
-        afterClosed: of({ input: 'test' }),
+        afterClosed: of({input: 'test'}),
       }); // Simulate run confirmation
 
       mockMatDialog.open.and.returnValue(dialogRefSpy);
 
       mockWorkflowService.executeWorkflow.and.returnValue(
-        of({ execution_id: 'exec1' }),
+        of({execution_id: 'exec1'}),
       );
 
       mockWorkflowService.pollExecutionDetails.and.returnValue(
-        of({ id: 'exec1', state: 'ACTIVE', step_entries: [], duration: 1 }),
+        of({id: 'exec1', state: 'ACTIVE', step_entries: [], duration: 1}),
       );
 
       component.run();
@@ -434,17 +434,17 @@ describe('WorkflowEditorComponent', () => {
 
     it('should call executeWorkflow and start polling on run confirmation', () => {
       const dialogRefSpy = jasmine.createSpyObj({
-        afterClosed: of({ inputs: {} }),
+        afterClosed: of({inputs: {}}),
       });
 
       mockMatDialog.open.and.returnValue(dialogRefSpy);
 
       mockWorkflowService.executeWorkflow.and.returnValue(
-        of({ execution_id: 'exec1' }),
+        of({execution_id: 'exec1'}),
       );
 
       mockWorkflowService.pollExecutionDetails.and.returnValue(
-        of({ id: 'exec1', state: 'ACTIVE', step_entries: [], duration: 1 }),
+        of({id: 'exec1', state: 'ACTIVE', step_entries: [], duration: 1}),
       );
 
       component.openRunModal('wf1', {});
@@ -466,7 +466,7 @@ describe('WorkflowEditorComponent', () => {
     it('should handle execution start failure', () => {
       spyOn(console, 'error');
       const dialogRefSpy = jasmine.createSpyObj({
-        afterClosed: of({ inputs: {} }),
+        afterClosed: of({inputs: {}}),
       });
 
       mockMatDialog.open.and.returnValue(dialogRefSpy);
@@ -587,7 +587,7 @@ describe('WorkflowEditorComponent', () => {
         type: new FormControl('type2'),
 
         inputs: new FormGroup({
-          prompt: new FormControl({ step: 'step1', output: 'text' }),
+          prompt: new FormControl({step: 'step1', output: 'text'}),
         }),
       });
 

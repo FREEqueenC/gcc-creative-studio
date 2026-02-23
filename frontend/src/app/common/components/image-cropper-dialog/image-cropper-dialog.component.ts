@@ -34,10 +34,7 @@ import {
 import {WorkspaceStateService} from '../../../services/workspace/workspace-state.service';
 import {environment} from '../../../../environments/environment';
 
-import {
-  FormGroup,
-  FormControl,
-} from '@angular/forms';
+import {FormGroup, FormControl} from '@angular/forms';
 
 interface AspectRatio {
   label: string;
@@ -60,7 +57,6 @@ export class ImageCropperDialogComponent {
   currentAspectRatio: number;
   backgroundColor = 'white';
   imageCropperForm!: FormGroup;
-
 
   transform: ImageTransform = {
     translateUnit: 'px',
@@ -100,7 +96,9 @@ export class ImageCropperDialogComponent {
     this.options = {
       aspectRatio: this.currentAspectRatio,
       maintainAspectRatio: true,
-      containWithinAspectRatio: this.imageCropperForm.get('containWithinAspectRatio')?.value,
+      containWithinAspectRatio: this.imageCropperForm.get(
+        'containWithinAspectRatio',
+      )?.value,
       backgroundColor: this.backgroundColor,
       autoCrop: true,
     };
@@ -109,11 +107,12 @@ export class ImageCropperDialogComponent {
     }
 
     // Subscribe to changes in the form control to update the cropper options
-    this.imageCropperForm.get('containWithinAspectRatio')?.valueChanges.subscribe(value => {
-      this.options = {...this.options, containWithinAspectRatio: value};
-    });
+    this.imageCropperForm
+      .get('containWithinAspectRatio')
+      ?.valueChanges.subscribe(value => {
+        this.options = {...this.options, containWithinAspectRatio: value};
+      });
   }
-
 
   // --- Start: New file handling logic ---
   handleFile(file: File): void {

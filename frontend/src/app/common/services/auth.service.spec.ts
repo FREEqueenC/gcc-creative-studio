@@ -14,123 +14,44 @@
  * limitations under the License.
  */
 
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
 import {TestBed} from '@angular/core/testing';
 import {Auth, IdTokenResult} from '@angular/fire/auth';
 
+import {AuthService} from './auth.service';
 
+import {Firestore} from '@angular/fire/firestore';
 
-
-
-
-
-import { AuthService } from './auth.service';
-
-
-
-import { Firestore } from '@angular/fire/firestore';
-
-
-
-import { UserService } from './user.service';
-
-
-
-
-
-
+import {UserService} from './user.service';
 
 describe('AuthService', () => {
-
-
-
   let service: AuthService;
 
-
-
-
-
-
-
   beforeEach(() => {
-
-
-
     TestBed.configureTestingModule({
-
-
-
       imports: [HttpClientTestingModule],
 
+      providers: [
+        {provide: Firestore, useValue: {}},
 
+        {provide: UserService, useValue: {}},
 
-            providers: [
+        {
+          provide: Auth,
 
+          useValue: {
+            currentUser: {
+              getIdToken: () => Promise.resolve('mock-id-token'),
+            },
 
-
-              { provide: Firestore, useValue: {} },
-
-
-
-              { provide: UserService, useValue: {} },
-
-
-
-              {
-
-
-
-                provide: Auth,
-
-
-
-                useValue: {
-
-
-
-                  currentUser: {
-
-
-
-                    getIdToken: () => Promise.resolve('mock-id-token'),
-
-
-
-                  },
-
-
-
-                  signOut: () => Promise.resolve(),
-
-
-
-                },
-
-
-
-              },
-
-
-
-            ],
-
-
-
+            signOut: () => Promise.resolve(),
+          },
+        },
+      ],
     });
 
-
-
     service = TestBed.inject(AuthService);
-
-
-
   });
-
-
-
-
-
-
 
   it('should be created', () => {
     expect(service).toBeTruthy();

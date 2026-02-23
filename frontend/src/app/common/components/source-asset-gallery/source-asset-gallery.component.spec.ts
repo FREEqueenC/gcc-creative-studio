@@ -14,112 +14,88 @@
  * limitations under the License.
  */
 
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
 
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 
+import {CUSTOM_ELEMENTS_SCHEMA} from '@angular/core';
 
+import {SourceAssetGalleryComponent} from './source-asset-gallery.component';
 
-import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import {MaterialModule} from '../../material.module';
 
+import {NoopAnimationsModule} from '@angular/platform-browser/animations';
 
+import {SourceAssetService} from '../../services/source-asset.service';
 
-import { SourceAssetGalleryComponent } from './source-asset-gallery.component';
+import {UserService} from '../../services/user.service';
 
+import {MatDialog} from '@angular/material/dialog';
 
-
-import { MaterialModule } from '../../material.module';
-
-
-
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-
-import { SourceAssetService } from '../../services/source-asset.service';
-
-import { UserService } from '../../services/user.service';
-
-import { MatDialog } from '@angular/material/dialog';
-
-import { MatSnackBar } from '@angular/material/snack-bar';
-
-
+import {MatSnackBar} from '@angular/material/snack-bar';
 
 describe('SourceAssetGalleryComponent', () => {
-
   let component: SourceAssetGalleryComponent;
 
   let fixture: ComponentFixture<SourceAssetGalleryComponent>;
 
-
-
   beforeEach(async () => {
-
     await TestBed.configureTestingModule({
-
       declarations: [SourceAssetGalleryComponent],
 
       imports: [HttpClientTestingModule, MaterialModule, NoopAnimationsModule],
 
       providers: [
+        {
+          provide: SourceAssetService,
+          useValue: {
+            isLoading$: {subscribe: () => {}},
 
-        { provide: SourceAssetService, useValue: {
+            allAssetsLoaded: {subscribe: () => {}},
 
-            isLoading$: { subscribe: () => {} },
-
-            allAssetsLoaded: { subscribe: () => {} },
-
-            assets: { subscribe: () => {} },
+            assets: {subscribe: () => {}},
 
             setFilters: () => {},
 
             loadAssets: () => {},
 
-            deleteAsset: () => ({ pipe: () => ({ subscribe: () => {} }) }),
+            deleteAsset: () => ({pipe: () => ({subscribe: () => {}})}),
+          },
+        },
 
-        }},
+        {
+          provide: UserService,
+          useValue: {
+            getUserDetails: () => ({email: 'test@example.com'}),
+          },
+        },
 
-        { provide: UserService, useValue: {
+        {
+          provide: MatDialog,
+          useValue: {
+            open: () => ({afterClosed: () => ({subscribe: () => {}})}),
+          },
+        },
 
-            getUserDetails: () => ({ email: 'test@example.com' }),
-
-        }},
-
-        { provide: MatDialog, useValue: {
-
-            open: () => ({ afterClosed: () => ({ subscribe: () => {} }) }),
-
-        }},
-
-        { provide: MatSnackBar, useValue: {
-
+        {
+          provide: MatSnackBar,
+          useValue: {
             open: () => {},
-
-        }},
-
+          },
+        },
       ],
 
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
-
     }).compileComponents();
-
-
 
     fixture = TestBed.createComponent(SourceAssetGalleryComponent);
 
     component = fixture.componentInstance;
 
     fixture.detectChanges();
-
   });
-
-
 
   it('should create', () => {
-
     expect(component).toBeTruthy();
-
   });
-
 });
-
-

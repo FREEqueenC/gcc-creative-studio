@@ -5,57 +5,74 @@ import {
   flush,
   tick,
 } from '@angular/core/testing';
-import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { AudioComponent } from './audio.component';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import {Component, Input, Output, EventEmitter} from '@angular/core';
+import {AudioComponent} from './audio.component';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
+import {MatSnackBar, MatSnackBarModule} from '@angular/material/snack-bar';
+import {MatDialog, MatDialogModule} from '@angular/material/dialog';
+import {NoopAnimationsModule} from '@angular/platform-browser/animations';
 import {
   AudioService,
   CreateAudioDto,
   GenerationModelEnum,
 } from '../services/audio/audio.service';
-import { of, throwError } from 'rxjs';
-import { JobStatus, MediaItem } from '../common/models/media-item.model';
-import { WorkspaceStateService } from '../services/workspace/workspace-state.service';
-import { FormsModule } from '@angular/forms';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectChange, MatSelectModule } from '@angular/material/select';
-import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import {of, throwError} from 'rxjs';
+import {JobStatus, MediaItem} from '../common/models/media-item.model';
+import {WorkspaceStateService} from '../services/workspace/workspace-state.service';
+import {FormsModule} from '@angular/forms';
+import {MatButtonToggleModule} from '@angular/material/button-toggle';
+import {MatFormFieldModule} from '@angular/material/form-field';
+import {MatInputModule} from '@angular/material/input';
+import {MatSelectChange, MatSelectModule} from '@angular/material/select';
+import {MatIconModule} from '@angular/material/icon';
+import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
 // Removed MediaLightboxComponent import - using mock instead
-import { HarnessLoader } from '@angular/cdk/testing';
-import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { MatButtonHarness } from '@angular/material/button/testing';
-import { MatDividerModule } from '@angular/material/divider';
-import { LanguageEnum, VoiceEnum } from './audio.constants';
-import { By } from '@angular/platform-browser';
-import { AddVoiceDialogComponent } from '../components/add-voice-dialog/add-voice-dialog.component';
-import { ActivatedRoute } from '@angular/router';
-import { NotificationService } from '../common/services/notification.service';
-import { AppInjector, setAppInjector } from '../app-injector';
-import { Injector } from '@angular/core';
-import { MatMenuModule } from '@angular/material/menu';
+import {HarnessLoader} from '@angular/cdk/testing';
+import {TestbedHarnessEnvironment} from '@angular/cdk/testing/testbed';
+import {MatButtonHarness} from '@angular/material/button/testing';
+import {MatDividerModule} from '@angular/material/divider';
+import {LanguageEnum, VoiceEnum} from './audio.constants';
+import {By} from '@angular/platform-browser';
+import {AddVoiceDialogComponent} from '../components/add-voice-dialog/add-voice-dialog.component';
+import {ActivatedRoute} from '@angular/router';
+import {NotificationService} from '../common/services/notification.service';
+import {AppInjector, setAppInjector} from '../app-injector';
+import {Injector} from '@angular/core';
+import {MatMenuModule} from '@angular/material/menu';
 // Removed NgOptimizedImage and IMAGE_LOADER
-import { CommonModule } from '@angular/common'; // Needed for *ngIf in mock template
-import { MatTooltipModule } from '@angular/material/tooltip';
-
+import {CommonModule} from '@angular/common'; // Needed for *ngIf in mock template
+import {MatTooltipModule} from '@angular/material/tooltip';
 
 // Define a mock MediaLightboxComponent
 @Component({
   selector: 'app-media-lightbox',
   template: `
     <div *ngIf="mediaItem">
-      <img *ngIf="selectedUrl && !isAudio && !isVideo" [src]="selectedUrl" [alt]="mediaItem.originalPrompt" [width]="imageWidth" [height]="imageHeight" class="main-media" />
-      <video *ngIf="selectedUrl && isVideo" [src]="selectedUrl" [poster]="posterUrl" class="main-media" controls muted></video>
-      <audio *ngIf="selectedUrl && isAudio" [src]="selectedUrl" controls></audio>
+      <img
+        *ngIf="selectedUrl && !isAudio && !isVideo"
+        [src]="selectedUrl"
+        [alt]="mediaItem.originalPrompt"
+        [width]="imageWidth"
+        [height]="imageHeight"
+        class="main-media"
+      />
+      <video
+        *ngIf="selectedUrl && isVideo"
+        [src]="selectedUrl"
+        [poster]="posterUrl"
+        class="main-media"
+        controls
+        muted
+      ></video>
+      <audio
+        *ngIf="selectedUrl && isAudio"
+        [src]="selectedUrl"
+        controls
+      ></audio>
     </div>
   `,
   standalone: true, // Keep it standalone like the real one
-  imports: [CommonModule] // CommonModule for *ngIf
+  imports: [CommonModule], // CommonModule for *ngIf
 })
 class MockMediaLightboxComponent {
   @Input() mediaItem: any; // Use 'any' for simplicity in mock
@@ -171,18 +188,17 @@ describe('AudioComponent', () => {
         MockMediaLightboxComponent, // Mock is here, in imports as it's standalone
       ],
       providers: [
-        { provide: AudioService, useValue: audioServiceSpy },
-        { provide: WorkspaceStateService, useValue: workspaceStateServiceSpy },
-        { provide: MatSnackBar, useValue: snackBarSpy },
-        { provide: MatDialog, useValue: dialogSpy },
+        {provide: AudioService, useValue: audioServiceSpy},
+        {provide: WorkspaceStateService, useValue: workspaceStateServiceSpy},
+        {provide: MatSnackBar, useValue: snackBarSpy},
+        {provide: MatDialog, useValue: dialogSpy},
         {
           provide: ActivatedRoute,
-          useValue: { snapshot: { queryParamMap: { get: () => null } } },
+          useValue: {snapshot: {queryParamMap: {get: () => null}}},
         },
-        { provide: NotificationService, useValue: notificationServiceSpy },
+        {provide: NotificationService, useValue: notificationServiceSpy},
       ],
-    })
-    .compileComponents();
+    }).compileComponents();
 
     setAppInjector(TestBed.inject(Injector));
     fixture = TestBed.createComponent(AudioComponent);
@@ -230,7 +246,7 @@ describe('AudioComponent', () => {
       component.generate();
 
       tick();
-      
+
       expect(component.isLoading).toBeFalse();
       expect(component.mediaItem).toEqual(mockMediaItem);
     }));
@@ -329,7 +345,7 @@ describe('AudioComponent', () => {
     }));
 
     it('should show error snackbar on generation failure and set isLoading to false', fakeAsync(() => {
-      const error = { message: 'Generation failed' };
+      const error = {message: 'Generation failed'};
       audioService.generateAudio.and.returnValue(throwError(() => error));
       component.generate();
       tick();
@@ -347,7 +363,7 @@ describe('AudioComponent', () => {
       // Create a dummy audio player element for testing
       const audioPlayerElement = document.createElement('audio');
       Object.defineProperty(component, 'audioPlayerRef', {
-        value: { nativeElement: audioPlayerElement },
+        value: {nativeElement: audioPlayerElement},
       });
       audioEl = component.audioPlayerRef.nativeElement;
       spyOn(audioEl, 'play');
@@ -355,35 +371,35 @@ describe('AudioComponent', () => {
     });
 
     it('togglePlay should call play() when paused', () => {
-      Object.defineProperty(audioEl, 'paused', { value: true });
+      Object.defineProperty(audioEl, 'paused', {value: true});
       component.togglePlay();
       expect(audioEl.play).toHaveBeenCalled();
       expect(component.isPlaying).toBeTrue();
     });
 
     it('togglePlay should call pause() when playing', () => {
-      Object.defineProperty(audioEl, 'paused', { value: false });
+      Object.defineProperty(audioEl, 'paused', {value: false});
       component.togglePlay();
       expect(audioEl.pause).toHaveBeenCalled();
       expect(component.isPlaying).toBeFalse();
     });
 
     it('onTimeUpdate should update currentTime and progressValue', () => {
-      Object.defineProperty(audioEl, 'currentTime', { value: 30 });
-      Object.defineProperty(audioEl, 'duration', { value: 120 });
+      Object.defineProperty(audioEl, 'currentTime', {value: 30});
+      Object.defineProperty(audioEl, 'duration', {value: 120});
       component.onTimeUpdate();
       expect(component.currentTime).toBe('0:30');
       expect(component.progressValue).toBe(25);
     });
 
     it('seek should set the audio currentTime', () => {
-      Object.defineProperty(audioEl, 'duration', { value: 200 });
+      Object.defineProperty(audioEl, 'duration', {value: 200});
       component.seek(50); // Seek to 50%
       expect(audioEl.currentTime).toBe(100);
     });
 
     it('onAudioLoaded should set the duration', () => {
-      Object.defineProperty(audioEl, 'duration', { value: 185.5 });
+      Object.defineProperty(audioEl, 'duration', {value: 185.5});
       component.onAudioLoaded();
       expect(component.duration).toBe('3:05');
     });
@@ -401,14 +417,14 @@ describe('AudioComponent', () => {
 
   describe('Voice Selection', () => {
     it('onVoiceSelectionChange should update selectedVoice', () => {
-      const event = { value: VoiceEnum.FENRIR } as MatSelectChange;
+      const event = {value: VoiceEnum.FENRIR} as MatSelectChange;
       component.onVoiceSelectionChange(event);
       expect(component.selectedVoice).toBe(VoiceEnum.FENRIR);
     });
 
     it('onVoiceSelectionChange should open dialog for "add-new-voice"', () => {
       spyOn(component, 'openAddVoiceDialog');
-      const event = { value: 'add-new-voice' } as MatSelectChange;
+      const event = {value: 'add-new-voice'} as MatSelectChange;
       component.onVoiceSelectionChange(event);
       expect(component.openAddVoiceDialog).toHaveBeenCalled();
       expect(component.selectedVoice).toBe('');
@@ -420,7 +436,7 @@ describe('AudioComponent', () => {
       const newVoiceName = 'My Custom Voice';
       const initialVoiceCount = component.voices.length;
       dialog.open.and.returnValue({
-        afterClosed: () => of({ name: newVoiceName }),
+        afterClosed: () => of({name: newVoiceName}),
       } as any);
 
       component.openAddVoiceDialog();

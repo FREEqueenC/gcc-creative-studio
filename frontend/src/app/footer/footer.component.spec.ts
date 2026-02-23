@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { MatToolbarModule } from '@angular/material/toolbar';
+import {MatToolbarModule} from '@angular/material/toolbar';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
-import { Router } from '@angular/router';
-import { By } from '@angular/platform-browser';
+import {Router} from '@angular/router';
+import {By} from '@angular/platform-browser';
 
 import {FooterComponent} from './footer.component';
 
@@ -35,9 +35,7 @@ describe('FooterComponent', () => {
     await TestBed.configureTestingModule({
       declarations: [FooterComponent],
       imports: [MatToolbarModule],
-      providers: [
-        { provide: Router, useValue: mockRouter }
-      ]
+      providers: [{provide: Router, useValue: mockRouter}],
     }).compileComponents();
 
     fixture = TestBed.createComponent(FooterComponent);
@@ -51,7 +49,9 @@ describe('FooterComponent', () => {
 
   it('should display "Powered by Vertex AI"', () => {
     const compiled = fixture.nativeElement;
-    expect(compiled.querySelector('.links-weight span').textContent).toContain('Powered by Vertex AI');
+    expect(compiled.querySelector('.links-weight span').textContent).toContain(
+      'Powered by Vertex AI',
+    );
   });
 
   it('should display "Privacy policy" link text', () => {
@@ -73,7 +73,9 @@ describe('FooterComponent', () => {
 
   it('should call navigateToTermsOfServicePage when "Terms and services" link is clicked', () => {
     spyOn(component, 'navigateToTermsOfServicePage');
-    const termsOfServiceLink = fixture.debugElement.queryAll(By.css('.links-weight'))[2];
+    const termsOfServiceLink = fixture.debugElement.queryAll(
+      By.css('.links-weight'),
+    )[2];
     termsOfServiceLink.triggerEventHandler('click', null);
     expect(component.navigateToTermsOfServicePage).toHaveBeenCalled();
   });
@@ -85,7 +87,9 @@ describe('FooterComponent', () => {
 
   it('should call navigateToPrivacyPolicyPage when "Privacy policy" link is clicked', () => {
     spyOn(component, 'navigateToPrivacyPolicyPage');
-    const privacyPolicyLink = fixture.debugElement.queryAll(By.css('.links-weight'))[1];
+    const privacyPolicyLink = fixture.debugElement.queryAll(
+      By.css('.links-weight'),
+    )[1];
     privacyPolicyLink.triggerEventHandler('click', null);
     expect(component.navigateToPrivacyPolicyPage).toHaveBeenCalled();
   });

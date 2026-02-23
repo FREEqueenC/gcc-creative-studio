@@ -14,16 +14,20 @@
  * limitations under the License.
  */
 
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ReactiveFormsModule } from '@angular/forms';
-import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { of } from 'rxjs';
-import { MaterialModule } from '../../../common/material.module';
-import { RunWorkflowModalComponent } from './run-workflow-modal.component';
+import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {ReactiveFormsModule} from '@angular/forms';
+import {
+  MatDialog,
+  MatDialogRef,
+  MAT_DIALOG_DATA,
+} from '@angular/material/dialog';
+import {of} from 'rxjs';
+import {MaterialModule} from '../../../common/material.module';
+import {RunWorkflowModalComponent} from './run-workflow-modal.component';
 //import { MaterialModule } from '../../../common/material.module';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { ImageSelectorComponent } from '../../../common/components/image-selector/image-selector.component';
-import { ImageCropperDialogComponent } from '../../../common/components/image-cropper-dialog/image-cropper-dialog.component';
+import {NoopAnimationsModule} from '@angular/platform-browser/animations';
+import {ImageSelectorComponent} from '../../../common/components/image-selector/image-selector.component';
+import {ImageCropperDialogComponent} from '../../../common/components/image-cropper-dialog/image-cropper-dialog.component';
 
 describe('RunWorkflowModalComponent', () => {
   let component: RunWorkflowModalComponent;
@@ -36,8 +40,8 @@ describe('RunWorkflowModalComponent', () => {
     name: 'User Input',
     type: 'user_input',
     outputs: {
-      image: { type: 'image' },
-      text: { type: 'text' },
+      image: {type: 'image'},
+      text: {type: 'text'},
     },
   };
 
@@ -49,9 +53,12 @@ describe('RunWorkflowModalComponent', () => {
       declarations: [RunWorkflowModalComponent],
       imports: [ReactiveFormsModule, MaterialModule, NoopAnimationsModule],
       providers: [
-        { provide: MatDialogRef, useValue: dialogRefSpy },
-        { provide: MatDialog, useValue: dialogSpy },
-        { provide: MAT_DIALOG_DATA, useValue: { userInputStep: mockUserInputStep } },
+        {provide: MatDialogRef, useValue: dialogRefSpy},
+        {provide: MatDialog, useValue: dialogSpy},
+        {
+          provide: MAT_DIALOG_DATA,
+          useValue: {userInputStep: mockUserInputStep},
+        },
       ],
     }).compileComponents();
 
@@ -74,11 +81,11 @@ describe('RunWorkflowModalComponent', () => {
 
   it('should close the dialog with form value onRun if form is valid', () => {
     component.runForm.get('text')?.setValue('test');
-    component.runForm.get('image')?.setValue([{ sourceAssetId: 123 }]);
+    component.runForm.get('image')?.setValue([{sourceAssetId: 123}]);
     component.onRun();
     expect(dialogRefSpy.close).toHaveBeenCalledWith({
       text: 'test',
-      image: [{ sourceAssetId: 123 }],
+      image: [{sourceAssetId: 123}],
     });
   });
 
@@ -89,9 +96,14 @@ describe('RunWorkflowModalComponent', () => {
 
   describe('openImageSelectorForReference', () => {
     it('should open the ImageSelectorComponent', () => {
-      dialogSpy.open.and.returnValue({ afterClosed: () => of(null) } as MatDialogRef<ImageSelectorComponent>);
+      dialogSpy.open.and.returnValue({
+        afterClosed: () => of(null),
+      } as MatDialogRef<ImageSelectorComponent>);
       component.openImageSelectorForReference('image');
-      expect(dialogSpy.open).toHaveBeenCalledWith(ImageSelectorComponent, jasmine.any(Object));
+      expect(dialogSpy.open).toHaveBeenCalledWith(
+        ImageSelectorComponent,
+        jasmine.any(Object),
+      );
     });
 
     it('should not open the dialog if there are already 3 images', () => {
@@ -101,8 +113,14 @@ describe('RunWorkflowModalComponent', () => {
     });
 
     it('should add a GCS image to referenceImages on dialog close', () => {
-      const mockImage = { id: 123, presignedUrl: 'url', gcsUri: 'gs://bucket/image.png' };
-      dialogSpy.open.and.returnValue({ afterClosed: () => of(mockImage) } as MatDialogRef<ImageSelectorComponent>);
+      const mockImage = {
+        id: 123,
+        presignedUrl: 'url',
+        gcsUri: 'gs://bucket/image.png',
+      };
+      dialogSpy.open.and.returnValue({
+        afterClosed: () => of(mockImage),
+      } as MatDialogRef<ImageSelectorComponent>);
       component.openImageSelectorForReference('image');
       expect(component.referenceImages['image'].length).toBe(1);
       expect(component.referenceImages['image'][0].sourceAssetId).toBe(123);
@@ -110,13 +128,17 @@ describe('RunWorkflowModalComponent', () => {
 
     it('should add a media item to referenceImages on dialog close', () => {
       const mockMediaItem = {
-        mediaItem: { id: 456, presignedUrls: ['url1'] },
+        mediaItem: {id: 456, presignedUrls: ['url1']},
         selectedIndex: 0,
       };
-      dialogSpy.open.and.returnValue({ afterClosed: () => of(mockMediaItem) } as MatDialogRef<ImageSelectorComponent>);
+      dialogSpy.open.and.returnValue({
+        afterClosed: () => of(mockMediaItem),
+      } as MatDialogRef<ImageSelectorComponent>);
       component.openImageSelectorForReference('image');
       expect(component.referenceImages['image'].length).toBe(1);
-      expect(component.referenceImages['image'][0].sourceMediaItem?.mediaItemId).toBe(456);
+      expect(
+        component.referenceImages['image'][0].sourceMediaItem?.mediaItemId,
+      ).toBe(456);
     });
   });
 
@@ -127,39 +149,46 @@ describe('RunWorkflowModalComponent', () => {
     });
 
     it('should open the ImageCropperDialogComponent for a valid image file', () => {
-      const file = new File([''], 'test.png', { type: 'image/png' });
+      const file = new File([''], 'test.png', {type: 'image/png'});
       dataTransfer.items.add(file);
-      dialogSpy.open.and.returnValue({ afterClosed: () => of(null) } as MatDialogRef<ImageCropperDialogComponent>);
+      dialogSpy.open.and.returnValue({
+        afterClosed: () => of(null),
+      } as MatDialogRef<ImageCropperDialogComponent>);
 
-      const event = new DragEvent('drop', { dataTransfer });
+      const event = new DragEvent('drop', {dataTransfer});
       component.onReferenceImageDrop(event, 'image');
-      expect(dialogSpy.open).toHaveBeenCalledWith(ImageCropperDialogComponent, jasmine.any(Object));
+      expect(dialogSpy.open).toHaveBeenCalledWith(
+        ImageCropperDialogComponent,
+        jasmine.any(Object),
+      );
     });
 
     it('should not open the dialog if there are already 3 images', () => {
       component.referenceImages['image'] = [{}, {}, {}] as any;
-      const file = new File([''], 'test.png', { type: 'image/png' });
+      const file = new File([''], 'test.png', {type: 'image/png'});
       dataTransfer.items.add(file);
-      const event = new DragEvent('drop', { dataTransfer });
+      const event = new DragEvent('drop', {dataTransfer});
       component.onReferenceImageDrop(event, 'image');
       expect(dialogSpy.open).not.toHaveBeenCalled();
     });
 
     it('should not open dialog for an invalid file type', () => {
-      const file = new File([''], 'test.txt', { type: 'text/plain' });
+      const file = new File([''], 'test.txt', {type: 'text/plain'});
       dataTransfer.items.add(file);
-      const event = new DragEvent('drop', { dataTransfer });
+      const event = new DragEvent('drop', {dataTransfer});
       component.onReferenceImageDrop(event, 'image');
       expect(dialogSpy.open).not.toHaveBeenCalled();
     });
 
     it('should add an image on successful crop', () => {
-      const file = new File([''], 'test.png', { type: 'image/png' });
+      const file = new File([''], 'test.png', {type: 'image/png'});
       dataTransfer.items.add(file);
-      const mockAsset = { id: 789, presignedUrl: 'cropped-url' };
-      dialogSpy.open.and.returnValue({ afterClosed: () => of(mockAsset) } as MatDialogRef<ImageCropperDialogComponent>);
+      const mockAsset = {id: 789, presignedUrl: 'cropped-url'};
+      dialogSpy.open.and.returnValue({
+        afterClosed: () => of(mockAsset),
+      } as MatDialogRef<ImageCropperDialogComponent>);
 
-      const event = new DragEvent('drop', { dataTransfer });
+      const event = new DragEvent('drop', {dataTransfer});
       component.onReferenceImageDrop(event, 'image');
       expect(component.referenceImages['image'].length).toBe(1);
       expect(component.referenceImages['image'][0].sourceAssetId).toBe(789);
@@ -167,8 +196,10 @@ describe('RunWorkflowModalComponent', () => {
   });
 
   it('should clear a reference image', () => {
-    component.referenceImages['image'] = [{ sourceAssetId: 123 } as any];
-    component.runForm.get('image')?.setValue(component.referenceImages['image']);
+    component.referenceImages['image'] = [{sourceAssetId: 123} as any];
+    component.runForm
+      .get('image')
+      ?.setValue(component.referenceImages['image']);
 
     component.clearReferenceImage('image', 0);
 

@@ -14,29 +14,32 @@
  * limitations under the License.
  */
 
-import { NotificationService } from '../common/services/notification.service';
-import { HttpClient } from '@angular/common/http';
+import {NotificationService} from '../common/services/notification.service';
+import {HttpClient} from '@angular/common/http';
 import {
   AfterViewInit,
   Component,
   HostListener,
   OnInit,
-  signal
+  signal,
 } from '@angular/core';
-import { MatChipInputEvent } from '@angular/material/chips';
-import { MatDialog } from '@angular/material/dialog';
-import { MatIconRegistry } from '@angular/material/icon';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { Router } from '@angular/router';
-import { finalize, Observable } from 'rxjs';
-import { AssetTypeEnum } from '../admin/source-assets-management/source-asset.model';
-import { ImageCropperDialogComponent } from '../common/components/image-cropper-dialog/image-cropper-dialog.component';
+import {MatChipInputEvent} from '@angular/material/chips';
+import {MatDialog} from '@angular/material/dialog';
+import {MatIconRegistry} from '@angular/material/icon';
+import {DomSanitizer, SafeResourceUrl} from '@angular/platform-browser';
+import {Router} from '@angular/router';
+import {finalize, Observable} from 'rxjs';
+import {AssetTypeEnum} from '../admin/source-assets-management/source-asset.model';
+import {ImageCropperDialogComponent} from '../common/components/image-cropper-dialog/image-cropper-dialog.component';
 import {
   ImageSelectorComponent,
   MediaItemSelection,
 } from '../common/components/image-selector/image-selector.component';
-import { GenerationModelConfig, MODEL_CONFIGS } from '../common/config/model-config';
-import { JobStatus, MediaItem } from '../common/models/media-item.model';
+import {
+  GenerationModelConfig,
+  MODEL_CONFIGS,
+} from '../common/config/model-config';
+import {JobStatus, MediaItem} from '../common/models/media-item.model';
 import {
   ReferenceImage,
   SourceMediaItemLink,
@@ -54,8 +57,8 @@ import {
   ConcatenationInput,
   SearchService,
 } from '../services/search/search.service';
-import { VideoStateService } from '../services/video-state.service';
-import { WorkspaceStateService } from '../services/workspace/workspace-state.service';
+import {VideoStateService} from '../services/video-state.service';
+import {WorkspaceStateService} from '../services/workspace/workspace-state.service';
 
 @Component({
   selector: 'app-video',
@@ -94,11 +97,15 @@ export class VideoComponent implements OnInit, AfterViewInit {
   referenceImagesType: 'ASSET' | 'STYLE' = 'ASSET';
   currentMode = 'Text to Video';
   modes = [
-    { value: 'Text to Video', icon: 'description', label: 'Text to Video' },
-    { value: 'Frames to Video', icon: 'image', label: 'Frames to Video' },
-    { value: 'Ingredients to Video', icon: 'layers', label: 'Ingredients to Video' },
-    { value: 'Extend Video', icon: 'extension', label: 'Extend Video' },
-    { value: 'Concatenate Video', icon: 'merge', label: 'Concatenate Video' },
+    {value: 'Text to Video', icon: 'description', label: 'Text to Video'},
+    {value: 'Frames to Video', icon: 'image', label: 'Frames to Video'},
+    {
+      value: 'Ingredients to Video',
+      icon: 'layers',
+      label: 'Ingredients to Video',
+    },
+    {value: 'Extend Video', icon: 'extension', label: 'Extend Video'},
+    {value: 'Concatenate Video', icon: 'merge', label: 'Concatenate Video'},
   ];
 
   // Internal state to track input types
@@ -127,12 +134,14 @@ export class VideoComponent implements OnInit, AfterViewInit {
   negativePhrases: string[] = [];
 
   // --- Dropdown Options ---
-  generationModels: GenerationModelConfig[] = MODEL_CONFIGS.filter(m => m.type === 'VIDEO');
+  generationModels: GenerationModelConfig[] = MODEL_CONFIGS.filter(
+    m => m.type === 'VIDEO',
+  );
   selectedGenerationModel = this.generationModels[0].viewValue;
-  aspectRatioOptions: { value: string; viewValue: string; disabled: boolean }[] =
+  aspectRatioOptions: {value: string; viewValue: string; disabled: boolean}[] =
     [
-      { value: '16:9', viewValue: '16:9 \n Horizontal', disabled: false },
-      { value: '9:16', viewValue: '9:16 \n Vertical', disabled: false },
+      {value: '16:9', viewValue: '16:9 \n Horizontal', disabled: false},
+      {value: '9:16', viewValue: '9:16 \n Vertical', disabled: false},
     ];
   selectedAspectRatio = this.aspectRatioOptions[0].viewValue;
   videoStyles = [
@@ -312,7 +321,7 @@ export class VideoComponent implements OnInit, AfterViewInit {
     return this.sanitizer.bypassSecurityTrustResourceUrl(url);
   }
 
-  selectModel(model: { value: string; viewValue: string }): void {
+  selectModel(model: {value: string; viewValue: string}): void {
     this.searchRequest.generationModel = model.value;
     this.selectedGenerationModel = model.viewValue;
 
@@ -355,7 +364,7 @@ export class VideoComponent implements OnInit, AfterViewInit {
     }
   }
 
-  selectAspectRatio(ratio: string | { value: string; viewValue: string }): void {
+  selectAspectRatio(ratio: string | {value: string; viewValue: string}): void {
     if (typeof ratio === 'string') {
       this.searchRequest.aspectRatio = ratio;
       const option = this.aspectRatioOptions.find(
@@ -492,9 +501,7 @@ export class VideoComponent implements OnInit, AfterViewInit {
     this.saveState();
   }
 
-
-
-  onClearReferenceImage(data: { index: number, event: Event }) {
+  onClearReferenceImage(data: {index: number; event: Event}) {
     this.clearReferenceImage(data.index, data.event as MouseEvent);
   }
 
@@ -504,7 +511,13 @@ export class VideoComponent implements OnInit, AfterViewInit {
 
     if (this.isConcatenateMode) {
       if (!activeWorkspaceId) {
-        this.notificationService.show('Workspace ID is missing', 'error', 'cross-in-circle-white', undefined, 20000);
+        this.notificationService.show(
+          'Workspace ID is missing',
+          'error',
+          'cross-in-circle-white',
+          undefined,
+          20000,
+        );
         return;
       }
       const inputs: ConcatenationInput[] = [];
@@ -516,7 +529,7 @@ export class VideoComponent implements OnInit, AfterViewInit {
           type: 'media_item',
         });
       } else if (this.startImageAssetId !== null) {
-        inputs.push({ id: this.startImageAssetId, type: 'source_asset' });
+        inputs.push({id: this.startImageAssetId, type: 'source_asset'});
       }
 
       // Input 2
@@ -526,7 +539,7 @@ export class VideoComponent implements OnInit, AfterViewInit {
           type: 'media_item',
         });
       } else if (this.endImageAssetId !== null) {
-        inputs.push({ id: this.endImageAssetId, type: 'source_asset' });
+        inputs.push({id: this.endImageAssetId, type: 'source_asset'});
       }
 
       if (inputs.length < 2) {
@@ -553,12 +566,24 @@ export class VideoComponent implements OnInit, AfterViewInit {
         .pipe(finalize(() => (this.isLoading = false)))
         .subscribe({
           error: err =>
-            this.notificationService.show(err.message || err, 'error', 'cross-in-circle-white', undefined, 20000),
+            this.notificationService.show(
+              err.message || err,
+              'error',
+              'cross-in-circle-white',
+              undefined,
+              20000,
+            ),
         });
       return;
     }
     if (!this.searchRequest.prompt && !this.isExtensionMode) {
-      this.notificationService.show('Please enter a prompt to generate a video.', 'info', undefined, 'info', 10000);
+      this.notificationService.show(
+        'Please enter a prompt to generate a video.',
+        'info',
+        undefined,
+        'info',
+        10000,
+      );
       return;
     }
     this.showErrorOverlay = true;
@@ -581,7 +606,13 @@ export class VideoComponent implements OnInit, AfterViewInit {
       );
       if (veo31Model) {
         this.selectModel(veo31Model);
-        this.notificationService.show("Veo 3 doesn't support images as input, so we've switched to Veo 3.1 for you.", 'success', undefined, 'check_small', undefined);
+        this.notificationService.show(
+          "Veo 3 doesn't support images as input, so we've switched to Veo 3.1 for you.",
+          'success',
+          undefined,
+          'check_small',
+          undefined,
+        );
         return;
       }
     }
@@ -626,7 +657,7 @@ export class VideoComponent implements OnInit, AfterViewInit {
           : undefined,
       sourceVideoAssetId:
         (this.currentMode === 'Frames to Video' && this._input1IsVideo) ||
-          this.currentMode === 'Extend Video'
+        this.currentMode === 'Extend Video'
           ? (this.startImageAssetId ?? undefined)
           : undefined,
       endImageAssetId:
@@ -635,14 +666,14 @@ export class VideoComponent implements OnInit, AfterViewInit {
           : undefined,
       referenceImages:
         this.currentMode === 'Ingredients to Video' &&
-          referenceImagesPayload.length > 0
+        referenceImagesPayload.length > 0
           ? referenceImagesPayload
           : undefined,
       sourceMediaItems:
         this.currentMode === 'Ingredients to Video'
           ? sourceMediaItemsForReference
           : this.currentMode === 'Frames to Video' ||
-            this.currentMode === 'Extend Video'
+              this.currentMode === 'Extend Video'
             ? validSourceMediaItems
             : undefined,
     };
@@ -661,7 +692,13 @@ export class VideoComponent implements OnInit, AfterViewInit {
         error: error => {
           // This block will now execute correctly if the POST request fails.
           console.error('Search error:', error);
-          this.notificationService.show(error.message || error, 'error', 'cross-in-circle-white', undefined, 20000);
+          this.notificationService.show(
+            error.message || error,
+            'error',
+            'cross-in-circle-white',
+            undefined,
+            20000,
+          );
         },
       });
   }
@@ -679,12 +716,18 @@ export class VideoComponent implements OnInit, AfterViewInit {
       })
       .pipe(finalize(() => (this.isLoading = false)))
       .subscribe({
-        next: (response: { prompt: string }) => {
+        next: (response: {prompt: string}) => {
           this.searchRequest.prompt = response.prompt;
           this.saveState();
         },
         error: error => {
-          this.notificationService.show(error.message || error, 'error', 'cross-in-circle-white', undefined, 20000);
+          this.notificationService.show(
+            error.message || error,
+            'error',
+            'cross-in-circle-white',
+            undefined,
+            20000,
+          );
         },
       });
   }
@@ -693,15 +736,21 @@ export class VideoComponent implements OnInit, AfterViewInit {
     this.isLoading = true;
     this.searchRequest.prompt = '';
     this.service
-      .getRandomPrompt({ target_type: 'video' })
+      .getRandomPrompt({target_type: 'video'})
       .pipe(finalize(() => (this.isLoading = false)))
       .subscribe({
-        next: (response: { prompt: string }) => {
+        next: (response: {prompt: string}) => {
           this.searchRequest.prompt = response.prompt;
           this.saveState();
         },
         error: error => {
-          this.notificationService.show(error.message || error, 'error', 'cross-in-circle-white', undefined, 20000);
+          this.notificationService.show(
+            error.message || error,
+            'error',
+            'cross-in-circle-white',
+            undefined,
+            20000,
+          );
         },
       });
   }
@@ -822,8 +871,8 @@ export class VideoComponent implements OnInit, AfterViewInit {
       'gcsUri' in result
         ? result.mimeType?.startsWith('video/')
         : (result as MediaItemSelection).mediaItem.mimeType?.startsWith(
-          'video/',
-        );
+            'video/',
+          );
 
     if (isVideo) {
       // If we are in Extend Video mode, we don't need to force a switch if the model supports it.
@@ -956,7 +1005,13 @@ export class VideoComponent implements OnInit, AfterViewInit {
           this.clearOtherImage(imageNumber);
         },
         error: error => {
-          this.notificationService.show(error.message || error, 'error', 'cross-in-circle-white', undefined, 20000);
+          this.notificationService.show(
+            error.message || error,
+            'error',
+            'cross-in-circle-white',
+            undefined,
+            20000,
+          );
         },
       });
   }
@@ -1013,7 +1068,7 @@ export class VideoComponent implements OnInit, AfterViewInit {
     this.clearInput(imageNumber);
   }
 
-  onClearImage(data: { num: 1 | 2, event: Event }) {
+  onClearImage(data: {num: 1 | 2; event: Event}) {
     data.event.stopPropagation();
     this.clearInput(data.num);
   }
@@ -1060,7 +1115,13 @@ export class VideoComponent implements OnInit, AfterViewInit {
         this.sourceMediaItems[1] = null;
       }
 
-      this.notificationService.show("Veo 3 doesn't support 2 images as input, so we've cleared the other one for you.", 'info', undefined, 'info', 5000);
+      this.notificationService.show(
+        "Veo 3 doesn't support 2 images as input, so we've cleared the other one for you.",
+        'info',
+        undefined,
+        'info',
+        5000,
+      );
     }
   }
 
@@ -1203,7 +1264,7 @@ export class VideoComponent implements OnInit, AfterViewInit {
           this.isExtensionMode = true;
           this.searchRequest.prompt = ''; // Clear prompt for extension
         } else if (item.role === 'concatenation_source') {
-          this.sourceMediaItems[0] = { ...item, role: 'video_source' };
+          this.sourceMediaItems[0] = {...item, role: 'video_source'};
           this.image1Preview = remixState.startImagePreviewUrl || null;
           this._input1IsVideo = true;
           this.isConcatenateMode = true;
@@ -1234,7 +1295,7 @@ export class VideoComponent implements OnInit, AfterViewInit {
     }
   }
 
-  handleExtendWithAi(event: { mediaItem: MediaItem; selectedIndex: number }) {
+  handleExtendWithAi(event: {mediaItem: MediaItem; selectedIndex: number}) {
     const remixState = {
       sourceMediaItems: [
         {
@@ -1249,7 +1310,7 @@ export class VideoComponent implements OnInit, AfterViewInit {
     this.applyRemixState(remixState);
   }
 
-  handleConcatenate(event: { mediaItem: MediaItem; selectedIndex: number }) {
+  handleConcatenate(event: {mediaItem: MediaItem; selectedIndex: number}) {
     const remixState = {
       sourceMediaItems: [
         {
@@ -1350,8 +1411,14 @@ export class VideoComponent implements OnInit, AfterViewInit {
         this.image2Preview = null;
         this._input2IsVideo = false;
         this.sourceMediaItems[1] = null;
-              this.updateModeAndNotify();
-              this.notificationService.show(snackbarMessage, 'info', undefined, 'info', 5000);
+        this.updateModeAndNotify();
+        this.notificationService.show(
+          snackbarMessage,
+          'info',
+          undefined,
+          'info',
+          5000,
+        );
       } // Correctly close the if block
 
       this._switchToReferenceImageModel();
@@ -1362,10 +1429,7 @@ export class VideoComponent implements OnInit, AfterViewInit {
     const veo31Model = this.generationModels.find(
       m => m.value === 'veo-3.1-generate-preview',
     );
-    if (
-      veo31Model &&
-      this.searchRequest.generationModel !== veo31Model.value
-    ) {
+    if (veo31Model && this.searchRequest.generationModel !== veo31Model.value) {
       this.selectModel(veo31Model);
       this.notificationService.show(
         "We've switched to the Veo 3.1 model for you, as this one supports reference images.",
@@ -1445,7 +1509,6 @@ export class VideoComponent implements OnInit, AfterViewInit {
   selectedModel = signal<string>('Veo 3.1 - Fast');
   selectedPreset = signal<string>('');
 
-
   // --- Event Handlers ---
 
   onPromptInput(event: Event) {
@@ -1508,5 +1571,3 @@ export class VideoComponent implements OnInit, AfterViewInit {
     // this.promptText.set(this.promptText() + ' ' + preset);
   }
 }
-
-

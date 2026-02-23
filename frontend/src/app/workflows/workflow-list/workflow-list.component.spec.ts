@@ -1,31 +1,31 @@
-import { Component, DebugElement } from '@angular/core';
+import {Component, DebugElement} from '@angular/core';
 import {
   ComponentFixture,
   fakeAsync,
   TestBed,
   tick,
 } from '@angular/core/testing';
-import { MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { PageEvent } from '@angular/material/paginator';
-import { Router, ActivatedRoute } from '@angular/router';
-import { of, Subject, throwError } from 'rxjs';
-import { ConfirmationDialogComponent } from '../../common/components/confirmation-dialog/confirmation-dialog.component';
-import { WorkflowListComponent } from './workflow-list.component';
-import { WorkflowModel, WorkflowRunStatusEnum } from '../workflow.models';
-import { WorkflowService } from '../workflow.service';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { MaterialModule } from '../../common/material.module';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { By } from '@angular/platform-browser';
-import { RouterTestingModule } from '@angular/router/testing';
-import { Firestore } from '@angular/fire/firestore';
-import { Auth } from '@angular/fire/auth';
-import { AuthService } from '../../common/services/auth.service';
+import {MatDialog, MatDialogRef} from '@angular/material/dialog';
+import {PageEvent} from '@angular/material/paginator';
+import {Router, ActivatedRoute} from '@angular/router';
+import {of, Subject, throwError} from 'rxjs';
+import {ConfirmationDialogComponent} from '../../common/components/confirmation-dialog/confirmation-dialog.component';
+import {WorkflowListComponent} from './workflow-list.component';
+import {WorkflowModel, WorkflowRunStatusEnum} from '../workflow.models';
+import {WorkflowService} from '../workflow.service';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
+import {MaterialModule} from '../../common/material.module';
+import {NoopAnimationsModule} from '@angular/platform-browser/animations';
+import {By} from '@angular/platform-browser';
+import {RouterTestingModule} from '@angular/router/testing';
+import {Firestore} from '@angular/fire/firestore';
+import {Auth} from '@angular/fire/auth';
+import {AuthService} from '../../common/services/auth.service';
 
-@Component({ template: '', selector: 'app-dummy-executions' })
+@Component({template: '', selector: 'app-dummy-executions'})
 class DummyExecutionsComponent {}
 
-@Component({ template: '', selector: 'app-dummy-edit' })
+@Component({template: '', selector: 'app-dummy-edit'})
 class DummyEditComponent {}
 
 describe('WorkflowListComponent', () => {
@@ -87,19 +87,19 @@ describe('WorkflowListComponent', () => {
             path: 'workflows/:id/executions',
             component: DummyExecutionsComponent,
           },
-          { path: 'workflows/edit/:id', component: DummyEditComponent },
+          {path: 'workflows/edit/:id', component: DummyEditComponent},
         ]),
       ],
       providers: [
-        { provide: WorkflowService, useValue: mockWorkflowService },
-        { provide: MatDialog, useValue: mockMatDialog },
-        { provide: Firestore, useValue: {} },
-        { provide: Auth, useValue: {} },
+        {provide: WorkflowService, useValue: mockWorkflowService},
+        {provide: MatDialog, useValue: mockMatDialog},
+        {provide: Firestore, useValue: {}},
+        {provide: Auth, useValue: {}},
         {
           provide: ActivatedRoute,
-          useValue: { snapshot: { paramMap: { get: () => '' } } },
+          useValue: {snapshot: {paramMap: {get: () => ''}}},
         },
-        { provide: AuthService, useValue: mockAuthService },
+        {provide: AuthService, useValue: mockAuthService},
       ],
     }).compileComponents();
 
@@ -138,7 +138,7 @@ describe('WorkflowListComponent', () => {
   });
 
   it('should handle page events', () => {
-    const pageEvent: PageEvent = { pageIndex: 1, pageSize: 10, length: 100 };
+    const pageEvent: PageEvent = {pageIndex: 1, pageSize: 10, length: 100};
     spyOn(component, 'handlePageEvent').and.callThrough();
     component.handlePageEvent(pageEvent);
     expect(component.handlePageEvent).toHaveBeenCalledWith(pageEvent);
@@ -146,7 +146,7 @@ describe('WorkflowListComponent', () => {
 
   it('should call setFilter on filter change', fakeAsync(() => {
     const filterValue = 'test filter';
-    component.onFilterChange({ target: { value: filterValue } } as any);
+    component.onFilterChange({target: {value: filterValue}} as any);
     tick(500);
     expect(mockWorkflowService.setFilter).toHaveBeenCalledWith(filterValue);
   }));
@@ -302,9 +302,7 @@ describe('WorkflowListComponent', () => {
 
       it('should navigate to history on card click', fakeAsync(() => {
         spyOn(router, 'navigate');
-        const card = debugElement.query(
-          By.css('.workflow-card'),
-        ).nativeElement;
+        const card = debugElement.query(By.css('.workflow-card')).nativeElement;
 
         card.click();
         tick();

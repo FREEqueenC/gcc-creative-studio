@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-import { TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { AngularFireModule } from '@angular/fire/compat';
-import { AngularFirestoreModule } from '@angular/fire/compat/firestore';
-import { of } from 'rxjs';
+import {TestBed} from '@angular/core/testing';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
+import {AngularFireModule} from '@angular/fire/compat';
+import {AngularFirestoreModule} from '@angular/fire/compat/firestore';
+import {of} from 'rxjs';
 // Removed import of environment as it was causing issues in test
-import { AdminAuthGuard } from './admin-auth.guard';
-import { AuthService } from '../common/services/auth.service';
-import { UserService } from '../common/services/user.service';
+import {AdminAuthGuard} from './admin-auth.guard';
+import {AuthService} from '../common/services/auth.service';
+import {UserService} from '../common/services/user.service';
 
 const mockFirebaseConfig = {
   apiKey: 'mock-api-key',
@@ -51,8 +51,8 @@ describe('AdminAuthGuard', () => {
       ],
       providers: [
         AdminAuthGuard,
-        { provide: AuthService, useValue: authServiceSpy },
-        { provide: UserService, useValue: userServiceSpy },
+        {provide: AuthService, useValue: authServiceSpy},
+        {provide: UserService, useValue: userServiceSpy},
       ],
     });
 
@@ -65,4 +65,3 @@ describe('AdminAuthGuard', () => {
     expect(guard).toBeTruthy();
   });
 });
-

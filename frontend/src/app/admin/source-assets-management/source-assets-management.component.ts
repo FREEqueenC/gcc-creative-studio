@@ -24,7 +24,10 @@ import {firstValueFrom} from 'rxjs';
 import {SourceAssetsService as SourceAssetAdminService} from './source-assets.service';
 import {AssetScopeEnum, AssetTypeEnum} from './source-asset.model';
 import {SourceAssetFormComponent} from './source-asset-form/source-asset-form.component';
-import { handleErrorSnackbar, handleSuccessSnackbar } from '../../utils/handleMessageSnackbar';
+import {
+  handleErrorSnackbar,
+  handleSuccessSnackbar,
+} from '../../utils/handleMessageSnackbar';
 import {SourceAssetResponseDto} from '../../common/services/source-asset.service';
 import {SourceAssetUploadFormComponent} from './source-asset-upload-form/source-asset-upload-form.component';
 
@@ -84,11 +87,7 @@ export class SourceAssetsManagementComponent implements OnInit {
 
     try {
       const finalResponse = await firstValueFrom(
-        this.sourceAssetService.searchSourceAssets(
-          filters,
-          this.limit,
-          offset,
-        ),
+        this.sourceAssetService.searchSourceAssets(filters, this.limit, offset),
       );
 
       this.dataSource.data = finalResponse.data;
@@ -125,7 +124,10 @@ export class SourceAssetsManagementComponent implements OnInit {
       .subscribe((result: SourceAssetResponseDto | null) => {
         if (result) {
           this.fetchAssets();
-          handleSuccessSnackbar(this.snackBar, `Asset "${result.originalFilename}" uploaded successfully`);
+          handleSuccessSnackbar(
+            this.snackBar,
+            `Asset "${result.originalFilename}" uploaded successfully`,
+          );
         }
       });
   }

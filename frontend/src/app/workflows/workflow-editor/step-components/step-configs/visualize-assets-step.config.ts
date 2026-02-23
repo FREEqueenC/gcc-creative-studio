@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { NodeTypes } from '../../../workflow.models';
-import { StepConfig } from '../generic-step/step.model';
+import {NodeTypes} from '../../../workflow.models';
+import {StepConfig} from '../generic-step/step.model';
 
 export const VISUALIZE_ASSETS_STEP_CONFIG: StepConfig = {
   type: NodeTypes.VISUALIZE_ASSETS,

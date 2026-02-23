@@ -442,6 +442,39 @@ describe('WorkflowService', () => {
     req.flush(mockResponse);
   });
 
+  it('should not load workflows if already loading', fakeAsync(() => {
+    service['_isLoading'].next(true);
+    service.loadWorkflows();
+    tick();
+    httpMock.expectNone(`${API_BASE_URL}/workflows/search`);
+  }));
+
+  it('should not load workflows if all are loaded and not a reset', fakeAsync(() => {
+    service['_allWorkflowsLoaded'].next(true);
+    service.loadWorkflows(false);
+    tick();
+    httpMock.expectNone(`${API_BASE_URL}/workflows/search`);
+  }));
+
+  it('should get executions with status ALL', () => {
+    const workflowId = '1';
+    const limit = 10;
+    const status = 'ALL';
+    const mockResponse = {executions: [], next_page_token: 'next-token'};
+
+    service
+      .getExecutions(workflowId, limit, undefined, status)
+      .subscribe(response => {
+        expect(response).toEqual(mockResponse);
+      });
+
+    const req = httpMock.expectOne(
+      `${API_BASE_URL}/workflows/${workflowId}/executions?limit=${limit}`,
+    );
+    expect(req.request.method).toBe('GET');
+    req.flush(mockResponse);
+  });
+
   it('should unsubscribe on destroy', () => {
     workspaceStateServiceMock.activeWorkspaceId$.next(123);
     const req = httpMock.expectOne(`${API_BASE_URL}/workflows/search`);

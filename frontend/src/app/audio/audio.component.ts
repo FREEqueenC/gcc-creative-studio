@@ -16,17 +16,21 @@
 
 //import { Component, ElementRef, ViewChild } from '@angular/core';
 //import { AudioService, CreateAudioDto, GenerationModelEnum } from '../services/audio/audio.service';
-import { NotificationService } from '../common/services/notification.service';
-import { Component, ElementRef, ViewChild } from '@angular/core';
-import { AudioService, CreateAudioDto, GenerationModelEnum } from '../services/audio/audio.service';
-import { MatDialog } from '@angular/material/dialog';
-import { MatSelectChange } from '@angular/material/select';
-import { finalize } from 'rxjs';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { WorkspaceStateService } from '../services/workspace/workspace-state.service';
-import { MediaItem } from '../common/models/media-item.model';
-import { AddVoiceDialogComponent } from '../components/add-voice-dialog/add-voice-dialog.component';
-import { MatIconRegistry } from '@angular/material/icon';
+import {NotificationService} from '../common/services/notification.service';
+import {Component, ElementRef, ViewChild} from '@angular/core';
+import {
+  AudioService,
+  CreateAudioDto,
+  GenerationModelEnum,
+} from '../services/audio/audio.service';
+import {MatDialog} from '@angular/material/dialog';
+import {MatSelectChange} from '@angular/material/select';
+import {finalize} from 'rxjs';
+import {DomSanitizer, SafeResourceUrl} from '@angular/platform-browser';
+import {WorkspaceStateService} from '../services/workspace/workspace-state.service';
+import {MediaItem} from '../common/models/media-item.model';
+import {AddVoiceDialogComponent} from '../components/add-voice-dialog/add-voice-dialog.component';
+import {MatIconRegistry} from '@angular/material/icon';
 import {LanguageEnum, VoiceEnum} from './audio.constants';
 
 // UI Helper type
@@ -200,7 +204,13 @@ export class AudioComponent {
         };
         this.voices = [newVoice, ...this.voices];
         this.selectedVoice = newVoice.id;
-        this.notificationService.show('Voice cloned successfully!', 'success', undefined, 'check_small', undefined);
+        this.notificationService.show(
+          'Voice cloned successfully!',
+          'success',
+          undefined,
+          'check_small',
+          undefined,
+        );
       }
     });
   }
@@ -208,7 +218,13 @@ export class AudioComponent {
   generate() {
     const activeWorkspaceId = this.workspaceStateService.getActiveWorkspaceId();
     if (!activeWorkspaceId) {
-      this.notificationService.show('Please select a workspace first.', 'error', 'cross-in-circle-white', undefined, 20000);
+      this.notificationService.show(
+        'Please select a workspace first.',
+        'error',
+        'cross-in-circle-white',
+        undefined,
+        20000,
+      );
       this.isLoading = false;
     } else {
       this.isLoading = true;
@@ -257,7 +273,13 @@ export class AudioComponent {
             // The Lightbox will handle displaying the first item automatically via inputs
           },
           error: (error: any) => {
-            this.notificationService.show(error.message || error, 'error', 'cross-in-circle-white', undefined, 20000);
+            this.notificationService.show(
+              error.message || error,
+              'error',
+              'cross-in-circle-white',
+              undefined,
+              20000,
+            );
             console.error('Generation failed:', error);
           },
         });

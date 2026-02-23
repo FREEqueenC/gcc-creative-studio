@@ -24,6 +24,7 @@ export enum NodeTypes {
   VIRTUAL_TRY_ON = 'virtual_try_on',
   GENERATE_AUDIO = 'generate_audio',
   VISUALIZE_ASSETS = 'visualize_assets',
+  GENERATE_IMAGE_FROM_PROMPT = "GENERATE_IMAGE_FROM_PROMPT",
 }
 
 export interface StepOutputReference {
@@ -51,17 +52,13 @@ interface BaseStep<T = Record<string, any>, S = Record<string, any>> {
   startedAt?: string;
   completedAt?: string;
 
-  outputs: { [key: string]: any };
+  outputs: {[key: string]: any};
   inputs: T;
   settings: S;
 }
 
-
-
 // --- Union of all step types (Dynamic by default) ---
 export type WorkflowStep = BaseStep;
-
-
 
 export enum WorkflowRunStatusEnum {
   RUNNING = 'running',
@@ -84,17 +81,14 @@ export interface WorkflowModel extends WorkflowBase {
   userId: string;
 }
 
-export interface WorkflowCreateDto extends WorkflowBase { }
+export type WorkflowCreateDto = WorkflowBase;
 
-export interface WorkflowUpdateDto extends WorkflowBase {
-
-}
+export type WorkflowUpdateDto = WorkflowBase;
 
 export interface WorkflowSearchDto {
   limit?: number;
   offset?: number;
   name?: string;
-
 }
 
 export interface PaginatedWorkflowsResponse {
@@ -146,5 +140,5 @@ export interface BatchExecutionResponse {
 }
 
 export interface BatchExecutionRequest {
-  items: { row_index: number; args: any }[];
+  items: {row_index: number; args: any}[];
 }

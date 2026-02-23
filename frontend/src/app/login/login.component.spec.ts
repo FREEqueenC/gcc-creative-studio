@@ -20,26 +20,28 @@ import {
   fakeAsync,
   tick,
 } from '@angular/core/testing';
-import { RouterTestingModule } from '@angular/router/testing';
-import { of, throwError, NEVER } from 'rxjs';
-import { LoginComponent } from './login.component';
-import { AuthService } from './../common/services/auth.service';
-import { UserModel } from './../common/models/user.model';
-import { MatSnackBar } from '@angular/material/snack-bar';
-import { Router } from '@angular/router';
-import { Injector, NgZone } from '@angular/core';
-import { environment } from '../../environments/environment';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { AppInjector, setAppInjector } from '../app-injector';
-import { NotificationService } from '../common/services/notification.service';
+import {RouterTestingModule} from '@angular/router/testing';
+import {of, throwError, NEVER} from 'rxjs';
+import {LoginComponent} from './login.component';
+import {AuthService} from './../common/services/auth.service';
+import {UserModel} from './../common/models/user.model';
+import {MatSnackBar} from '@angular/material/snack-bar';
+import {Router} from '@angular/router';
+import {Injector, NgZone} from '@angular/core';
+import {environment} from '../../environments/environment';
+import {MatCardModule} from '@angular/material/card';
+import {MatFormFieldModule} from '@angular/material/form-field';
+import {MatInputModule} from '@angular/material/input';
+import {NoopAnimationsModule} from '@angular/platform-browser/animations';
+import {AppInjector, setAppInjector} from '../app-injector';
+import {NotificationService} from '../common/services/notification.service';
 
 // Define a MockAuthService class
 class MockAuthService {
   signInWithGoogleFirebase = jasmine.createSpy('signInWithGoogleFirebase');
-  signInForGoogleIdentityPlatform = jasmine.createSpy('signInForGoogleIdentityPlatform');
+  signInForGoogleIdentityPlatform = jasmine.createSpy(
+    'signInForGoogleIdentityPlatform',
+  );
   // Add any other methods from AuthService that are called in LoginComponent
 }
 
@@ -57,7 +59,8 @@ describe('LoginComponent', () => {
     id: '123',
     name: 'Test User',
     email: 'test@example.com',
-    picture: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+    picture:
+      'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
   };
 
   beforeEach(async () => {
@@ -68,9 +71,7 @@ describe('LoginComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [
-        RouterTestingModule.withRoutes([
-          { path: '', component: LoginComponent },
-        ]),
+        RouterTestingModule.withRoutes([{path: '', component: LoginComponent}]),
         MatCardModule,
         MatFormFieldModule,
         MatInputModule,
@@ -78,9 +79,9 @@ describe('LoginComponent', () => {
       ],
       declarations: [LoginComponent],
       providers: [
-        { provide: AuthService, useClass: MockAuthService }, // Use useClass for the mock
-        { provide: MatSnackBar, useValue: snackBarSpy },
-        { provide: NotificationService, useValue: notificationServiceSpy },
+        {provide: AuthService, useClass: MockAuthService}, // Use useClass for the mock
+        {provide: MatSnackBar, useValue: snackBarSpy},
+        {provide: NotificationService, useValue: notificationServiceSpy},
       ],
     }).compileComponents();
 
@@ -107,29 +108,27 @@ describe('LoginComponent', () => {
     beforeEach(() => {
       consoleErrorSpy = spyOn(console, 'error');
     });
-          it('should show loader and reset error flags', fakeAsync(() => {
-            authService.signInWithGoogleFirebase.and.returnValue(NEVER); // Use NEVER to prevent completion or error
-            authService.signInForGoogleIdentityPlatform.and.returnValue(NEVER); // Use NEVER
-            component.loader = false;
-            component.invalidLogin = true;
-            component.errorMessage = 'Old error';
-    
-            component.loginWithGoogle();
-            // fixture.detectChanges(); // autoDetectChanges is true
-    
-            expect(component.loader).toBeTrue();
-            expect(component.invalidLogin).toBeFalse();
-            expect(component.errorMessage).toBe('');
-          }));
+    it('should show loader and reset error flags', fakeAsync(() => {
+      authService.signInWithGoogleFirebase.and.returnValue(NEVER); // Use NEVER to prevent completion or error
+      authService.signInForGoogleIdentityPlatform.and.returnValue(NEVER); // Use NEVER
+      component.loader = false;
+      component.invalidLogin = true;
+      component.errorMessage = 'Old error';
+
+      component.loginWithGoogle();
+      // fixture.detectChanges(); // autoDetectChanges is true
+
+      expect(component.loader).toBeTrue();
+      expect(component.invalidLogin).toBeFalse();
+      expect(component.errorMessage).toBe('');
+    }));
     describe('in local environment', () => {
       beforeEach(() => {
         (environment as any).isLocal = true;
       });
 
       it('should call signInWithGoogleFirebase and navigate on success', fakeAsync(() => {
-        authService.signInWithGoogleFirebase.and.returnValue(
-          of('test-token'),
-        );
+        authService.signInWithGoogleFirebase.and.returnValue(of('test-token'));
         spyOn(router, 'navigate');
 
         component.loginWithGoogle();
@@ -169,9 +168,7 @@ describe('LoginComponent', () => {
         tick();
 
         expect(component.loader).toBeFalse();
-        expect(component['handleLoginError']).toHaveBeenCalledWith(
-          error,
-        );
+        expect(component['handleLoginError']).toHaveBeenCalledWith(error);
       }));
     });
 
@@ -189,9 +186,7 @@ describe('LoginComponent', () => {
         component.loginWithGoogle();
         tick();
 
-        expect(
-          authService.signInForGoogleIdentityPlatform,
-        ).toHaveBeenCalled();
+        expect(authService.signInForGoogleIdentityPlatform).toHaveBeenCalled();
         expect(component.loader).toBeFalse();
         expect(router.navigate).toHaveBeenCalledWith(['/']);
       }));
@@ -227,9 +222,7 @@ describe('LoginComponent', () => {
         tick();
 
         expect(component.loader).toBeFalse();
-        expect(component['handleLoginError']).toHaveBeenCalledWith(
-          error,
-        );
+        expect(component['handleLoginError']).toHaveBeenCalledWith(error);
       }));
     });
   });

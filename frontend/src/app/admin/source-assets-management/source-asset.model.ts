@@ -16,7 +16,8 @@
 
 export enum AssetScopeEnum {
   PRIVATE = 'private', // Belongs to a single user
-  SYSTEM = 'system', // Available to all users (e.g., VTO models)
+  SYSTEM = 'system',
+  WORKSPACE = "WORKSPACE", // Available to all users (e.g., VTO models)
 }
 
 export enum AssetTypeEnum {
@@ -29,6 +30,7 @@ export enum AssetTypeEnum {
   VTO_BOTTOM = 'vto_bottom',
   VTO_DRESS = 'vto_dress',
   VTO_SHOE = 'vto_shoe',
+  IMAGE = "IMAGE",
 }
 
 export interface SourceAsset {

@@ -20,11 +20,7 @@ export const handleErrorSnackbar: (
   snackBar: MatSnackBar,
   error: any,
   context: string,
-) => void = (
-  snackBar: MatSnackBar,
-  error: any,
-  context: string,
-) => {
+) => void = (snackBar: MatSnackBar, error: any, context: string) => {
   console.error(`${context} error:`, error);
   const errorMessage =
     error?.error?.detail?.[0]?.msg ||
@@ -54,7 +50,7 @@ export const handleInfoSnackbar: (
   snackBar: MatSnackBar,
   msg: string,
   duration?: number,
-) => void = (snackBar: MatSnackBar, msg: string, duration: number = 10000) => {
+) => void = (snackBar: MatSnackBar, msg: string, duration = 10000) => {
   snackBar.open(msg, 'Close', {
     duration: duration,
     panelClass: ['info-snackbar'],

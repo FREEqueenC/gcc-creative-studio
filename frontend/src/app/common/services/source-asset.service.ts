@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, of } from 'rxjs';
-import { catchError, finalize, shareReplay, tap } from 'rxjs/operators';
-import { environment } from '../../../environments/environment';
+import {HttpClient} from '@angular/common/http';
+import {Injectable} from '@angular/core';
+import {BehaviorSubject, Observable, of} from 'rxjs';
+import {catchError, finalize, shareReplay, tap} from 'rxjs/operators';
+import {environment} from '../../../environments/environment';
 import {
   AssetScopeEnum,
   AssetTypeEnum,
 } from '../../admin/source-assets-management/source-asset.model';
-import { WorkspaceStateService } from '../../services/workspace/workspace-state.service';
+import {WorkspaceStateService} from '../../services/workspace/workspace-state.service';
 
 export interface SourceAssetResponseDto {
   id: number;
@@ -75,7 +75,7 @@ export class SourceAssetService {
   constructor(
     private http: HttpClient,
     private workspaceStateService: WorkspaceStateService,
-  ) { }
+  ) {}
 
   get assets(): Observable<SourceAssetResponseDto[]> {
     return this.assets$.asObservable();
@@ -182,7 +182,7 @@ export class SourceAssetService {
       }),
       catchError(() => {
         this.assetsRequest$ = null; // Allow retry on error
-        return of({ data: [], count: 0, page: 0, pageSize: 0, totalPages: 0 });
+        return of({data: [], count: 0, page: 0, pageSize: 0, totalPages: 0});
       }),
       finalize(() => {
         this.isLoading$.next(false);

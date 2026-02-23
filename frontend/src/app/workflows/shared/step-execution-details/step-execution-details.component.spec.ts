@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
-import { of } from 'rxjs';
+import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {Router} from '@angular/router';
+import {of} from 'rxjs';
 
-import { StepExecutionDetailsComponent } from './step-execution-details.component';
+import {StepExecutionDetailsComponent} from './step-execution-details.component';
 
 describe('StepExecutionDetailsComponent', () => {
   let component: StepExecutionDetailsComponent;
@@ -27,20 +27,20 @@ describe('StepExecutionDetailsComponent', () => {
 
   const mockStepConfigs = {
     'text-step': {
-      inputs: [{ name: 'prompt', type: 'text' }],
-      outputs: [{ name: 'text', type: 'text' }],
+      inputs: [{name: 'prompt', type: 'text'}],
+      outputs: [{name: 'text', type: 'text'}],
     },
     'image-step': {
-      inputs: [{ name: 'image', type: 'image' }],
-      outputs: [{ name: 'image', type: 'image' }],
+      inputs: [{name: 'image', type: 'image'}],
+      outputs: [{name: 'image', type: 'image'}],
     },
     'video-step': {
-      inputs: [{ name: 'video', type: 'video' }],
-      outputs: [{ name: 'video', type: 'video' }],
+      inputs: [{name: 'video', type: 'video'}],
+      outputs: [{name: 'video', type: 'video'}],
     },
     'audio-step': {
-      inputs: [{ name: 'audio', type: 'audio' }],
-      outputs: [{ name: 'audio', type: 'audio' }],
+      inputs: [{name: 'audio', type: 'audio'}],
+      outputs: [{name: 'audio', type: 'audio'}],
     },
   };
 
@@ -80,8 +80,10 @@ describe('StepExecutionDetailsComponent', () => {
     });
 
     it('should return previewUrl if value is an object with previewUrl', () => {
-      const value = { previewUrl: 'http://example.com/preview.jpg' };
-      expect(component.getMediaUrl(value)).toBe('http://example.com/preview.jpg');
+      const value = {previewUrl: 'http://example.com/preview.jpg'};
+      expect(component.getMediaUrl(value)).toBe(
+        'http://example.com/preview.jpg',
+      );
     });
 
     it('should return the value if it is a string starting with http', () => {
@@ -159,7 +161,7 @@ describe('StepExecutionDetailsComponent', () => {
     });
 
     it('should resolve values with _resolvedValue property', () => {
-      const value = { _resolvedValue: [{ _resolvedValue: 'a' }, 'b'] };
+      const value = {_resolvedValue: [{_resolvedValue: 'a'}, 'b']};
       expect(component.getResolvedValues(value)).toEqual(['a', 'b']);
     });
   });
@@ -250,14 +252,14 @@ describe('StepExecutionDetailsComponent', () => {
 
   describe('inputCount', () => {
     it('should return the correct number of inputs', () => {
-      component.inputs = { a: 1, b: 2 };
+      component.inputs = {a: 1, b: 2};
       expect(component.inputCount).toBe(2);
     });
   });
 
   describe('outputCount', () => {
     it('should return the correct number of outputs', () => {
-      component.outputs = { x: 1, y: 2, z: 3 };
+      component.outputs = {x: 1, y: 2, z: 3};
       expect(component.outputCount).toBe(3);
     });
   });

@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { ActivatedRoute } from '@angular/router';
-import { RouterTestingModule } from '@angular/router/testing';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
+import {ActivatedRoute} from '@angular/router';
+import {RouterTestingModule} from '@angular/router/testing';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 
 import {MediaLightboxComponent} from './media-lightbox.component';
@@ -27,7 +27,11 @@ describe('MediaLightboxComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [MediaLightboxComponent, HttpClientTestingModule, RouterTestingModule],
+      imports: [
+        MediaLightboxComponent,
+        HttpClientTestingModule,
+        RouterTestingModule,
+      ],
       providers: [
         {
           provide: ActivatedRoute,

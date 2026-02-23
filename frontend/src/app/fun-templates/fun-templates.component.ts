@@ -326,7 +326,7 @@ export class FunTemplatesComponent implements OnInit, OnDestroy {
       presignedUrls: [sourceAsset.presignedUrl],
       presignedThumbnailUrls: [sourceAsset.presignedUrl],
       originalPrompt: `Input: ${sourceAsset.role}`,
-      gcsUris: [sourceAsset.presignedUrl]
+      gcsUris: [sourceAsset.presignedUrl],
       // Add any other required fields for MediaItem with default values
     };
 

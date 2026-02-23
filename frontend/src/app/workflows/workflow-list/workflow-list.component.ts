@@ -14,14 +14,10 @@
  * limitations under the License.
  */
 
-import {
-  Component,
-  OnDestroy,
-  OnInit,
-} from '@angular/core';
-import { MatDialog } from '@angular/material/dialog';
-import { PageEvent } from '@angular/material/paginator';
-import { Router } from '@angular/router';
+import {Component, OnDestroy, OnInit} from '@angular/core';
+import {MatDialog} from '@angular/material/dialog';
+import {PageEvent} from '@angular/material/paginator';
+import {Router} from '@angular/router';
 import {
   debounceTime,
   distinctUntilChanged,
@@ -30,14 +26,10 @@ import {
   Subscription,
   takeUntil,
 } from 'rxjs';
-import { ConfirmationDialogComponent } from '../../common/components/confirmation-dialog/confirmation-dialog.component';
-import {
-  WorkflowModel,
-  WorkflowRunStatusEnum,
-} from '../workflow.models';
-import { WorkflowService } from '../workflow.service';
-import { AuthService } from '../../common/services/auth.service';
-
+import {ConfirmationDialogComponent} from '../../common/components/confirmation-dialog/confirmation-dialog.component';
+import {WorkflowModel, WorkflowRunStatusEnum} from '../workflow.models';
+import {WorkflowService} from '../workflow.service';
+import {AuthService} from '../../common/services/auth.service';
 
 @Component({
   selector: 'app-workflow-list',
@@ -66,7 +58,7 @@ export class WorkflowListComponent implements OnInit, OnDestroy {
     private router: Router,
     public dialog: MatDialog,
     public authService: AuthService,
-  ) { }
+  ) {}
 
   ngOnInit(): void {
     this.obs$ = this.workflowService.workflows$;
@@ -83,7 +75,6 @@ export class WorkflowListComponent implements OnInit, OnDestroy {
       .subscribe(filter => {
         this.workflowService.setFilter(filter);
       });
-
   }
 
   handlePageEvent(event: PageEvent) {
@@ -142,8 +133,6 @@ export class WorkflowListComponent implements OnInit, OnDestroy {
     this.subscriptions.unsubscribe();
   }
 
-
-
   public getWorkflowRunStatusChipClass(status: WorkflowRunStatusEnum): string {
     const statusLower = status.toLowerCase();
 
@@ -195,7 +184,7 @@ export class WorkflowListComponent implements OnInit, OnDestroy {
       Math.abs((now.getTime() - date.getTime()) / 1000),
     );
 
-    const intervals: { [key: string]: number } = {
+    const intervals: {[key: string]: number} = {
       year: 31536000,
       month: 2592000,
       week: 604800,

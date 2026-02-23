@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { NotificationContainerComponent } from './common/components/notification-container/notification-container.component';
+import {NoopAnimationsModule} from '@angular/platform-browser/animations';
+import {NotificationContainerComponent} from './common/components/notification-container/notification-container.component';
 import {TestBed} from '@angular/core/testing';
 import {RouterModule} from '@angular/router';
 import {AppComponent} from './app.component';

@@ -1,23 +1,26 @@
-import { Component, Input, OnInit } from '@angular/core';
-import { AbstractControl } from '@angular/forms';
-import { MatDialog } from '@angular/material/dialog';
-import { AssetTypeEnum } from '../../../../../../admin/source-assets-management/source-asset.model';
-import { ImageCropperDialogComponent } from '../../../../../../common/components/image-cropper-dialog/image-cropper-dialog.component';
-import { ImageSelectorComponent, MediaItemSelection } from '../../../../../../common/components/image-selector/image-selector.component';
-import { ReferenceImage } from '../../../../../../common/models/search.model';
-import { SourceAssetResponseDto } from '../../../../../../common/services/source-asset.service';
-import { StepOutputReference } from '../../../../../workflow.models';
+import {Component, Input, OnInit} from '@angular/core';
+import {AbstractControl} from '@angular/forms';
+import {MatDialog} from '@angular/material/dialog';
+import {AssetTypeEnum} from '../../../../../../admin/source-assets-management/source-asset.model';
+import {ImageCropperDialogComponent} from '../../../../../../common/components/image-cropper-dialog/image-cropper-dialog.component';
+import {
+  ImageSelectorComponent,
+  MediaItemSelection,
+} from '../../../../../../common/components/image-selector/image-selector.component';
+import {ReferenceImage} from '../../../../../../common/models/search.model';
+import {SourceAssetResponseDto} from '../../../../../../common/services/source-asset.service';
+import {StepOutputReference} from '../../../../../workflow.models';
 
 @Component({
   selector: 'app-step-media-input',
   templateUrl: './step-media-input.component.html',
-  styleUrls: ['./step-media-input.component.scss']
+  styleUrls: ['./step-media-input.component.scss'],
 })
 export class StepMediaInputComponent implements OnInit {
   @Input() control!: AbstractControl;
   @Input() inputName!: string;
   @Input() type: 'image' | 'video' = 'image';
-  @Input() maxItems: number = 1;
+  @Input() maxItems = 1;
   @Input() compatibleOutputs: any[] = [];
   @Input() showValidationErrors = false;
 
@@ -32,17 +35,16 @@ export class StepMediaInputComponent implements OnInit {
     // Fixed -> handled as single item usually, but for Image input it uses `referenceImages[input.name]` which is an array.
     // So standardized: Always work with array for internal display.
     // If control value is null, return empty array.
-    // Wait, if it's FIXED mode and we only allow 1, the control value might be just the object? 
+    // Wait, if it's FIXED mode and we only allow 1, the control value might be just the object?
     // In GenericStepComponent, `referenceImages` was the source of truth for display, and `updateInputControlWithError` synced it to control.
     // We should probably maintain a local `referenceImages` array and sync to control.
     if (!val) return [];
     return Array.isArray(val) ? val : [val];
   }
 
-  constructor(public dialog: MatDialog) { }
+  constructor(public dialog: MatDialog) {}
 
-  ngOnInit(): void {
-  }
+  ngOnInit(): void {}
 
   get isMixedMode(): boolean {
     return this.maxItems > 1; // Or check if control value is array?
@@ -53,14 +55,16 @@ export class StepMediaInputComponent implements OnInit {
   }
 
   getLinkedOutputLabel(item: StepOutputReference): string {
-    const found = this.compatibleOutputs.find(o => o.value.step === item.step && o.value.output === item.output);
+    const found = this.compatibleOutputs.find(
+      o => o.value.step === item.step && o.value.output === item.output,
+    );
     return found ? found.label : `${item.step}.${item.output}`;
   }
 
   openImageSelectorForReference(): void {
     if (this.items.length >= this.maxItems) return;
 
-    let mimeType: string = 'image/*';
+    let mimeType = 'image/*';
     if (this.type === 'video') mimeType = 'video/mp4';
 
     const dialogRef = this.dialog.open(ImageSelectorComponent, {
@@ -69,39 +73,45 @@ export class StepMediaInputComponent implements OnInit {
       maxWidth: '90vw',
       data: {
         mimeType: mimeType,
-        assetType: this.type === 'video' ? AssetTypeEnum.GENERIC_VIDEO : AssetTypeEnum.GENERIC_IMAGE,
+        assetType:
+          this.type === 'video'
+            ? AssetTypeEnum.GENERIC_VIDEO
+            : AssetTypeEnum.GENERIC_IMAGE,
       },
       panelClass: 'image-selector-dialog',
     });
 
-    dialogRef.afterClosed().subscribe((result: MediaItemSelection | SourceAssetResponseDto) => {
-      if (result && this.items.length < this.maxItems) {
-        let newImage: ReferenceImage | null = null;
+    dialogRef
+      .afterClosed()
+      .subscribe((result: MediaItemSelection | SourceAssetResponseDto) => {
+        if (result && this.items.length < this.maxItems) {
+          let newImage: ReferenceImage | null = null;
 
-        if ('gcsUri' in result) {
-          newImage = {
-            sourceAssetId: result.id,
-            previewUrl: result.presignedUrl || '',
-          };
-        } else {
-          const previewUrl = result.mediaItem.presignedUrls?.[result.selectedIndex];
-          if (previewUrl) {
+          if ('gcsUri' in result) {
             newImage = {
-              previewUrl: previewUrl,
-              sourceMediaItem: {
-                mediaItemId: result.mediaItem.id,
-                mediaIndex: result.selectedIndex,
-                role: 'image_reference_asset',
-              },
+              sourceAssetId: result.id,
+              previewUrl: result.presignedUrl || '',
             };
+          } else {
+            const previewUrl =
+              result.mediaItem.presignedUrls?.[result.selectedIndex];
+            if (previewUrl) {
+              newImage = {
+                previewUrl: previewUrl,
+                sourceMediaItem: {
+                  mediaItemId: result.mediaItem.id,
+                  mediaIndex: result.selectedIndex,
+                  role: 'image_reference_asset',
+                },
+              };
+            }
+          }
+
+          if (newImage) {
+            this.addItem(newImage);
           }
         }
-
-        if (newImage) {
-          this.addItem(newImage);
-        }
-      }
-    });
+      });
   }
 
   onReferenceImageDrop(event: DragEvent) {

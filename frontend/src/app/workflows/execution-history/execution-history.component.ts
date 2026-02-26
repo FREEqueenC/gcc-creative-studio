@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute } from '@angular/router';
@@ -22,14 +22,18 @@ import { handleErrorSnackbar, handleSuccessSnackbar } from '../../utils/handleMe
 import { RunWorkflowModalComponent } from '../workflow-editor/run-workflow-modal/run-workflow-modal.component';
 import { NodeTypes } from '../workflow.models';
 import { WorkflowService } from '../workflow.service';
+import { WorkflowExecutionPollingService } from './workflow-execution-polling.service';
+import { Subscription } from 'rxjs';
+import { BatchExecutionModalComponent } from './batch-execution-modal/batch-execution-modal.component';
 import { ExecutionDetailsModalComponent } from './execution-details-modal/execution-details-modal.component';
+import { AuthService } from '../../common/services/auth.service';
 
 @Component({
     selector: 'app-execution-history',
     templateUrl: './execution-history.component.html',
     styleUrls: ['./execution-history.component.scss']
 })
-export class ExecutionHistoryComponent implements OnInit {
+export class ExecutionHistoryComponent implements OnInit, OnDestroy {
     workflowId: string | null = null;
     workflow: any | null = null;
     executions: any[] = [];
@@ -37,12 +41,15 @@ export class ExecutionHistoryComponent implements OnInit {
     nextPageToken: string | null = null;
     displayedColumns: string[] = ['status', 'id', 'startTime', 'duration', 'actions'];
     selectedStatus: string = 'ALL';
+    private pollingSubscription: Subscription | null = null;
 
     constructor(
         private route: ActivatedRoute,
         private workflowService: WorkflowService,
+        private pollingService: WorkflowExecutionPollingService,
         private dialog: MatDialog,
-        private snackBar: MatSnackBar
+        private snackBar: MatSnackBar,
+        public authService: AuthService
     ) { }
 
     ngOnInit(): void {
@@ -53,6 +60,10 @@ export class ExecutionHistoryComponent implements OnInit {
                 this.loadExecutions(true);
             }
         });
+    }
+
+    ngOnDestroy(): void {
+        this.stopPolling();
     }
 
     loadWorkflow(): void {
@@ -83,6 +94,9 @@ export class ExecutionHistoryComponent implements OnInit {
                 }
                 this.nextPageToken = response.next_page_token || null;
                 this.isLoading = false;
+
+                // Check if we need to start polling
+                this.checkAndStartPolling(this.executions);
             },
             error: (err) => {
                 console.error('Failed to load executions', err);
@@ -106,6 +120,7 @@ export class ExecutionHistoryComponent implements OnInit {
 
         this.dialog.open(ExecutionDetailsModalComponent, {
             width: '800px',
+            maxWidth: '90vw',
             maxHeight: '90vh',
             data: {
                 workflowId: this.workflowId,
@@ -115,23 +130,34 @@ export class ExecutionHistoryComponent implements OnInit {
         });
     }
 
-    getStatusClass(state: string): string {
-        switch (state) {
-            case 'SUCCEEDED': return '!bg-green-500/20 !text-green-300';
-            case 'FAILED': return '!bg-red-500/20 !text-red-300';
-            case 'ACTIVE': return '!bg-blue-500/20 !text-blue-300';
-            default: return '!bg-gray-500/20 !text-gray-300';
+    openBatchExecution(): void {
+        if (!this.workflowId) return;
+
+        // Ensure workflow is loaded
+        if (!this.workflow) {
+            this.workflowService.getWorkflowById(this.workflowId).subscribe(wf => {
+                this.workflow = wf;
+                this.openBatchDialog();
+            });
+        } else {
+            this.openBatchDialog();
         }
     }
 
-    getStatusIcon(state: string): string {
-        switch (state) {
-            case 'SUCCEEDED': return 'check_circle';
-            case 'FAILED': return 'error';
-            case 'ACTIVE': return 'hourglass_top';
-            default: return 'help_outline';
-        }
+    private openBatchDialog(): void {
+        this.dialog.open(BatchExecutionModalComponent, {
+            width: '900px',
+            maxWidth: '95vw',
+            maxHeight: '90vh',
+            data: {
+                workflow: this.workflow
+            },
+            panelClass: 'batch-execution-modal'
+        });
     }
+
+
+
 
     runWorkflow(): void {
         if (!this.workflowId || this.isLoading) return;
@@ -170,6 +196,7 @@ export class ExecutionHistoryComponent implements OnInit {
                         this.isLoading = false;
                         handleSuccessSnackbar(this.snackBar, 'Workflow execution started!');
                         this.loadExecutions(true);
+                        // Polling will be triggered by loadExecutions if ACTIVE
                     },
                     error: (err) => {
                         this.isLoading = false;
@@ -178,5 +205,51 @@ export class ExecutionHistoryComponent implements OnInit {
                 });
             }
         });
+    }
+
+    private startPolling(): void {
+        if (this.pollingSubscription || !this.workflowId) return;
+
+        this.pollingSubscription = this.pollingService.pollExecutions(this.workflowId).subscribe({
+            next: (executions) => this.handlePollingUpdate(executions),
+            error: (err) => console.error('Polling error', err)
+        });
+    }
+
+    private stopPolling(): void {
+        if (this.pollingSubscription) {
+            this.pollingSubscription.unsubscribe();
+            this.pollingSubscription = null;
+        }
+    }
+
+    private checkAndStartPolling(executions: any[]): void {
+        const hasActive = executions.some(e => e.state === 'ACTIVE');
+        if (hasActive) {
+            this.startPolling();
+        } else {
+            this.stopPolling();
+        }
+    }
+
+    private handlePollingUpdate(updatedExecutions: any[]): void {
+        if (!updatedExecutions || updatedExecutions.length === 0) return;
+
+        const currentIds = new Set(this.executions.map(e => e.id));
+        const newExecutions = updatedExecutions.filter(e => !currentIds.has(e.id));
+
+        // Update existing
+        this.executions = this.executions.map(exec => {
+            const updated = updatedExecutions.find(u => u.id === exec.id);
+            return updated ? updated : exec;
+        });
+
+        // Prepend new
+        if (newExecutions.length > 0) {
+            this.executions = [...newExecutions, ...this.executions];
+        }
+
+        // Check continuously if we should stop
+        this.checkAndStartPolling(updatedExecutions);
     }
 }

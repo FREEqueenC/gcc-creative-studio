@@ -33,7 +33,7 @@ export class RunWorkflowModalComponent implements OnInit {
     runForm!: FormGroup;
     userInputStep: WorkflowStep;
     inputDefinitions: { name: string; type: string }[] = [];
-    referenceImages: { [key: string]: ReferenceImage[] } = {};
+    referenceImages: { [key: string]: ReferenceImage | null } = {};
 
     constructor(
         private fb: FormBuilder,
@@ -52,8 +52,8 @@ export class RunWorkflowModalComponent implements OnInit {
                 this.inputDefinitions.push({ name: key, type: value.type });
 
                 if (value.type === 'image') {
-                    this.runForm.addControl(key, this.fb.control([], Validators.required));
-                    this.referenceImages[key] = [];
+                    this.runForm.addControl(key, this.fb.control(null, Validators.required));
+                    this.referenceImages[key] = null;
                 } else {
                     this.runForm.addControl(key, this.fb.control('', Validators.required));
                 }
@@ -72,7 +72,7 @@ export class RunWorkflowModalComponent implements OnInit {
     }
 
     openImageSelectorForReference(inputName: string): void {
-        if ((this.referenceImages[inputName]?.length || 0) >= 3) return;
+        if (this.referenceImages[inputName]) return;
         const dialogRef = this.dialog.open(ImageSelectorComponent, {
             width: '90vw',
             height: '80vh',
@@ -86,9 +86,7 @@ export class RunWorkflowModalComponent implements OnInit {
         dialogRef
             .afterClosed()
             .subscribe((result: MediaItemSelection | SourceAssetResponseDto) => {
-                if (result && (this.referenceImages[inputName]?.length || 0) < 3) {
-                    if (!this.referenceImages[inputName]) this.referenceImages[inputName] = [];
-
+                if (result && !this.referenceImages[inputName]) {
                     let newImage: ReferenceImage | null = null;
 
                     if ('gcsUri' in result) {
@@ -112,7 +110,7 @@ export class RunWorkflowModalComponent implements OnInit {
                     }
 
                     if (newImage) {
-                        this.referenceImages[inputName].push(newImage);
+                        this.referenceImages[inputName] = newImage;
                         this.updateInputControlWithError(inputName);
                     }
                 }
@@ -122,7 +120,7 @@ export class RunWorkflowModalComponent implements OnInit {
     // Called when DROPPING a file on the new drop zone
     onReferenceImageDrop(event: DragEvent, inputName: string) {
         event.preventDefault();
-        if ((this.referenceImages[inputName]?.length || 0) >= 3) return;
+        if (this.referenceImages[inputName]) return;
         const file = event.dataTransfer?.files[0];
         if (file && file.type.startsWith('image/')) {
             // For a direct drop, go straight to the cropper
@@ -136,11 +134,10 @@ export class RunWorkflowModalComponent implements OnInit {
 
             dialogRef.afterClosed().subscribe((result: SourceAssetResponseDto) => {
                 if (result && result.id) {
-                    if (!this.referenceImages[inputName]) this.referenceImages[inputName] = [];
-                    this.referenceImages[inputName].push({
+                    this.referenceImages[inputName] = {
                         sourceAssetId: result.id,
                         previewUrl: result.presignedUrl || '',
-                    });
+                    };
                     this.updateInputControlWithError(inputName);
                 }
             });
@@ -148,15 +145,13 @@ export class RunWorkflowModalComponent implements OnInit {
     }
 
 
-    clearReferenceImage(inputName: string, index: number) {
-        if (this.referenceImages[inputName]) {
-            this.referenceImages[inputName].splice(index, 1);
-            this.updateInputControlWithError(inputName);
-        }
+    clearReferenceImage(inputName: string) {
+        this.referenceImages[inputName] = null;
+        this.updateInputControlWithError(inputName);
     }
 
     private updateInputControlWithError(inputName: string) {
-        const images = this.referenceImages[inputName] || [];
-        this.runForm.get(inputName)?.setValue(images);
+        const image = this.referenceImages[inputName] || null;
+        this.runForm.get(inputName)?.setValue(image);
     }
 }

@@ -49,6 +49,7 @@ class MediaItemResponse(MediaItemModel):
     """
 
     presigned_urls: List[str] = []
+    original_presigned_urls: Optional[List[str]] = None
     presigned_thumbnail_urls: Optional[List[str]] = []
     enriched_source_assets: Optional[List[SourceAssetLinkResponse]] = None
     enriched_source_media_items: Optional[List[SourceMediaItemLinkResponse]] = (

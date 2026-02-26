@@ -82,7 +82,7 @@ export const GENERATE_VIDEO_STEP_CONFIG: StepConfig = {
       name: 'brand_guidelines',
       label: 'Use Brand Guidelines',
       type: 'checkbox',
-      defaultValue: true,
+      defaultValue: false,
     },
   ],
   outputs: [

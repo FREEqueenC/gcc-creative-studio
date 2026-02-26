@@ -12,13 +12,96 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import io
 import json
 import logging
 import os
+import pathlib
 import subprocess
 from typing import List, Tuple
 
+from PIL import Image as PILImage
+
+from src.common.storage_service import GcsService
+
 logger = logging.getLogger(__name__)
+
+
+
+
+def generate_image_thumbnail_bytes(image_bytes: bytes, mime_type: str) -> bytes | None:
+    """
+    Generates a thumbnail from image bytes using PIL.
+    
+    Args:
+        image_bytes: The raw bytes of the image.
+        mime_type: The mime type of the image (e.g., 'image/png', 'image/jpeg').
+        
+    Returns:
+        The raw bytes of the generated thumbnail, or None if it fails.
+    """
+    try:
+        with PILImage.open(io.BytesIO(image_bytes)) as img:
+            # Convert to RGB if RGBA and saving as JPEG
+            if mime_type == "image/jpeg" and img.mode == "RGBA":
+                img = img.convert("RGB")
+                
+            img.thumbnail((512, 512))
+            output = io.BytesIO()
+            
+            format_to_save = "PNG" if mime_type == "image/png" else "JPEG"
+            img.save(output, format=format_to_save, optimize=True)
+            return output.getvalue()
+    except Exception as e:
+        logger.error(f"Error generating image thumbnail: {e}")
+        return None
+
+
+def generate_image_thumbnail_from_gcs(
+    gcs_service: GcsService,
+    gcs_uri: str,
+    mime_type: str
+) -> str | None:
+    """
+    Generates a thumbnail for the given GCS URI and uploads it.
+    
+    Args:
+        gcs_service: The GcsService instance to use for download/upload.
+        gcs_uri: The GCS URI of the source image.
+        mime_type: The mime type of the image.
+        
+    Returns:
+        The GCS URI of the generated thumbnail, or None if it fails.
+    """
+    try:
+        image_bytes = gcs_service.download_bytes_from_gcs(gcs_uri)
+        if not image_bytes:
+            return None
+        
+        thumbnail_bytes = generate_image_thumbnail_bytes(image_bytes, mime_type)
+        if not thumbnail_bytes:
+            return None
+            
+        if not gcs_uri.startswith("gs://"):
+            return None
+            
+        # gs://bucket/blob_name
+        parts = gcs_uri.split("/", 3) # gs:, , bucket, blob_name
+        if len(parts) < 4:
+            return None
+        blob_name = parts[3]
+        
+        path = pathlib.Path(blob_name)
+        # Use simple string manipulation to avoid path issues on different OS if needed, pathlib is generally fine.
+        new_blob_name = str(path.parent / f"{path.stem}_thumbnail{path.suffix}")
+        if path.parent == pathlib.Path("."):
+             new_blob_name = f"{path.stem}_thumbnail{path.suffix}"
+
+        return gcs_service.upload_bytes_to_gcs(thumbnail_bytes, new_blob_name, mime_type)
+
+    except Exception as e:
+        logger.error(f"Thumbnail generation failed: {e}")
+        return None
 
 
 def generate_thumbnail(video_path: str) -> str | None:

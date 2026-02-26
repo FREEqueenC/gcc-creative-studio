@@ -65,6 +65,7 @@ class SourceAsset(Base):
     scope: Mapped[AssetScopeEnum] = mapped_column(String, default=AssetScopeEnum.PRIVATE.value)
     asset_type: Mapped[AssetTypeEnum] = mapped_column(String, default=AssetTypeEnum.GENERIC_IMAGE.value)
     thumbnail_gcs_uri: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    original_gcs_uri: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
     created_at: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True),
@@ -94,6 +95,7 @@ class SourceAssetModel(BaseDocument):
     user_id: int = Field(
         description="User ID of the person who uploaded this specific file."
     )
+    original_gcs_uri: Optional[str] = None
     gcs_uri: str
     original_filename: str
     mime_type: MimeTypeEnum

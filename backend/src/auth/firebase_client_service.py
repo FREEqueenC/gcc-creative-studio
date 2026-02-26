@@ -75,9 +75,6 @@ class FirebaseClient:
             )
             raise RuntimeError(f"Failed to initialize Firebase Admin SDK: {e}")
 
-        db_name = config_service.FIREBASE_DB
-        logger.info(f"Connecting to Firestore database: '{db_name}'")
-
     def check_adc_authentication(self):
         """
         Checks if Application Default Credentials (ADC) are valid by making a
@@ -128,47 +125,3 @@ class FirebaseClient:
 
 
 firebase_client = FirebaseClient()
-
-
-
-def create_firebase_user(email: str, password: str):
-    try:
-        user_record = auth.create_user(email=email, password=password)
-        return user_record
-    except auth.EmailAlreadyExistsError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered with Firebase.",
-        )
-    except Exception as e:
-        logger.error(
-            f"Error creating Firebase user {email}: {e}", exc_info=True
-        )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Could not create user in Firebase.",  # Avoid leaking raw error details to client
-        )
-
-
-def verify_firebase_token(id_token: str):
-    try:
-        decoded_token = auth.verify_id_token(id_token)
-        return decoded_token
-    except auth.ExpiredIdTokenError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Firebase ID token has expired.",
-        )
-    except auth.InvalidIdTokenError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid Firebase ID token.",
-        )
-    except Exception as e:
-        logger.error(
-            f"Unexpected error verifying Firebase token: {e}", exc_info=True
-        )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Could not process token.",
-        )

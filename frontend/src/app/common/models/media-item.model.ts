@@ -68,6 +68,7 @@ export interface MediaItem {
   gcsUris: string[];
   sourceImagesGcs?: string[];
   presignedUrls?: string[];
+  originalPresignedUrls?: string[];
   presignedThumbnailUrls?: string[];
 
   // Video specific
@@ -101,7 +102,6 @@ export interface MediaItem {
 
   // Debugging field
   rawData?: Record<string, any>;
-  workspaceId?: number;
   errorMessage?: string;
 }
 

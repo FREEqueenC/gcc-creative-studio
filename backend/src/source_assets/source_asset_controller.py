@@ -43,7 +43,7 @@ from src.source_assets.source_asset_service import SourceAssetService
 from src.users.repository.user_repository import UserRepository
 from src.users.user_model import UserModel, UserRoleEnum
 from src.workspaces.repository.workspace_repository import WorkspaceRepository
-from src.workspaces.workspace_auth_guard import workspace_auth_service
+from src.workspaces.workspace_auth_guard import WorkspaceAuth
 
 router = APIRouter(
     prefix="/api/source_assets",
@@ -64,9 +64,10 @@ async def upload_source_asset(
     scope: Optional[AssetScopeEnum] = Form(None),
     assetType: Optional[AssetTypeEnum] = Form(None),
     aspectRatio: Optional[AspectRatioEnum] = Form(None),
+    upscaleFactor: Optional[str] = Form(None),
     current_user: UserModel = Depends(get_current_user),
-    service: SourceAssetService = Depends(),
-    workspace_repo: WorkspaceRepository = Depends(),
+    service: SourceAssetService = Depends(SourceAssetService),
+    workspace_auth: WorkspaceAuth = Depends(),
 ):
     """
     Uploads a new source asset. Handles de-duplication and upscaling.
@@ -78,19 +79,22 @@ async def upload_source_asset(
     """
     # Use our centralized dependency to authorize the user for the workspace
     # before proceeding with the upload.
-    await workspace_auth_service.authorize(
+    await workspace_auth.authorize(
         workspace_id=workspaceId,
         user=current_user,
-        workspace_repo=workspace_repo,
     )
 
+    contents = await file.read()
     return await service.upload_asset(
         user=current_user,
-        file=file,
+        file_bytes=contents,
+        filename=file.filename,
+        mime_type=file.content_type,
         scope=scope,
         workspace_id=workspaceId,
         asset_type=assetType,
         aspect_ratio=aspectRatio,
+        upscale_factor=upscaleFactor,
     )
 
 

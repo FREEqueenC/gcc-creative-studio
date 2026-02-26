@@ -76,9 +76,9 @@ class CreateImagenDto(BaseDto):
         default=False,
         description="Whether to add a watermark to the generated image.",
     )
-    upscale_factor: Literal["", "x2", "x4"] = Field(
+    upscale_factor: Literal["", "x2", "x3", "x4"] = Field(
         default="",
-        description="""Factor of the upscale, either x2 or x4. If empty it will not upscale""",
+        description="""Factor of the upscale, either x2, x3 or x4. If empty it will not upscale""",
     )
     source_asset_ids: Optional[Annotated[list[int], Field(max_length=14)]] = (
         Field(
@@ -117,6 +117,7 @@ class CreateImagenDto(BaseDto):
     ) -> GenerationModelEnum:
         """Ensures that only supported generation models for imagen are used."""
         valid_generation_models = [
+            GenerationModelEnum.IMAGEN_4_UPSCALE_PREVIEW,
             GenerationModelEnum.IMAGEGEN_002,
             GenerationModelEnum.IMAGEGEN_005,
             GenerationModelEnum.IMAGEGEN_006,
@@ -127,6 +128,7 @@ class CreateImagenDto(BaseDto):
             GenerationModelEnum.IMAGEN_4_ULTRA,
             GenerationModelEnum.IMAGEN_4_001,
             GenerationModelEnum.GEMINI_2_5_FLASH_IMAGE_PREVIEW,
+            GenerationModelEnum.GEMINI_2_5_FLASH_IMAGE,
             GenerationModelEnum.GEMINI_3_PRO_IMAGE_PREVIEW,
         ]
         if value not in valid_generation_models:
@@ -152,12 +154,14 @@ class CreateImagenDto(BaseDto):
         is_gemini_3_pro = (
             self.generation_model == GenerationModelEnum.GEMINI_3_PRO_IMAGE_PREVIEW
         )
+        
         is_gemini_flash = (
             self.generation_model == GenerationModelEnum.GEMINI_2_5_FLASH_IMAGE_PREVIEW
+            or self.generation_model == GenerationModelEnum.GEMINI_2_5_FLASH_IMAGE
         )
 
         # Aspect Ratio Validation
-        allowed_ratios_gemini_3 = [
+        allowed_ratios_gemini = [
             AspectRatioEnum.RATIO_1_1,
             AspectRatioEnum.RATIO_3_4,
             AspectRatioEnum.RATIO_4_3,
@@ -170,15 +174,10 @@ class CreateImagenDto(BaseDto):
             AspectRatioEnum.RATIO_21_9,
         ]
         
-        if is_gemini_3_pro:
-            if self.aspect_ratio not in allowed_ratios_gemini_3:
+        if is_gemini_3_pro or is_gemini_flash:
+            if self.aspect_ratio not in allowed_ratios_gemini:
                  raise ValueError(
-                    f"Aspect ratio {self.aspect_ratio} is not supported for Gemini 3 Pro."
-                )
-        elif is_gemini_flash:
-            if self.aspect_ratio != AspectRatioEnum.RATIO_1_1:
-                raise ValueError(
-                    f"Aspect ratio {self.aspect_ratio} is not supported for Gemini Flash. Only 1:1 is supported."
+                    f"Aspect ratio {self.aspect_ratio} is not supported for Gemini models."
                 )
         else: # Imagen models
             allowed_ratios_imagen = [

@@ -32,7 +32,7 @@ export class MediaTemplatesService {
 
   getMediaTemplates(): Observable<PaginatedResponse<MediaTemplate>> {
     return this.http
-      .get<PaginatedResponse<MediaTemplate>>(this.apiUrl)
+      .get<PaginatedResponse<MediaTemplate>>(`${this.apiUrl}?limit=30`)
       .pipe(catchError(this.handleError));
   }
 

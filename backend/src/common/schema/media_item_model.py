@@ -148,6 +148,7 @@ class MediaItem(Base):
     num_media: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     generation_time: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     error_message: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    thumbnail_uris: Mapped[List[str]] = mapped_column(ARRAY(String), default=[])
 
     # Enums
     aspect_ratio: Mapped[AspectRatioEnum] = mapped_column(String, nullable=False)
@@ -164,10 +165,10 @@ class MediaItem(Base):
     source_media_items: Mapped[Optional[List[dict]]] = mapped_column(JSONB, nullable=True)
     
     gcs_uris: Mapped[List[str]] = mapped_column(ARRAY(String), default=[])
+    original_gcs_uris: Mapped[Optional[List[str]]] = mapped_column(ARRAY(String), nullable=True, default=[])
 
     # Video specific
     duration_seconds: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-    thumbnail_uris: Mapped[List[str]] = mapped_column(ARRAY(String), default=[])
     comment: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
     # Image specific
@@ -251,6 +252,14 @@ class MediaItemModel(BaseDocument):
         Field(
             min_length=0,  # As on the video generation we return a placeholder this can be 0
             description="A list of public URLs for the media to be displayed (e.g., video or image).",
+        ),
+    ]
+    original_gcs_uris: Annotated[
+        Optional[List[str]],
+        Field(
+            default=None,
+            min_length=0, 
+            description="A list of public URLs (original / non-upscaled) for the media to be displayed (e.g., video or image).",
         ),
     ]
 

@@ -252,7 +252,7 @@ TEMPLATES = [
         ],
         "generation_parameters": {
             "prompt": "Your goal is to create a 'product flat lay' from the image! Step 1: Identify and segment every featured product and article of clothing (e.g., shirt, pants, shoes, bag, sunglasses). Step 2: Create a clean canvas with a solid white background. Step 3: Composite all segmented items from Step 1 onto the canvas. Step 4: Arrange the items in an organized, 'knolling' style (i.e., laid flat, organized at 90-degree angles). Step 5: The final image must contain only the products, with no part of the person or original scene visible.",
-            "model": "gemini-2.5-flash-image-preview",
+            "model": "gemini-2.5-flash-image",
             "aspect_ratio": AspectRatioEnum.RATIO_1_1,
         },
     },
@@ -274,7 +274,7 @@ TEMPLATES = [
         ],
         "generation_parameters": {
             "prompt": "Your goal is to create a 'pose variation sheet' for the subject in the provided image. Preserve (Do Not Change): Subject Identity: The face, hair, and body type must be identical to the original. Apparel: The subject must be wearing the exact same clothes. Background: Maintain the original background scene and lighting. Generate (New Poses): Create 3 new images of the subject in the following distinct poses: [Pose 1: e.g., 'Leaning against the wall casually'] [Pose 2: e.g., 'Arms raised in celebration'] [Pose 3: e.g., 'Crouching down to look at something'] [Pose 4. e.g., 'Surprise me with this one!']",
-            "model": "gemini-2.5-flash-image-preview",
+            "model": "gemini-2.5-flash-image",
             "aspect_ratio": AspectRatioEnum.RATIO_3_4,
         },
     },
@@ -301,7 +301,7 @@ TEMPLATES = [
         ],
         "generation_parameters": {
             "prompt": "Task: Virtual Garment Transfer Input A (Target Model): [image of the person to dress] Input B (Garment Source): [image of the clothing on another person/mannequin] Instructions: Identity Lock (Input A): Preserve 100% of the target model's face, hair, body type, and pose. Garment Extraction (Input B): Isolate only the full apparel ensemble (e.g., 'the denim jacket and white skirt') from Input B. Discard the original model, background, and body parts. Composite & Re-Drape: Intelligently fit and conform the extracted garment onto the target model (A). The clothing must realistically adapt to the model's pose, creating all new, necessary folds, shadows, and highlights to match the new body position. Output: A single, photorealistic image of the target model (A) wearing the ensemble from (B).",
-            "model": "gemini-2.5-flash-image-preview",
+            "model": "gemini-2.5-flash-image",
             "aspect_ratio": AspectRatioEnum.RATIO_3_4,
         },
     },
@@ -323,7 +323,7 @@ TEMPLATES = [
         ],
         "generation_parameters": {
             "prompt": "Task: Photorealistic Denoising and Enhancement Input Image: [Uploaded Pre-rendered 3D Image] Instructions: Scene Fidelity Lock: Maintain 100% of the geometric structure, object placement, and camera angle from the input image. Do not introduce new objects or alter the scene composition. Material & Texture Enhancement: Generatively refine all materials and textures to achieve hyperrealistic detail. Focus on realistic subsurface scattering for skin, intricate fabric weaves, accurate metallic reflections, and subtle imperfections. Lighting & Shadows: Enhance existing lighting to be more physically accurate. Introduce subtle volumetric effects, realistic global illumination, and crisp, natural soft shadows appropriate for the scene's light sources. Post-Processing: Apply a subtle cinematic grade, including film grain, bloom (where appropriate), and depth of field, without altering the core scene. Output: A photorealistic image that looks like a photograph taken from the input 3D scene.",
-            "model": "gemini-2.5-flash-image-preview",
+            "model": "gemini-2.5-flash-image",
             "aspect_ratio": AspectRatioEnum.RATIO_16_9,
         },
     },
@@ -350,7 +350,7 @@ TEMPLATES = [
         ],
         "generation_parameters": {
             "prompt": "Change the floor of the first image attached, to be of the marmol in the second attached image.",
-            "model": "gemini-2.5-flash-image-preview",
+            "model": "gemini-2.5-flash-image",
             "aspect_ratio": AspectRatioEnum.RATIO_4_3,
         },
     },
@@ -377,7 +377,7 @@ TEMPLATES = [
         ],
         "generation_parameters": {
             "prompt": "Replace the paintings in the living room of the first image with the painting provided on the second image.",
-            "model": "gemini-2.5-flash-image-preview",
+            "model": "gemini-2.5-flash-image",
             "aspect_ratio": AspectRatioEnum.RATIO_4_3,
         },
     },

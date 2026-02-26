@@ -31,7 +31,6 @@ import {
   AssetScopeEnum,
   AssetTypeEnum,
 } from '../../../admin/source-assets-management/source-asset.model';
-import {WorkspaceStateService} from '../../../services/workspace/workspace-state.service';
 import {environment} from '../../../../environments/environment';
 
 interface AspectRatio {

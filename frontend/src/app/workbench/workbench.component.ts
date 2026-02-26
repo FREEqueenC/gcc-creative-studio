@@ -29,14 +29,15 @@ import {
   Inject,
   PLATFORM_ID
 } from '@angular/core';
-import { CommonModule, isPlatformBrowser } from '@angular/common';
-import {MatIconRegistry } from '@angular/material/icon';
+import { isPlatformBrowser } from '@angular/common';
+import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer, SafeResourceUrl, SafeUrl } from '@angular/platform-browser';
 import { MatDialog } from '@angular/material/dialog';
 import { ImageSelectorComponent, MediaItemSelection } from '../common/components/image-selector/image-selector.component';
 import { SourceAssetResponseDto } from '../common/services/source-asset.service';
-import { MediaItem } from '../common/models/media-item.model';
 // --- Interfaces ---
+import { WorkbenchService, TimelineRequest, Clip } from './workbench.service';
+
 interface MediaAsset {
   id: string;
   name: string;
@@ -69,6 +70,7 @@ export class WorkbenchComponent implements OnInit, OnDestroy {
   currentTime = signal<number>(0);
   isPlaying = signal<boolean>(false);
   selectedClipId = signal<string | null>(null);
+  activeToolButton = signal<'gallery' | 'audio' | 'stories' | 'edit' | 'agent' | null>(null);
 
   // Simple tab between video/audio assets (UX only)
   activeTab = signal<'video' | 'audio'>('video');
@@ -112,7 +114,7 @@ export class WorkbenchComponent implements OnInit, OnDestroy {
 
   timelineWidth = computed(() => {
     // Ensure timeline is at least screen width or longer based on content
-    return Math.max(this.totalDuration() * this.pixelsPerSecond + 800, 2000); 
+    return Math.max(this.totalDuration() * this.pixelsPerSecond + 800,800); 
   });
 
   // derived signals for active source logic
@@ -154,6 +156,9 @@ export class WorkbenchComponent implements OnInit, OnDestroy {
 
   // Services
   private sanitizer = inject(DomSanitizer);
+  private workbenchService = inject(WorkbenchService);
+
+  isDownloading = signal(false);
 
   // Trimming state (for clip in/out adjustments)
   trimState: {
@@ -181,6 +186,10 @@ export class WorkbenchComponent implements OnInit, OnDestroy {
     .addSvgIcon(
         'white-gemini-spark-icon',
         this.setPath(`${this.path}/mobile-white-gemini-spark-icon.svg`),
+      )
+      .addSvgIcon(
+        'creative-studio-icon',
+        this.setPath(`${this.path}/creative-studio-icon.svg`),
       )
       .addSvgIcon(
         'mobile-white-gemini-spark-icon',
@@ -257,6 +266,22 @@ export class WorkbenchComponent implements OnInit, OnDestroy {
       .addSvgIcon(
         'desktop-mac-icon',
         this.setPath(`${this.path}/desktop-mac.svg`),     
+      )
+      .addSvgIcon(
+        'edit-icon',
+        this.setPath(`${this.path}/edit.svg`),     
+      )
+      .addSvgIcon(
+        'gemini-spark-icon',
+        this.setPath(`${this.path}/gemini-spark.svg`),     
+      )
+      .addSvgIcon(
+        'photo-merge-auto-icon',
+        this.setPath(`${this.path}/photo-merge-auto.svg`),     
+      )
+      .addSvgIcon(
+        'web-stories-icon',
+        this.setPath(`${this.path}/web-stories.svg`),     
       );
 
     // Setup an effect to handle video seeking/sync when active clip changes or time jumps
@@ -773,6 +798,52 @@ export class WorkbenchComponent implements OnInit, OnDestroy {
   onVideoEnded() {}
   onMetadataLoaded() {}
 
+
+  // --- Download / Render ---
+  downloadVideo() {
+    // Only allow download if there are clips and not already downloading
+    if (this.timelineClips().length === 0 || this.isDownloading()) return;
+
+    this.isDownloading.set(true);
+
+    // Map timeline clips to request format
+    const requestClips: Clip[] = this.timelineClips().map(clip => {
+      const asset = this.assets().find(a => a.id === clip.assetId);
+      return {
+        assetId: clip.assetId,
+        url: asset?.url || '',
+        startTime: clip.startTime,
+        duration: clip.duration,
+        offset: clip.offset,
+        trackIndex: clip.trackIndex,
+        type: clip.trackIndex === 0 ? 'video' : 'audio'
+      };
+    });
+
+    const request: TimelineRequest = {
+      clips: requestClips
+    };
+
+    this.workbenchService.renderVideo(request).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `creative-studio-export-${new Date().getTime()}.mp4`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        this.isDownloading.set(false);
+      },
+      error: (err) => {
+        console.error('Download failed', err);
+        this.isDownloading.set(false);
+        // Ideally show a snackbar here
+      }
+    });
+  }
+
   // --- Interaction ---
   
   // Scrubbing State
@@ -978,18 +1049,41 @@ export class WorkbenchComponent implements OnInit, OnDestroy {
   }
 
   // --- Utilities ---
-
-  formatTime(seconds: number): string {
+   formatTimeRuler(seconds: number): string {
     const m = Math.floor(seconds / 60);
     const s = Math.floor(seconds % 60);
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   }
 
+  formatTime(seconds: number): string {
+    const fps = 30; // Assuming 30 frames per second
+    const totalFrames = Math.floor(seconds * fps);
+
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.floor(seconds % 60);
+    const f = totalFrames % fps;
+
+    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}:${f.toString().padStart(2, '0')}`;
+  }
+
   timeRulerTicks(): number[] {
     const duration = Math.max(this.totalDuration(), 60);
     const ticks = [];
-    for(let i=0; i <= duration; i+=5) ticks.push(i);
+    for(let i=0; i <= duration; i+=2) ticks.push(i);
     return ticks;
+  }
+
+  isMajorTick(tick: number): boolean {
+    return tick % 10 === 0;
+  }
+
+  toggleToolButton(buttonName: 'gallery' | 'audio' | 'stories' | 'edit' | 'agent'): void {
+    if (this.activeToolButton() === buttonName) {
+      this.activeToolButton.set(null);
+    } else {
+      this.activeToolButton.set(buttonName);
+    }
   }
 
   getRandomColor() {

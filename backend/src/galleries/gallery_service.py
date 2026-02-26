@@ -32,7 +32,14 @@ from src.galleries.dto.gallery_response_dto import (
     SourceAssetLinkResponse,
     SourceMediaItemLinkResponse,
 )
+from src.common.base_dto import (
+    AspectRatioEnum,
+    GenerationModelEnum,
+    MimeTypeEnum,
+)
 from src.galleries.dto.gallery_search_dto import GallerySearchDto
+from src.images.dto.upscale_imagen_dto import UpscaleImagenDto
+from src.images.imagen_service import ImagenService
 from src.images.repository.media_item_repository import MediaRepository
 from src.source_assets.repository.source_asset_repository import (
     SourceAssetRepository,
@@ -40,7 +47,7 @@ from src.source_assets.repository.source_asset_repository import (
 from src.users.user_model import UserModel, UserRoleEnum
 from src.workspaces.repository.workspace_repository import WorkspaceRepository
 from src.workspaces.schema.workspace_model import WorkspaceScopeEnum
-from src.workspaces.workspace_auth_guard import workspace_auth_service
+from src.workspaces.workspace_auth_guard import WorkspaceAuth
 
 logger = logging.getLogger(__name__)
 
@@ -56,12 +63,16 @@ class GalleryService:
         source_asset_repo: SourceAssetRepository = Depends(),
         workspace_repo: WorkspaceRepository = Depends(),
         iam_signer_credentials: IamSignerCredentials = Depends(),
+        workspace_auth: WorkspaceAuth = Depends(),
+        imagen_service: ImagenService = Depends(),
     ):
         """Initializes the service with its dependencies."""
         self.media_repo = media_repo
         self.source_asset_repo = source_asset_repo
         self.workspace_repo = workspace_repo
         self.iam_signer_credentials = iam_signer_credentials
+        self.workspace_auth = workspace_auth
+        self.imagen_service = imagen_service 
 
     async def _enrich_source_asset_link(
         self, link: SourceAssetLink
@@ -70,7 +81,7 @@ class GalleryService:
         Fetches the source asset document and generates a presigned URL for it.
         """
         asset_doc = await self.source_asset_repo.get_by_id(link.asset_id)
-
+        
         if not asset_doc:
             return None
 
@@ -171,6 +182,16 @@ class GalleryService:
             if uri
         ]
 
+        # 1.5 Create tasks for original media URLs
+        all_original_gcs_uris = item.original_gcs_uris or []
+        original_url_tasks = [
+            asyncio.to_thread(
+                self.iam_signer_credentials.generate_presigned_url, uri
+            )
+            for uri in all_original_gcs_uris
+            if uri
+        ]
+
         # 2. Create tasks for thumbnail URLs
         thumbnail_tasks = [
             asyncio.to_thread(
@@ -199,11 +220,13 @@ class GalleryService:
         # 5. Gather all results concurrently
         (
             presigned_urls,
+            original_presigned_urls,
             presigned_thumbnail_urls,
             enriched_source_assets_with_nones,
             enriched_source_media_items_with_nones,
         ) = await asyncio.gather(
             asyncio.gather(*main_url_tasks),
+            asyncio.gather(*original_url_tasks),
             asyncio.gather(*thumbnail_tasks),
             asyncio.gather(*source_asset_tasks),
             asyncio.gather(*source_media_item_tasks),
@@ -220,6 +243,7 @@ class GalleryService:
         return MediaItemResponse(
             **item.model_dump(exclude={"source_assets"}),
             presigned_urls=presigned_urls,
+            original_presigned_urls=original_presigned_urls,
             presigned_thumbnail_urls=presigned_thumbnail_urls,
             enriched_source_assets=enriched_source_assets or None,
             enriched_source_media_items=enriched_source_media_items or None,
@@ -282,10 +306,10 @@ class GalleryService:
             )
 
         # Use the centralized authorization logic
-        await workspace_auth_service.authorize(
+        await self.workspace_auth.authorize(
             workspace_id=item.workspace_id,
             user=current_user,
-            workspace_repo=self.workspace_repo,
         )
 
         return await self._create_gallery_response(item)
+    

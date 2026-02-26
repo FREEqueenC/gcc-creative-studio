@@ -235,6 +235,7 @@ class GeminiService:
             and dto.generation_model
             in [
                 GenerationModelEnum.GEMINI_2_5_FLASH_IMAGE_PREVIEW,
+                GenerationModelEnum.GEMINI_2_5_FLASH_IMAGE,
                 GenerationModelEnum.GEMINI_3_PRO_IMAGE_PREVIEW,
             ]
             and (dto.source_asset_ids or dto.source_media_items)

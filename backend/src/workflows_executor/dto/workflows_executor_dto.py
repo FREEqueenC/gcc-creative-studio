@@ -23,8 +23,6 @@ from src.workflows.schema.workflow_model import (
     EditImageSettings,
     GenerateVideoInputs,
     GenerateVideoSettings,
-    CropImageInputs,
-    CropImageSettings,
     VirtualTryOnInputs,
     VirtualTryOnSettings,
     GenerateAudioInputs,
@@ -50,9 +48,6 @@ class GenerateVideoRequest(BaseModel):
     inputs: GenerateVideoInputs
     config: GenerateVideoSettings
 
-class CropImageRequest(BaseModel):
-    inputs: CropImageInputs
-    config: CropImageSettings
 
 class VirtualTryOnRequest(BaseModel):
     workspace_id: int

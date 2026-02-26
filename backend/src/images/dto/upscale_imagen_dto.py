@@ -31,9 +31,9 @@ class UpscaleImagenDto(BaseDto):
     user_image: str = Field(
         description="Base 64 encoded image or gcs uri of the image to scale."
     )
-    upscale_factor: Literal["x2", "x4"] = Field(
+    upscale_factor: Literal["x2", "x3", "x4"] = Field(
         default="x2",
-        description="""Factor of the upscale, either "x2" or "x4".""",
+        description="""Factor of the upscale, either "x2", "x3" or "x4".""",
     )
     include_rai_reason: bool = Field(
         default=True,
@@ -44,6 +44,19 @@ class UpscaleImagenDto(BaseDto):
         default=MimeTypeEnum.IMAGE_PNG,
         description="""type of the image to upscale either "image/jpeg" or "image/png".""",
     )
+    enhance_input_image: bool = Field(
+        default=False,
+        description="""Whether to add an image enhancing step before upscaling.
+      It is expected to suppress the noise and JPEG compression artifacts
+      from the input image.""",
+    )
+    image_preservation_factor: float | None = Field(
+        default=None,
+        description="""With a higher image preservation factor, the original image
+      pixels are more respected. With a lower image preservation factor, the
+      output image will have be more different from the input image, but
+      with finer details and less noise.""",
+    )
 
     @field_validator("generation_model")
     def validate_imagen_generation_model(
@@ -51,6 +64,7 @@ class UpscaleImagenDto(BaseDto):
     ) -> GenerationModelEnum:
         """Ensures that only supported generation models for imagen are used."""
         valid_video_ratios = [
+            GenerationModelEnum.IMAGEN_4_UPSCALE_PREVIEW,
             GenerationModelEnum.IMAGEGEN_002,
             GenerationModelEnum.IMAGEGEN_005,
             GenerationModelEnum.IMAGEGEN_006,

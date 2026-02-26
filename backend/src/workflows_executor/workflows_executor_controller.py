@@ -21,7 +21,6 @@ from src.workflows_executor.dto.workflows_executor_dto import (
     GenerateImageRequest,
     EditImageRequest,
     GenerateVideoRequest,
-    CropImageRequest,
     VirtualTryOnRequest,
     GenerateAudioRequest,
 )
@@ -67,14 +66,6 @@ async def generate_video(
     service: WorkflowsExecutorService = Depends(),
 ):
     return await service.generate_video(request, authorization)
-
-
-@router.post("/crop_image")
-async def crop_image(
-    request: CropImageRequest,
-    service: WorkflowsExecutorService = Depends(),
-):
-    return await service.crop_image(request)
 
 
 @router.post("/virtual_try_on")

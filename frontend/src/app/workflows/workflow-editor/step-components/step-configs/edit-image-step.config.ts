@@ -18,7 +18,7 @@ import { MODEL_CONFIGS } from '../../../../common/config/model-config';
 import { StepConfig } from '../generic-step/step.model';
 
 const model_options = MODEL_CONFIGS
-  .filter(model => model.value === 'gemini-2.5-flash-image-preview' || model.value === 'gemini-3-pro-image-preview')
+  .filter(model => model.value === 'gemini-2.5-flash-image' || model.value === 'gemini-3-pro-image-preview')
   .map(model => ({
     value: model.value,
     label: model.viewValue,
@@ -48,7 +48,7 @@ export const EDIT_IMAGE_STEP_CONFIG: StepConfig = {
       label: 'Model',
       type: 'select',
       options: model_options,
-      defaultValue: 'gemini-2.5-flash-image-preview',
+      defaultValue: 'gemini-2.5-flash-image',
     },
     {
       name: 'aspect_ratio',
@@ -61,7 +61,7 @@ export const EDIT_IMAGE_STEP_CONFIG: StepConfig = {
       name: 'brand_guidelines',
       label: 'Use Brand Guidelines',
       type: 'checkbox',
-      defaultValue: true,
+      defaultValue: false,
     },
   ],
   outputs: [

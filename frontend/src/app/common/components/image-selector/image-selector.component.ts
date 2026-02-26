@@ -50,6 +50,7 @@ export class ImageSelectorComponent {
     public data: {
       mimeType: 'image/*' | 'image/png' | 'video/mp4' | 'video/*' | 'audio/*' | 'audio/mpeg' | null;
       assetType: AssetTypeEnum;
+      enableUpscale?: boolean;
     },
   ) { }
 
@@ -61,6 +62,7 @@ export class ImageSelectorComponent {
         data: {
           imageFile: file,
           assetType: this.data.assetType,
+          enableUpscale: this.data.enableUpscale
         },
         width: '600px',
       });

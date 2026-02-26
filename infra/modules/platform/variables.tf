@@ -16,10 +16,6 @@ variable "gcp_project_id" { type = string }
 variable "gcp_region" { type = string }
 variable "environment" { type = string }
 
-variable "firebase_db_name" {
-  type = string
-  default = "cstudio"
-}
 
 variable "firebase_site_id" {
   type        = string

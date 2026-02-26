@@ -22,7 +22,7 @@ from src.videos.dto.concatenate_videos_dto import ConcatenateVideosDto
 from src.videos.dto.create_veo_dto import CreateVeoDto
 from src.videos.veo_service import VeoService
 from src.workspaces.repository.workspace_repository import WorkspaceRepository
-from src.workspaces.workspace_auth_guard import workspace_auth_service
+from src.workspaces.workspace_auth_guard import WorkspaceAuth
 
 # Define role checkers for convenience
 user_only = Depends(
@@ -43,15 +43,14 @@ async def generate_videos(
     request: Request,
     current_user: UserModel = Depends(get_current_user),
     service: VeoService = Depends(),
-    workspace_repo: WorkspaceRepository = Depends(),
+    workspace_auth: WorkspaceAuth = Depends(),
 ) -> MediaItemResponse | None:
     try:
         # Use our centralized dependency to authorize the user for the workspace
         # before proceeding with the expensive generation job.
-        await workspace_auth_service.authorize(
+        await workspace_auth.authorize(
             workspace_id=video_request.workspace_id,
             user=current_user,
-            workspace_repo=workspace_repo,
         )
 
         # Get the executor from the app state
@@ -86,17 +85,16 @@ async def concatenate_videos(
     request: Request,
     current_user: UserModel = Depends(get_current_user),
     service: VeoService = Depends(),
-    workspace_repo: WorkspaceRepository = Depends(),
+    workspace_auth: WorkspaceAuth = Depends(),
 ):
     """
     Creates a new video by concatenating two or more existing videos in a specified order.
     This is an asynchronous operation that returns a placeholder immediately.
     """
     try:
-        await workspace_auth_service.authorize(
+        await workspace_auth.authorize(
             workspace_id=concat_request.workspace_id,
             user=current_user,
-            workspace_repo=workspace_repo,
         )
         executor = request.app.state.executor
         placeholder_item = await service.start_video_concatenation_job(

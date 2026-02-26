@@ -64,7 +64,7 @@ export const MODEL_CONFIGS: GenerationModelConfig[] = [
     },
   },
   {
-    value: 'gemini-2.5-flash-image-preview',
+    value: 'gemini-2.5-flash-image',
     viewValue: 'Nano Banana',
     type: 'IMAGE',
     imageSrc: 'assets/images/banana-peel.png',
@@ -72,7 +72,7 @@ export const MODEL_CONFIGS: GenerationModelConfig[] = [
     capabilities: {
       supportedModes: ['Text to Image', 'Ingredients to Image'],
       maxReferenceImages: 2,
-      supportedAspectRatios: ['1:1'],
+      supportedAspectRatios: ['1:1', '16:9', '9:16', '3:4', '4:3', '2:3', '3:2', '4:5', '5:4', '21:9'],
     },
   },
   {

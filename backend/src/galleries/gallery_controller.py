@@ -21,7 +21,7 @@ from src.galleries.dto.gallery_search_dto import GallerySearchDto
 from src.galleries.gallery_service import GalleryService
 from src.users.user_model import UserModel, UserRoleEnum
 from src.workspaces.repository.workspace_repository import WorkspaceRepository
-from src.workspaces.workspace_auth_guard import workspace_auth_service
+from src.workspaces.workspace_auth_guard import WorkspaceAuth
 
 router = APIRouter(
     prefix="/api/gallery",
@@ -48,7 +48,7 @@ async def search_gallery_items(
     search_dto: GallerySearchDto,
     current_user: UserModel = Depends(get_current_user),
     service: GalleryService = Depends(),
-    workspace_repo: WorkspaceRepository = Depends(),
+    workspace_auth: WorkspaceAuth = Depends(),
 ):
     """
     Performs a paginated search for media items within a specific workspace.
@@ -58,10 +58,9 @@ async def search_gallery_items(
     """
     # This dependency call acts as a gatekeeper. If the user is not authorized
     # for the workspace_id inside search_dto, it will raise an exception.
-    await workspace_auth_service.authorize(
+    await workspace_auth.authorize(
         workspace_id=search_dto.workspace_id,
         user=current_user,
-        workspace_repo=workspace_repo,
     )
 
     return await service.get_paginated_gallery(

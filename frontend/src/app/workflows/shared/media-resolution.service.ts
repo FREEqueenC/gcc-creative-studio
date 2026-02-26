@@ -17,7 +17,7 @@
 import { Injectable } from '@angular/core';
 import { forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
-import { SourceAssetService } from '../../common/services/source-asset.service';
+import { SourceAssetResponseDto, SourceAssetService } from '../../common/services/source-asset.service';
 import { GalleryService } from '../../gallery/gallery.service';
 import { NodeTypes } from '../workflow.models';
 import { STEP_CONFIGS_MAP } from './step-configs.map';

@@ -56,6 +56,8 @@ interface TimelineClip {
   offset: number; // offset into the original source file
   trackIndex: number; // 0 for video, 1 for audio
   color: string;
+  isHidden?: boolean; // NEW: Track visibility per clip
+  isLocked?: boolean; // NEW: Track lock state per clip
 }
 
 @Component({
@@ -94,6 +96,12 @@ export class WorkbenchComponent implements OnInit, OnDestroy {
         tracks.push(clips.filter(c => c.trackIndex === i));
     }
     return tracks;
+  });
+
+    // EXACT CLIP SELECTED
+  selectedClip = computed(() => {
+    const id = this.selectedClipId();
+    return id ? this.timelineClips().find(c => c.id === id) : null;
   });
 
   // Filtered assets list based on active tab
@@ -282,6 +290,14 @@ export class WorkbenchComponent implements OnInit, OnDestroy {
       .addSvgIcon(
         'web-stories-icon',
         this.setPath(`${this.path}/web-stories.svg`),     
+      )
+      .addSvgIcon(
+        'lock-open-right-icon',
+        this.setPath(`${this.path}/lock-open-right-icon.svg`),     
+      )
+      .addSvgIcon(
+        'visibility-off-icon',
+        this.setPath(`${this.path}/visibility-off-icon.svg`),     
       );
 
     // Setup an effect to handle video seeking/sync when active clip changes or time jumps
@@ -291,7 +307,7 @@ export class WorkbenchComponent implements OnInit, OnDestroy {
       const curTime = this.currentTime();
 
       // Video Sync
-      if (vid && vClip) {
+      if (vid && vClip&&!vClip.isHidden) {
         const fileTime = (curTime - vClip.startTime) + vClip.offset;
         if (Math.abs(vid.currentTime - fileTime) > 0.5) vid.currentTime = fileTime;
         if (this.isPlaying() && vid.paused) vid.play().catch(e => console.error('[VideoSync] Play failed', e));
@@ -310,7 +326,7 @@ export class WorkbenchComponent implements OnInit, OnDestroy {
             const aud = audioRef.nativeElement;
             const aClip = activeAClips[index];
             
-            if (aud && aClip) {
+            if (aud && aClip && !aClip.isHidden) {
                 const fileTime = (curTime - aClip.startTime) + aClip.offset;
                 if (Math.abs(aud.currentTime - fileTime) > 0.5) {
                     aud.currentTime = fileTime;
@@ -549,7 +565,6 @@ export class WorkbenchComponent implements OnInit, OnDestroy {
   updateAssetDuration(id: string, duration: number) {
     this.assets.update(items => items.map(i => i.id === id ? {...i, duration} : i));
     this.timelineClips.update(clips => clips.map(clip => clip.assetId === id ? { ...clip, duration } : clip));
-    this.refreshTimelineLayout();
   }
 
   onThumbnailError(asset: MediaAsset) {
@@ -557,23 +572,7 @@ export class WorkbenchComponent implements OnInit, OnDestroy {
     this.assets.update(items => items.map(i => i.id === asset.id ? {...i, thumbnail: undefined} : i));
   }
 
-  refreshTimelineLayout() {
-      this.timelineClips.update(clips => {
-          const vClips = clips.filter(c => c.trackIndex === 0);
-          const otherClips = clips.filter(c => c.trackIndex !== 0);
 
-          const layoutTrack = (trackClips: TimelineClip[]) => {
-            let currentTime = 0;
-            return trackClips.map(clip => {
-                const newClip = { ...clip, startTime: currentTime };
-                currentTime += clip.duration;
-                return newClip;
-            });
-          };
-
-          return [...layoutTrack(vClips), ...otherClips];
-      });
-  }
 
   getAssetThumbnail(id: string): string | undefined {
       return this.assets().find(a => a.id === id)?.thumbnail;
@@ -637,7 +636,6 @@ export class WorkbenchComponent implements OnInit, OnDestroy {
     }
 
     this.timelineClips.update(prev => [...prev, ...clipsToAdd]);
-    this.refreshTimelineLayout();
   }
 
   deleteAsset(asset: MediaAsset, event: Event) {
@@ -657,8 +655,6 @@ export class WorkbenchComponent implements OnInit, OnDestroy {
             this.selectedClipId.set(null);
         }
     }
-    
-    this.refreshTimelineLayout();
   }
 
   private findAvailableAudioTrack(startTime: number, duration: number): number {
@@ -690,6 +686,7 @@ export class WorkbenchComponent implements OnInit, OnDestroy {
     event.stopPropagation();
     event.preventDefault();
     this.selectClip(clip.id, event);
+    if (clip.isLocked) return; // Prevent dragging if locked
     this.dragState = {
       active: true,
       clipId: clip.id,
@@ -705,18 +702,20 @@ export class WorkbenchComponent implements OnInit, OnDestroy {
   }
 
   deleteSelectedClip() {
-    const id = this.selectedClipId();
+    const clip = this.selectedClip();
+    const id = clip?.id;
+    if (!clip || clip.isLocked) return;
     if (!id) return;
     this.timelineClips.update(prev => prev.filter(c => c.id !== id));
     this.selectedClipId.set(null);
-    this.refreshTimelineLayout();
   }
 
   // --- Split Logic ---
   canSplit(): boolean {
-    const id = this.selectedClipId();
+    const clip = this.selectedClip();
+    const id = clip?.id;
+    if (!clip || clip.isLocked) return false;
     if (!id) return false;
-    const clip = this.timelineClips().find(c => c.id === id);
     if (!clip) return false;
     const time = this.currentTime();
     return time > clip.startTime + 0.1 && time < clip.startTime + clip.duration - 0.1;
@@ -746,7 +745,6 @@ export class WorkbenchComponent implements OnInit, OnDestroy {
     });
 
     this.selectedClipId.set(clip2.id);
-    this.refreshTimelineLayout();
   }
 
   // --- Logic: Playback Loop ---
@@ -903,6 +901,7 @@ export class WorkbenchComponent implements OnInit, OnDestroy {
     startTrim(event: MouseEvent, clip: TimelineClip, type: 'start' | 'end') {
       event.stopPropagation();
       event.preventDefault();
+      if (clip.isLocked) return; // Prevent trimming locked clips
       this.trimState = {
         active: true,
         clipId: clip.id,
@@ -956,7 +955,6 @@ export class WorkbenchComponent implements OnInit, OnDestroy {
 
     onTrimEnd() {
       if (this.trimState && this.trimState.active) {
-        this.refreshTimelineLayout();
         this.trimState = null;
       }
     }
@@ -994,58 +992,57 @@ export class WorkbenchComponent implements OnInit, OnDestroy {
   }
 
   // Move-aside overlap resolution on the same track
-  private resolveOverlaps(movedClipId: string) {
-    const allClips = this.timelineClips();
-    const movedClip = allClips.find(c => c.id === movedClipId);
-    if (!movedClip) return;
+    // --- Plow / Ripple Insert Logic ---
+  resolveOverlaps(movedClipId: string) {
+      const allClips = this.timelineClips().map(c => ({...c}));
+      const movedClip = allClips.find(c => c.id === movedClipId);
+      if (!movedClip) return;
 
-    if (movedClip.trackIndex === 0) {
-        // Video Track: Magnetic / Ripple Edit
-        // 1. Sort all video clips by startTime to determine order
-        // 2. Remove gaps
-        const videoClips = allClips.filter(c => c.trackIndex === 0).sort((a, b) => a.startTime - b.startTime);
-        
-        let currentTime = 0;
-        const newVideoClips = videoClips.map(clip => {
-            const newClip = { ...clip, startTime: currentTime };
-            currentTime += clip.duration;
-            return newClip;
-        });
-        
-        // Update state
-        this.timelineClips.update(prev => {
-            const others = prev.filter(c => c.trackIndex !== 0);
-            return [...others, ...newVideoClips];
-        });
+      const trackClips = allClips.filter(c => c.trackIndex === movedClip.trackIndex);
+      const otherTracks = allClips.filter(c => c.trackIndex !== movedClip.trackIndex);
+      const others = trackClips.filter(c => c.id !== movedClipId);
 
-    } else {
-        // Audio Track: Gravity
-        // Try to place on Track 1, then 2, etc.
-        const audioClips = allClips.filter(c => c.trackIndex > 0 && c.id !== movedClipId);
-        
-        let targetTrack = 1;
-        let placed = false;
-        const duration = movedClip.duration;
-        const startTime = movedClip.startTime; // Keep the user's dragged time
-        
-        while (!placed) {
-            const trackClips = audioClips.filter(c => c.trackIndex === targetTrack);
-            const hasOverlap = trackClips.some(c => {
-               const cEnd = c.startTime + c.duration;
-               const newEnd = startTime + duration;
-               return (startTime < cEnd && newEnd > c.startTime);
-            });
-            
-            if (!hasOverlap) {
-                placed = true;
-            } else {
-                targetTrack++;
-            }
-        }
-        
-        // Update the clip with the new track index
-        this.timelineClips.update(prev => prev.map(c => c.id === movedClipId ? { ...c, trackIndex: targetTrack } : c));
-    }
+      // Sort others by start time to process them linearly
+      others.sort((a, b) => a.startTime - b.startTime);
+
+      const movedStart = movedClip.startTime;
+      const movedEnd = movedClip.startTime + movedClip.duration;
+
+      // 1. "Plow" logic: anything that overlaps with the moved clip is pushed to its right.
+      for (const other of others) {
+          const overlap = (other.startTime < movedEnd) && ((other.startTime + other.duration) > movedStart);
+          if (overlap) {
+              other.startTime = movedEnd; 
+          }
+      }
+
+      // 2. Ripple pass on 'others' to ensure the pushed clips don't overlap with subsequent clips
+      others.sort((a, b) => a.startTime - b.startTime);
+      for (let i = 1; i < others.length; i++) {
+          const prev = others[i - 1];
+          const curr = others[i];
+          const prevEnd = prev.startTime + prev.duration;
+          if (curr.startTime < prevEnd) {
+              curr.startTime = prevEnd;
+          }
+      }
+
+      // Re-merge
+      const finalTrackClips = [movedClip, ...others];
+      const finalClips = allClips.map(c => {
+          const updated = finalTrackClips.find(t => t.id === c.id);
+          return updated ? updated : c;
+      });
+
+      this.timelineClips.set(finalClips);
+  }
+// --- Clip Controls (Target Specific ID) ---
+  toggleVisibility(id: string|undefined) {
+      this.timelineClips.update(clips => clips.map(c => c.id === id ? {...c, isHidden: !c.isHidden} : c));
+  }
+
+  toggleLock(id: string|undefined) {
+      this.timelineClips.update(clips => clips.map(c => c.id === id ? {...c, isLocked: !c.isLocked} : c));
   }
 
   // --- Utilities ---
@@ -1097,5 +1094,9 @@ export class WorkbenchComponent implements OnInit, OnDestroy {
 
   getSequence(length: number): number[] {
     return [...Array(Math.floor(length)).keys()].map(i => i + 1);
+  }
+
+  hideCurrentVideo(){
+
   }
 }

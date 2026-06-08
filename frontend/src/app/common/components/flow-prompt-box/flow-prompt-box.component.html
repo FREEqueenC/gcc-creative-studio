@@ -395,24 +395,26 @@
               >
                 1
               </button>
-              <button
-                (click)="selectOutputs(2)"
-                class="block w-full px-3 py-1.5 text-left text-sm rounded hover:bg-neutral-600"
-              >
-                2
-              </button>
-              <button
-                (click)="selectOutputs(3)"
-                class="block w-full px-3 py-1.5 text-left text-sm rounded hover:bg-neutral-600"
-              >
-                3
-              </button>
-              <button
-                (click)="selectOutputs(4)"
-                class="block w-full px-3 py-1.5 text-left text-sm rounded hover:bg-neutral-600"
-              >
-                4
-              </button>
+              @if (getSelectedModelObject()?.value !== 'gemini-omni-generate-preview') {
+                <button
+                  (click)="selectOutputs(2)"
+                  class="block w-full px-3 py-1.5 text-left text-sm rounded hover:bg-neutral-600"
+                >
+                  2
+                </button>
+                <button
+                  (click)="selectOutputs(3)"
+                  class="block w-full px-3 py-1.5 text-left text-sm rounded hover:bg-neutral-600"
+                >
+                  3
+                </button>
+                <button
+                  (click)="selectOutputs(4)"
+                  class="block w-full px-3 py-1.5 text-left text-sm rounded hover:bg-neutral-600"
+                >
+                  4
+                </button>
+              }
             </div>
           }
         </div>

@@ -63,7 +63,7 @@ export class VideoStateService {
       style: null,
       colorAndTone: null,
       lighting: null,
-      numberOfMedia: 4,
+      numberOfMedia: showOmni ? 1 : 4,
       durationSeconds: 8,
       composition: null,
       generateAudio: true,

@@ -333,8 +333,9 @@ export class VideoComponent implements OnInit, AfterViewInit {
     this.searchRequest.style = state.style;
     this.searchRequest.colorAndTone = state.colorAndTone;
     this.searchRequest.lighting = state.lighting;
-    this.searchRequest.numberOfMedia = state.numberOfMedia;
-    this.selectedOutputs.set(state.numberOfMedia || 2);
+    this.searchRequest.numberOfMedia =
+      state.model === 'gemini-omni-generate-preview' ? 1 : state.numberOfMedia;
+    this.selectedOutputs.set(this.searchRequest.numberOfMedia || 2);
     this.searchRequest.durationSeconds = state.durationSeconds;
     this.searchRequest.composition = state.composition;
     this.searchRequest.generateAudio = state.generateAudio;
@@ -404,9 +405,16 @@ export class VideoComponent implements OnInit, AfterViewInit {
       this.selectedAspectRatio = landscapeOption.viewValue;
     }
 
+    if (model.value === 'gemini-omni-generate-preview') {
+      this.searchRequest.numberOfMedia = 1;
+      this.selectedOutputs.set(1);
+    }
+
     this.aspectRatioOptions.forEach(opt => {
       opt.disabled = !supportedRatios.includes(opt.value);
     });
+
+    this.saveState();
   }
 
   selectAspectRatio(ratio: string | {value: string; viewValue: string}): void {

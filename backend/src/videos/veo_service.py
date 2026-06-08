@@ -599,24 +599,42 @@ def _process_video_in_background(
                             permanent_thumbnail_gcs_uris = []
                             interaction_details = []
 
-                            num_outputs = request_dto.number_of_media or 1
+                            num_outputs = 1
                             worker_logger.info(
                                 f"Queueing {num_outputs} Gemini Omni generation interactions."
                             )
 
                             async def generate_single_omni_output(i: int):
-                                if is_turn_2:
-                                    interaction = await asyncio.to_thread(
-                                        vertex_client.interactions.create,
-                                        model=model_name_for_api,
-                                        previous_interaction_id=interaction1_id,
-                                        input=turn2_input,
-                                    )
-                                else:
-                                    interaction = await asyncio.to_thread(
-                                        vertex_client.interactions.create,
-                                        model=model_name_for_api,
-                                        input=t1_inputs,
+                                max_retries = 3
+                                last_err = None
+                                interaction = None
+                                for attempt in range(max_retries):
+                                    try:
+                                        if is_turn_2:
+                                            interaction = await asyncio.to_thread(
+                                                vertex_client.interactions.create,
+                                                model=model_name_for_api,
+                                                previous_interaction_id=interaction1_id,
+                                                input=turn2_input,
+                                            )
+                                        else:
+                                            interaction = await asyncio.to_thread(
+                                                vertex_client.interactions.create,
+                                                model=model_name_for_api,
+                                                input=t1_inputs,
+                                            )
+                                        break
+                                    except Exception as e:
+                                        last_err = e
+                                        worker_logger.warning(
+                                            f"Gemini Omni interactions API call attempt {attempt + 1} failed: {e}. Retrying..."
+                                        )
+                                        if attempt < max_retries - 1:
+                                            await asyncio.sleep(2)
+
+                                if interaction is None:
+                                    raise last_err or Exception(
+                                        "Failed to generate video after multiple attempts."
                                     )
 
                                 interaction_id = interaction.id

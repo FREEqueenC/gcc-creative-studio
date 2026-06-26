@@ -171,7 +171,7 @@ class GenerateImageSettings(BaseModel):
     model: str
     brand_guidelines: bool
     aspect_ratio: str
-    resolution: Literal["1K", "2K", "4K"] = "4K"
+    resolution: Literal["1K", "2K", "4K"] = "1K"
 
 
 class GenerateImageStep(BaseStep[GenerateImageInputs, GenerateImageSettings]):
@@ -190,7 +190,7 @@ class EditImageSettings(BaseModel):
     model: str
     brand_guidelines: bool
     aspect_ratio: str
-    resolution: Literal["1K", "2K", "4K"] = "4K"
+    resolution: Literal["1K", "2K", "4K"] = "1K"
 
 
 class EditImageStep(BaseStep[EditImageInputs, EditImageSettings]):

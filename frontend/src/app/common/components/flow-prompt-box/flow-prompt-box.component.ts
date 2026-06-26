@@ -51,6 +51,7 @@ import {MatTooltipModule} from '@angular/material/tooltip';
 export class FlowPromptBoxComponent {
   @Input() searchRequest!: any; // Keep for now, but prefer individual inputs
   @Input() generationModels: GenerationModelConfig[] = [];
+  @Input() selectedResolution: '1K' | '2K' | '4K' = '1K';
   @Input() isLoading = false;
   @Input() selectedGenerationModel = '';
   @Input() prompt = '';
@@ -69,6 +70,7 @@ export class FlowPromptBoxComponent {
   @Output() rewriteClicked = new EventEmitter<void>();
   @Output() modelSelected = new EventEmitter<any>();
   @Output() promptChanged = new EventEmitter<string>();
+  @Output() resolutionChanged = new EventEmitter<'1K' | '2K' | '4K'>();
   @Output() aspectRatioChanged = new EventEmitter<string>();
   @Output() outputsChanged = new EventEmitter<number>();
   @Output() modeChanged = new EventEmitter<string>();
@@ -131,7 +133,9 @@ export class FlowPromptBoxComponent {
   // Menu open/close states
   isModeMenuOpen = signal<boolean>(false);
   isSettingsMenuOpen = signal<boolean>(false);
-  isSettingsDropdownOpen = signal<'aspect' | 'outputs' | 'model' | null>(null);
+  isSettingsDropdownOpen = signal<
+    'aspect' | 'outputs' | 'model' | 'resolution' | null
+  >(null);
   selectedMode = signal<string>('Text to Video');
   selectedPreset = signal<string>('');
 
@@ -164,6 +168,13 @@ export class FlowPromptBoxComponent {
     console.log('Selected Mode:', mode);
   }
 
+  selectResolution(resolution: '1K' | '2K' | '4K') {
+    this.selectedResolution = resolution;
+    this.resolutionChanged.emit(resolution);
+    this.isSettingsDropdownOpen.set(null);
+    console.log('Selected Resolution:', resolution);
+  }
+
   selectNewAspectRatio(ratio: string) {
     this.aspectRatioChanged.emit(ratio);
     this.isSettingsDropdownOpen.set(null);
@@ -191,5 +202,13 @@ export class FlowPromptBoxComponent {
     return this.generationModels.find(
       m => m.viewValue === this.selectedGenerationModel,
     );
+  }
+
+  getSelectedModelResolutions(): ('1K' | '2K' | '4K')[] {
+    const model = this.getSelectedModelObject();
+    if (model?.capabilities?.supportedResolutions?.length === 0) {
+      return ['1K', '2K', '4K'];
+    }
+    return model?.capabilities?.supportedResolutions ?? [];
   }
 }

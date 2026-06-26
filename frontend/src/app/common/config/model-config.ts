@@ -29,6 +29,7 @@ export interface ModelCapability {
   supportedModes: GenerationMode[];
   maxReferenceImages: number; // Max images for ingredients/frames modes
   supportedAspectRatios: string[]; // e.g., ['16:9', '1:1']
+  supportedResolutions: ('1K' | '2K' | '4K')[]; // e.g., ['1K', '2K', '4K']
   supportsAudio?: boolean; // For video
   supportsNegativePrompt?: boolean;
   supportsGoogleSearch?: boolean;
@@ -75,6 +76,7 @@ export const MODEL_CONFIGS: GenerationModelConfig[] = [
         '1:8',
         '8:1',
       ], // All
+      supportedResolutions: ['1K', '2K', '4K'], // All
       supportsGoogleSearch: true,
     },
   },
@@ -99,6 +101,7 @@ export const MODEL_CONFIGS: GenerationModelConfig[] = [
         '5:4',
         '21:9',
       ], // All
+      supportedResolutions: ['1K', '2K', '4K'], // All
       supportsGoogleSearch: true,
     },
   },
@@ -123,6 +126,7 @@ export const MODEL_CONFIGS: GenerationModelConfig[] = [
         '5:4',
         '21:9',
       ],
+      supportedResolutions: ['1K', '2K', '4K'], // All
     },
   },
 
@@ -137,6 +141,7 @@ export const MODEL_CONFIGS: GenerationModelConfig[] = [
       supportedModes: ['Multimodal to text'],
       maxReferenceImages: 10,
       supportedAspectRatios: [],
+      supportedResolutions: [],
     },
   },
   {
@@ -149,6 +154,7 @@ export const MODEL_CONFIGS: GenerationModelConfig[] = [
       supportedModes: ['Multimodal to text'],
       maxReferenceImages: 10,
       supportedAspectRatios: [],
+      supportedResolutions: [],
     },
   },
   {
@@ -161,6 +167,7 @@ export const MODEL_CONFIGS: GenerationModelConfig[] = [
       supportedModes: ['Multimodal to text'],
       maxReferenceImages: 10,
       supportedAspectRatios: [],
+      supportedResolutions: [],
     },
   },
   {
@@ -173,6 +180,7 @@ export const MODEL_CONFIGS: GenerationModelConfig[] = [
       supportedModes: ['Multimodal to text'],
       maxReferenceImages: 10,
       supportedAspectRatios: [],
+      supportedResolutions: [],
     },
   },
   // --- Video Models ---
@@ -189,6 +197,7 @@ export const MODEL_CONFIGS: GenerationModelConfig[] = [
       ],
       maxReferenceImages: 3,
       supportedAspectRatios: ['16:9', '9:16'],
+      supportedResolutions: ['1K', '2K', '4K'], // All
       supportsAudio: true,
     },
   },
@@ -205,6 +214,7 @@ export const MODEL_CONFIGS: GenerationModelConfig[] = [
       ], // Assuming ingredients = image-to-video
       maxReferenceImages: 3,
       supportedAspectRatios: ['16:9', '9:16'],
+      supportedResolutions: ['1K', '2K', '4K'], // All
       supportsAudio: true,
     },
   },
@@ -221,6 +231,7 @@ export const MODEL_CONFIGS: GenerationModelConfig[] = [
       ],
       maxReferenceImages: 3,
       supportedAspectRatios: ['16:9', '9:16'],
+      supportedResolutions: ['1K', '2K', '4K'], // All
       supportsAudio: true,
     },
   },
@@ -237,6 +248,7 @@ export const MODEL_CONFIGS: GenerationModelConfig[] = [
       ],
       maxReferenceImages: 3,
       supportedAspectRatios: ['16:9', '9:16'],
+      supportedResolutions: ['1K', '2K', '4K'], // All
       supportsAudio: true,
     },
   },
@@ -251,6 +263,7 @@ export const MODEL_CONFIGS: GenerationModelConfig[] = [
       supportedModes: ['Text to Audio'],
       maxReferenceImages: 0,
       supportedAspectRatios: [],
+      supportedResolutions: [],
       supportsSeed: true,
       supportsNegativePrompt: true,
       supportsVoice: false,
@@ -266,6 +279,7 @@ export const MODEL_CONFIGS: GenerationModelConfig[] = [
       supportedModes: ['Text to Audio'],
       maxReferenceImages: 0,
       supportedAspectRatios: [],
+      supportedResolutions: [],
       supportsVoice: true,
       supportsLanguage: true,
       supportsSeed: false,
@@ -281,6 +295,7 @@ export const MODEL_CONFIGS: GenerationModelConfig[] = [
       supportedModes: ['Text to Audio'],
       maxReferenceImages: 0,
       supportedAspectRatios: [],
+      supportedResolutions: [],
       supportsVoice: true,
       supportsLanguage: true,
       supportsSeed: false,

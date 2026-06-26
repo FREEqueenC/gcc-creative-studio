@@ -420,54 +420,101 @@
         </div>
       </div>
 
-      <!-- Model Dropdown -->
-      <div class="relative mt-3">
-        <label
-          for="model"
-          class="block text-xs font-medium text-neutral-400 mb-1.5"
-          >Model</label
-        >
-        <button
-          (click)="
-            $event.stopPropagation();
-            isSettingsDropdownOpen.set(
-              isSettingsDropdownOpen() === 'model' ? null : 'model'
-            )
-          "
-          class="relative w-full flex items-center justify-between rounded-lg bg-neutral-700 px-3 py-2 text-left text-sm"
-        >
-          <span>{{ selectedGenerationModel }}</span>
-          <mat-icon
-            class="transition-transform"
-            [class.rotate-180]="isSettingsDropdownOpen() === 'model'"
+      <div class="grid grid-cols-2 gap-3 mt-3">
+        <!-- Model Dropdown -->
+        <div class="relative">
+          <label
+            for="model"
+            class="block text-xs font-medium text-neutral-400 mb-1.5"
+            >Model</label
           >
-            expand_more
-          </mat-icon>
-        </button>
-        @if (isSettingsDropdownOpen() === 'model') {
-          <div
-            class="absolute left-0 top-full z-30 mt-1 w-full rounded-lg bg-neutral-700 p-1 shadow-lg max-h-80 overflow-y-auto"
+          <button
+            (click)="
+              $event.stopPropagation();
+              isSettingsDropdownOpen.set(
+                isSettingsDropdownOpen() === 'model' ? null : 'model'
+              )
+            "
+            class="relative w-full flex items-center justify-between rounded-lg bg-neutral-700 px-3 py-2 text-left text-sm"
           >
-            <button
-              *ngFor="let model of generationModels"
-              (click)="selectInternalModel(model)"
-              class="block w-full px-3 py-1.5 text-left text-sm rounded hover:bg-neutral-600 whitespace-pre-wrap"
-              [ngClass]="{
-                'bg-neutral-600':
-                  selectedGenerationModel === model.viewValue,
-              }"
+            <span>{{ selectedGenerationModel }}</span>
+            <mat-icon
+              class="transition-transform"
+              [class.rotate-180]="isSettingsDropdownOpen() === 'model'"
             >
-              <div class="flex items-center gap-2">
-                @if (model.isImage) {
-                <img [src]="model.imageSrc" class="h-5 w-5 object-contain" alt="model icon" />
-                } @else if (model.isSvg) {
-                <mat-icon [svgIcon]="model.icon || ''" class="!h-5 !w-5"></mat-icon>
-                }
-                {{ model.viewValue }}
-              </div>
-            </button>
-          </div>
-        }
+              expand_more
+            </mat-icon>
+          </button>
+          @if (isSettingsDropdownOpen() === 'model') {
+            <div
+              class="absolute left-0 top-full z-30 mt-1 w-full rounded-lg bg-neutral-700 p-1 shadow-lg max-h-80 overflow-y-auto"
+            >
+              <button
+                *ngFor="let model of generationModels"
+                (click)="selectInternalModel(model)"
+                class="block w-full px-3 py-1.5 text-left text-sm rounded hover:bg-neutral-600 whitespace-pre-wrap"
+                [ngClass]="{
+                  'bg-neutral-600':
+                    selectedGenerationModel === model.viewValue,
+                }"
+              >
+                <div class="flex items-center gap-2">
+                  @if (model.isImage) {
+                  <img [src]="model.imageSrc" class="h-5 w-5 object-contain" alt="model icon" />
+                  } @else if (model.isSvg) {
+                  <mat-icon [svgIcon]="model.icon || ''" class="!h-5 !w-5"></mat-icon>
+                  }
+                  {{ model.viewValue }}
+                </div>
+              </button>
+            </div>
+          }
+        </div>
+
+        <!-- Resolution Dropdown -->
+        <div class="relative">
+          <label
+            for="resolution"
+            class="block text-xs font-medium text-neutral-400 mb-1.5"
+            >Resolution</label
+          >
+          <button
+            (click)="
+              $event.stopPropagation();
+              isSettingsDropdownOpen.set(
+                isSettingsDropdownOpen() === 'resolution' ? null : 'resolution'
+              )
+            "
+            class="relative w-full flex items-center justify-between rounded-lg bg-neutral-700 px-3 py-2 text-left text-sm"
+          >
+            <span>{{ selectedResolution }}</span>
+            <mat-icon
+              class="transition-transform"
+              [class.rotate-180]="isSettingsDropdownOpen() === 'resolution'"
+            >
+              expand_more
+            </mat-icon>
+          </button>
+          @if (isSettingsDropdownOpen() === 'resolution') {
+            <div
+              class="absolute left-0 top-full z-30 mt-1 w-full rounded-lg bg-neutral-700 p-1 shadow-lg max-h-80 overflow-y-auto"
+            >
+              <button
+                *ngFor="let resolution of getSelectedModelResolutions()"
+                (click)="selectResolution(resolution)"
+                class="block w-full px-3 py-1.5 text-left text-sm rounded hover:bg-neutral-600 whitespace-pre-wrap"
+                [ngClass]="{
+                  'bg-neutral-600':
+                    selectedResolution === resolution,
+                }"
+              >
+                <div class="flex items-center gap-2">
+                  {{ resolution }}
+                </div>
+              </button>
+            </div>
+          }
+        </div>
       </div>
     </div>
   }

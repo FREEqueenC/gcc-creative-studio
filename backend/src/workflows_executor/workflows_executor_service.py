@@ -306,6 +306,7 @@ class WorkflowsExecutorService:
             "aspect_ratio": request.config.aspect_ratio,
             "use_brand_guidelines": request.config.brand_guidelines,
             "number_of_media": 1,
+            "resolution": request.config.resolution,
         }
 
         headers = {"Authorization": authorization} if authorization else {}
@@ -355,6 +356,7 @@ class WorkflowsExecutorService:
             "number_of_media": 1,
             "source_media_items": media_items,
             "source_asset_ids": asset_ids,
+            "resolution": request.config.resolution,
         }
 
         headers = {"Authorization": authorization} if authorization else {}

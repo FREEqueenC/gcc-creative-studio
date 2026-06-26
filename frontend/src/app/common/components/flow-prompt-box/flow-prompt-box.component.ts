@@ -206,9 +206,6 @@ export class FlowPromptBoxComponent {
 
   getSelectedModelResolutions(): ('1K' | '2K' | '4K')[] {
     const model = this.getSelectedModelObject();
-    if (model?.capabilities?.supportedResolutions?.length === 0) {
-      return ['1K', '2K', '4K'];
-    }
     return model?.capabilities?.supportedResolutions ?? [];
   }
 }

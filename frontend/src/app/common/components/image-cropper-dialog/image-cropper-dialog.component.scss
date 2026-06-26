@@ -40,11 +40,12 @@
     rgba(255, 255, 255, 0.02) 100%
   );
   backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 20px;
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
   position: relative;
-  padding: 24px 32px;
+  padding: 24px;
 }
 
 .loading-overlay {
@@ -69,27 +70,258 @@
   }
 }
 
-.cropper-area {
-  height: 400px;
+.editor-workspace-container {
+  display: flex;
   width: 100%;
-  background-color: #1a1a1a; // Darker background for cropper area
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
+  height: 100%;
   overflow: hidden;
-  position: relative;
+  gap: 16px;
+}
 
-  // ngx-image-cropper specific overrides if needed
-  ::ng-deep {
-    .source-image {
-      max-height: 400px;
+/* Vertical Toolbar Dock */
+.vertical-toolbar {
+  width: 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+
+  button {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    color: rgba(255, 255, 255, 0.65);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    mat-icon {
+      font-size: 24px;
+      width: 24px;
+      height: 24px;
     }
-    .ngx-ic-cropper {
-      // Ensure handles are visible
-      border: 1px solid rgba(255, 255, 255, 0.5);
+
+    &:hover {
+      color: white;
+      background: rgba(255, 255, 255, 0.08);
+      transform: translateY(-2px);
+    }
+
+    &.active {
+      color: #3b82f6;
+      background: rgba(59, 130, 246, 0.15);
     }
   }
 }
 
+/* Main Workspace Area */
+.main-workspace {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Minimalist Drawing Configuration Panel */
+.drawing-panel {
+  position: absolute;
+  width: 240px;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  animation: panelSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+
+  @keyframes panelSlideIn {
+    from {
+      opacity: 0;
+      transform: translateX(-15px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .panel-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    .section-label {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      color: rgba(255, 255, 255, 0.45);
+    }
+  }
+
+  /* Tool Selector Buttons */
+  .tool-selector {
+    display: flex;
+    padding: 4px;
+    justify-content: space-around;
+
+    button {
+      height: 38px;
+      border-radius: 8px;
+      color: rgba(255, 255, 255, 0.6);
+      background: transparent;
+      border: none;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      &:hover {
+        color: white;
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      &.active {
+        color: white;
+        background: rgba(255, 255, 255, 0.12);
+      }
+    }
+  }
+
+  /* Color Swatches Grid */
+  .color-swatches-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    align-items: center;
+
+    .color-swatch {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.4);
+      padding: 0;
+
+      &:hover {
+        transform: scale(1.15);
+      }
+
+      &.active {
+        border-color: white;
+        transform: scale(1.1);
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
+      }
+    }
+
+    /* Custom Color Picker */
+    .custom-color-picker-wrapper {
+      position: relative;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      input[type="color"] {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+        z-index: 2;
+      }
+
+      .custom-color-label {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: linear-gradient(45deg, #ff3b30, #34c759, #007aff, #ffcc00, #af52de);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border: 2px solid rgba(255, 255, 255, 0.25);
+        box-sizing: border-box;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        z-index: 1;
+
+        mat-icon {
+          font-size: 16px;
+          width: 16px;
+          height: 16px;
+          color: white;
+          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+        }
+      }
+
+      &:hover .custom-color-label {
+        transform: scale(1.15);
+        border-color: rgba(255, 255, 255, 0.5);
+      }
+    }
+  }
+
+  /* Slider Header and Customizations */
+  .slider-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .size-value {
+      font-size: 14px;
+      font-weight: 700;
+      color: white;
+    }
+  }
+
+  .size-slider {
+    width: 100%;
+    
+    ::ng-deep {
+      .mdc-slider__track--inactive {
+        background-color: rgba(255, 255, 255, 0.15) !important;
+      }
+      .mdc-slider__track--active_fill {
+        border-color: #3b82f6 !important;
+      }
+      .mdc-slider__thumb-knob {
+        background-color: #3b82f6 !important;
+      }
+    }
+  }
+
+  /* History Controls Actions */
+  .history-actions {
+    display: flex;
+    padding: 4px;
+    justify-content: space-around;
+
+    button {
+      color: rgba(255, 255, 255, 0.7);
+      transition: all 0.2s ease;
+
+      &:hover:not([disabled]) {
+        color: white;
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      &[disabled] {
+        color: rgba(255, 255, 255, 0.2) !important;
+      }
+    }
+  }
+}
+
+/* Crop Controls Toolbar at the top of main workspace */
 .controls-toolbar {
   display: flex;
   align-items: center;
@@ -114,10 +346,67 @@
 
 .aspect-ratio-dropdown {
   width: 150px;
+  
+  ::ng-deep .mat-mdc-text-field-wrapper {
+    background-color: rgba(255, 255, 255, 0.03) !important;
+  }
+}
+
+/* Unified Workspace Viewport */
+.workspace-viewport {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.cropper-area,
+.canvas-area {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+
+  &.hidden {
+    display: none !important;
+  }
+}
+
+.cropper-area {
+  --cropper-overlay-color: transparent;
+}
+
+.drawing-canvas {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  background-color: transparent;
+  display: block;
+}
+
+.canvas-text-input {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px dashed;
+  border-radius: 4px;
+  outline: none;
+  padding: 2px 6px;
+  z-index: 60;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  font-family: 'Google Sans', sans-serif;
 }
 
 mat-dialog-actions {
-  margin-top: 24px;
+  margin-top: 16px;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -147,6 +436,16 @@ mat-dialog-actions {
     display: flex;
     align-items: center;
     gap: 8px;
+    
+    input[type="color"] {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: transparent;
+      cursor: pointer;
+      padding: 0;
+    }
   }
 }
 

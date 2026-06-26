@@ -14,8 +14,20 @@
  * limitations under the License.
  */
 
-import {Component, Inject} from '@angular/core';
-import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  Inject,
+  OnDestroy,
+  ViewChild,
+  signal,
+} from '@angular/core';
+import {
+  MAT_DIALOG_DATA,
+  MatDialogRef,
+  MatDialog,
+} from '@angular/material/dialog';
 import {
   ImageCroppedEvent,
   ImageTransform,
@@ -32,6 +44,19 @@ import {
   AssetTypeEnum,
 } from '../../../admin/source-assets-management/source-asset.model';
 import {environment} from '../../../../environments/environment';
+import {CanvasDrawer} from './canvas-drawer';
+
+export enum ImageEditorMode {
+  CROP = 'crop',
+  ADJUST = 'adjust',
+  DRAW = 'draw',
+}
+
+export enum DrawingTool {
+  BRUSH = 'brush',
+  TEXT = 'text',
+  RECTANGLE = 'rectangle',
+}
 
 interface AspectRatio {
   label: string;
@@ -39,21 +64,62 @@ interface AspectRatio {
   stringValue: string;
 }
 
+interface ImageCropperDialogData {
+  imageFile: File;
+  assetType: AssetTypeEnum;
+  aspectRatios?: AspectRatio[];
+  enableUpscale?: boolean;
+}
+
+interface TextInputCanvas {
+  value: string;
+  position: {x: number; y: number};
+  pendingTextCoords: {x: number; y: number};
+}
+
 @Component({
   selector: 'app-image-cropper-dialog',
   templateUrl: './image-cropper-dialog.component.html',
   styleUrls: ['./image-cropper-dialog.component.scss'],
 })
-export class ImageCropperDialogComponent {
+export class ImageCropperDialogComponent implements AfterViewInit, OnDestroy {
+  @ViewChild('drawingCanvas') drawingCanvas!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('textInput') textInputRef?: ElementRef<HTMLInputElement>;
+
+  readonly ImageEditorMode = ImageEditorMode;
+  readonly DrawingTool = DrawingTool;
+
   isUploading = false;
   isConverting = false; // New state for the conversion step
   imageFile: File | null = null; // Initialize as null
+
+  canvasDrawer: CanvasDrawer | null = null;
+  textInputCanvas: TextInputCanvas | null = null;
+
+  // Signals for drawing controls
+  activeMode = signal<ImageEditorMode>(ImageEditorMode.CROP);
+  activeDrawTool = signal<DrawingTool>(DrawingTool.BRUSH);
+  brushColor = signal<string>('#ff3b30');
+  brushSize = signal<number>(16);
+
+  presetColors = [
+    '#ffffff',
+    '#000000',
+    '#ff3b30',
+    '#34c759',
+    '#007aff',
+    '#ffcc00',
+    '#af52de',
+  ];
+
+  canUndo = signal<boolean>(false);
+  canRedo = signal<boolean>(false);
 
   croppedImageBlob: Blob | null = null;
   aspectRatios: AspectRatio[] = [];
   currentAspectRatio: number;
   containWithinAspectRatio = false;
-  backgroundColor = 'white';
+  backgroundColor = 'black';
 
   transform: ImageTransform = {
     translateUnit: 'px',
@@ -65,16 +131,25 @@ export class ImageCropperDialogComponent {
   canvasRotation = 0;
   options: Partial<CropperOptions>;
 
+  static open(
+    dialog: MatDialog,
+    data: ImageCropperDialogData,
+  ): MatDialogRef<ImageCropperDialogComponent, SourceAssetResponseDto> {
+    return dialog.open(ImageCropperDialogComponent, {
+      data,
+      width: '95vw',
+      height: '95vh',
+      maxWidth: '95vw',
+      maxHeight: '95vh',
+    });
+  }
+
   constructor(
     public dialogRef: MatDialogRef<ImageCropperDialogComponent>,
     private http: HttpClient,
     private sourceAssetService: SourceAssetService,
     @Inject(MAT_DIALOG_DATA)
-    public data: {
-      imageFile: File;
-      assetType: AssetTypeEnum;
-      aspectRatios?: AspectRatio[];
-    },
+    public data: ImageCropperDialogData,
   ) {
     this.aspectRatios = data.aspectRatios || [
       {label: '1:1 Square', value: 1 / 1, stringValue: '1:1'},
@@ -208,6 +283,172 @@ export class ImageCropperDialogComponent {
   }
   // --- End: Add New Control Methods ---
 
+  ngAfterViewInit(): void {
+    if (this.drawingCanvas?.nativeElement && !this.canvasDrawer) {
+      this.initCanvasDrawer();
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (this.canvasDrawer) {
+      this.canvasDrawer.destroy();
+      this.canvasDrawer = null;
+    }
+  }
+
+  private initCanvasDrawer(): void {
+    if (!this.drawingCanvas?.nativeElement) return;
+    this.canvasDrawer = new CanvasDrawer(this.drawingCanvas.nativeElement);
+    this.syncCanvasDrawerSettings();
+    this.canvasDrawer.onTextRequested =
+      (x, y, clientX, clientY) => this.handleTextRequested(x, y, clientX, clientY);
+    this.canvasDrawer.onHistoryChange = () => this.updateHistorySignals();
+  }
+
+  private syncCanvasDrawerSettings(): void {
+    if (!this.canvasDrawer) return;
+    this.canvasDrawer.mode = this.activeDrawTool();
+    this.canvasDrawer.strokeColor = this.brushColor();
+    this.canvasDrawer.strokeWidth = this.brushSize();
+    this.canvasDrawer.fontSize = this.brushSize();
+  }
+
+  private updateHistorySignals(): void {
+    if (!this.canvasDrawer) return;
+    this.canUndo.set(this.canvasDrawer.canUndo());
+    this.canRedo.set(this.canvasDrawer.canRedo());
+  }
+
+  handleTextRequested(
+    x: number,
+    y: number,
+    clientX: number,
+    clientY: number,
+  ): void {
+    this.commitText();
+    const rect =
+      this.drawingCanvas?.nativeElement?.parentElement
+        ? this.drawingCanvas.nativeElement.parentElement.getBoundingClientRect()
+        : {left: 0, top: 0};
+    this.textInputCanvas = {
+      value: '',
+      position: {
+        x: clientX - rect.left,
+        y: clientY - rect.top,
+      },
+      pendingTextCoords: {x, y},
+    };
+
+    setTimeout(() => this.textInputRef?.nativeElement?.focus());
+  }
+
+  commitText(): void {
+    if (!this.textInputCanvas || !this.canvasDrawer) return;
+    const text = this.textInputCanvas.value.trim();
+    if (text) {
+      this.canvasDrawer.addText(
+        text,
+        this.textInputCanvas.pendingTextCoords.x,
+        this.textInputCanvas.pendingTextCoords.y,
+      );
+    }
+    this.textInputCanvas = null;
+  }
+
+  // Drawing control methods
+  setMode(mode: ImageEditorMode): void {
+    const currentMode = this.activeMode();
+    if (currentMode === mode) return;
+    let canvaChangesPending = false;
+    if (mode === ImageEditorMode.DRAW) {
+      const blobToLoad = this.croppedImageBlob || this.imageFile;
+      if (blobToLoad) {
+        const img = new Image();
+        const url = URL.createObjectURL(blobToLoad);
+        img.onload = () => {
+          if (!this.canvasDrawer && this.drawingCanvas?.nativeElement) {
+            this.initCanvasDrawer();
+          }
+          if (this.canvasDrawer) {
+            this.canvasDrawer.setBackgroundImage(img);
+            this.syncCanvasDrawerSettings();
+            this.updateHistorySignals();
+          }
+          URL.revokeObjectURL(url);
+        };
+        img.src = url;
+      }
+    } else if (currentMode === ImageEditorMode.DRAW) {
+        canvaChangesPending = this.canvasToImage((croppedFile) => {
+          this.imageFile = croppedFile;
+          this.activeMode.set(ImageEditorMode.CROP);
+        });
+    }
+    if (!canvaChangesPending) this.activeMode.set(mode);
+  }
+
+  private canvasToImage(callback: (croppedFile: File) => void): boolean {
+    let canvaChangesPending = false;
+    this.commitText();
+    if (this.canvasDrawer) {
+      canvaChangesPending = true;
+      this.canvasDrawer.canvas.toBlob(blob => {
+        if (blob) {
+          const croppedFile = new File(
+            [blob],
+            this.imageFile?.name || 'edited-image.png',
+            {type: 'image/png'},
+          );
+          callback(croppedFile);
+        }
+      }, 'image/png');
+    }
+    return canvaChangesPending;
+  }
+
+  setDrawTool(tool: DrawingTool): void {
+    this.activeDrawTool.set(tool);
+    this.canvasDrawer!.mode = tool;
+  }
+
+  setBrushColor(color: string): void {
+    this.brushColor.set(color);
+    this.canvasDrawer!.strokeColor = color;
+  }
+
+  onBrushColorPickerChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input && input.value) {
+      this.brushColor.set(input.value);
+      this.canvasDrawer!.strokeColor = input.value;
+    }
+  }
+
+  onBrushSizeChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input && input.value) {
+      const size = Number(input.value);
+      this.brushSize.set(size);
+      this.canvasDrawer!.strokeWidth = size;
+      this.canvasDrawer!.fontSize = size;
+    }
+  }
+
+  undo(): void {
+    this.canvasDrawer!.undo();
+    this.updateHistorySignals();
+  }
+
+  redo(): void {
+    this.canvasDrawer!.redo();
+    this.updateHistorySignals();
+  }
+
+  clearDrawing(): void {
+    this.canvasDrawer!.clear();
+    this.updateHistorySignals();
+  }
+
   imageCropped(event: ImageCroppedEvent) {
     if (event.blob) {
       this.croppedImageBlob = event.blob;
@@ -215,7 +456,24 @@ export class ImageCropperDialogComponent {
   }
 
   uploadCroppedImage() {
-    if (this.croppedImageBlob) {
+    if (this.activeMode() === ImageEditorMode.DRAW) {
+      this.canvasToImage((croppedFile) => {
+        this.isUploading = true;
+        const selectedRatio = this.aspectRatios.find(
+          r => r.value === this.currentAspectRatio,
+        );
+        const aspectRatioString = selectedRatio
+          ? selectedRatio.stringValue
+          : '1:1';
+
+        this.uploadAsset(croppedFile, aspectRatioString)
+          .pipe(finalize(() => (this.isUploading = false)))
+          .subscribe(asset => {
+            this.sourceAssetService.addAsset(asset);
+            this.dialogRef.close(asset);
+          });
+      });
+    } else if (this.croppedImageBlob) {
       const croppedFile = new File(
         [this.croppedImageBlob],
         this.imageFile?.name || 'untitled',

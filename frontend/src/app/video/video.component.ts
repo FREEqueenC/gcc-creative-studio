@@ -1067,21 +1067,20 @@ export class VideoComponent implements OnInit, AfterViewInit {
   }
 
   openCropperDialog(file: File, imageNumber: 1 | 2) {
-    const dialogRef = this.dialog.open(ImageCropperDialogComponent, {
-      data: {
-        imageFile: file,
-        assetType: AssetTypeEnum.GENERIC_IMAGE,
-      },
-      width: '600px',
+    const dialogRef = ImageCropperDialogComponent.open(this.dialog, {
+      imageFile: file,
+      assetType: AssetTypeEnum.GENERIC_IMAGE,
     });
 
-    dialogRef.afterClosed().subscribe((result: SourceAssetResponseDto) => {
-      if (result && result.id) {
-        this.processInput(result, imageNumber);
-        this.updateModeAndNotify();
-        this.clearOtherImage(imageNumber);
-      }
-    });
+    dialogRef
+      .afterClosed()
+      .subscribe((result: SourceAssetResponseDto | undefined) => {
+        if (result && result.id) {
+          this.processInput(result, imageNumber);
+          this.updateModeAndNotify();
+          this.clearOtherImage(imageNumber);
+        }
+      });
   }
 
   uploadVideoDirectly(file: File, imageNumber: 1 | 2) {
@@ -1664,24 +1663,23 @@ export class VideoComponent implements OnInit, AfterViewInit {
     const file = event.dataTransfer?.files[0];
     if (file && file.type.startsWith('image/')) {
       // For a direct drop, go straight to the cropper
-      const dialogRef = this.dialog.open(ImageCropperDialogComponent, {
-        data: {
-          imageFile: file,
-          assetType: AssetTypeEnum.GENERIC_IMAGE,
-        },
-        width: '600px',
+      const dialogRef = ImageCropperDialogComponent.open(this.dialog, {
+        imageFile: file,
+        assetType: AssetTypeEnum.GENERIC_IMAGE,
       });
 
-      dialogRef.afterClosed().subscribe((result: SourceAssetResponseDto) => {
-        if (result && result.id) {
-          this.referenceImages.push({
-            sourceAssetId: result.id,
-            previewUrl: result.presignedUrl || '',
-          });
-          this.handleReferenceImageAdded();
-          this.saveState();
-        }
-      });
+      dialogRef
+        .afterClosed()
+        .subscribe((result: SourceAssetResponseDto | undefined) => {
+          if (result && result.id) {
+            this.referenceImages.push({
+              sourceAssetId: result.id,
+              previewUrl: result.presignedUrl || '',
+            });
+            this.handleReferenceImageAdded();
+            this.saveState();
+          }
+        });
     }
   }
 

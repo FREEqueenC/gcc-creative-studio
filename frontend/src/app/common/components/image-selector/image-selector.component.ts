@@ -85,18 +85,15 @@ export class ImageSelectorComponent implements OnInit {
     if (file.type.startsWith('image/')) {
       if (this.shouldCrop) {
         // If shouldCrop is true, open the cropper dialog
-        const cropperDialogRef = this.dialog.open(ImageCropperDialogComponent, {
-          data: {
-            imageFile: file,
-            assetType: this.data.assetType,
-            enableUpscale: this.data.enableUpscale,
-          },
-          width: '600px',
+        const cropperDialogRef = ImageCropperDialogComponent.open(this.dialog, {
+          imageFile: file,
+          assetType: this.data.assetType,
+          enableUpscale: this.data.enableUpscale,
         });
 
         cropperDialogRef
           .afterClosed()
-          .subscribe((asset: SourceAssetResponseDto) => {
+          .subscribe((asset: SourceAssetResponseDto | undefined) => {
             if (asset) {
               this.dialogRef.close(asset);
             }
@@ -161,12 +158,9 @@ export class ImageSelectorComponent implements OnInit {
     if (file.type.startsWith('image/')) {
       this.dialogRef.close();
 
-      this.dialog.open(ImageCropperDialogComponent, {
-        data: {
-          imageFile: file,
-          assetType: this.data.assetType,
-        },
-        width: '600px',
+      ImageCropperDialogComponent.open(this.dialog, {
+        imageFile: file,
+        assetType: this.data.assetType,
       });
     } else {
       console.log('File is not an image, cannot open cropper.');

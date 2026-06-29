@@ -127,10 +127,6 @@ export class FlowPromptBoxComponent {
     }
   }
 
-  modelResolutions = computed(() => {
-    return this.getSelectedModelObject()?.capabilities?.supportedResolutions ?? [];
-  })
-
   // --- Logic moved from VideoComponent ---
 
   promptText = signal<string>('');
@@ -207,5 +203,10 @@ export class FlowPromptBoxComponent {
     return this.generationModels.find(
       m => m.viewValue === this.selectedGenerationModel,
     );
+  }
+
+  getSelectedModelResolutions(): ('1K' | '2K' | '4K')[] {
+    const model = this.getSelectedModelObject();
+    return model?.capabilities?.supportedResolutions ?? [];
   }
 }

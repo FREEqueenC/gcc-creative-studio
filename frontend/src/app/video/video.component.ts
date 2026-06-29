@@ -437,7 +437,7 @@ export class VideoComponent implements OnInit, AfterViewInit {
   }
 
   onResolutionChanged(resolution: '1K' | '2K' | '4K') {
-    this.searchRequest.resolution = resolution == '4K' ? '2K' : resolution;
+    this.searchRequest.resolution = resolution === '4K' ? '2K' : resolution;
     this.saveState();
   }
 

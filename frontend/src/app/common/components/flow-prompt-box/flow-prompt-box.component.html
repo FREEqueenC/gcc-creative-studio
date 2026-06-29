@@ -420,7 +420,7 @@
         </div>
       </div>
 
-      <div class="grid gap-3 mt-3" [class.grid-cols-2]="getSelectedModelResolutions().length > 0" [class.grid-cols-1]="getSelectedModelResolutions().length === 0">
+      <div class="grid gap-3 mt-3" [class.grid-cols-2]="modelResolutions().length > 0" [class.grid-cols-1]="modelResolutions().length === 0">
         <!-- Model Dropdown -->
         <div class="relative">
           <label
@@ -472,7 +472,7 @@
         </div>
 
         <!-- Resolution Dropdown -->
-        @if (getSelectedModelResolutions().length > 0) {
+        @if (modelResolutions().length > 0) {
           <div class="relative">
             <label for="resolution" class="block text-xs font-medium text-neutral-400 mb-1.5">Resolution</label>
             <button
@@ -491,7 +491,7 @@
             </button>
             @if (isSettingsDropdownOpen() === 'resolution') {
               <div class="absolute left-0 top-full z-30 mt-1 w-full rounded-lg bg-neutral-700 p-1 shadow-lg max-h-80 overflow-y-auto">
-                @for (resolution of getSelectedModelResolutions(); track resolution) {
+                @for (resolution of modelResolutions(); track resolution) {
                   <button
                     (click)="selectResolution(resolution)"
                     class="block w-full px-3 py-1.5 text-left text-sm rounded hover:bg-neutral-600 whitespace-pre-wrap"

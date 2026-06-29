@@ -425,6 +425,7 @@ class WorkflowsExecutorService:
             "prompt": request.inputs.prompt,
             "workspace_id": request.workspace_id,
             "generation_model": request.config.model,
+            "resolution": request.config.resolution,
             "use_brand_guidelines": request.config.brand_guidelines,
             "reference_images": reference_images,
             "source_media_items": media_items,

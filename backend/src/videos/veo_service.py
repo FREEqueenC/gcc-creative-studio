@@ -760,6 +760,15 @@ def _process_video_in_background(
                             }
 
                         else:
+                            # Map DTO resolution ("1K", "2K") to GenAI SDK supported resolutions ("720p", "1080p")
+                            resolution_map = {
+                                "1K": "720p",
+                                "2K": "1080p",
+                            }
+                            api_resolution = resolution_map.get(
+                                request_dto.resolution, "720p"
+                            )
+
                             # Run sync API call in thread
                             operation: types.GenerateVideosOperation = (
                                 await asyncio.to_thread(
@@ -772,6 +781,7 @@ def _process_video_in_background(
                                         number_of_videos=request_dto.number_of_media,
                                         output_gcs_uri=gcs_output_directory,
                                         aspect_ratio=request_dto.aspect_ratio,
+                                        resolution=api_resolution,
                                         negative_prompt=request_dto.negative_prompt,
                                         generate_audio=request_dto.generate_audio,
                                         # TODO: Pass from dto the secs if extending video (4, 5, 6, 7)

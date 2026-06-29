@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import Query
 from pydantic import Field, field_validator, model_validator
@@ -149,6 +149,10 @@ class CreateVeoDto(BaseDto):
     parent_media_item_id: int | None = Field(
         default=None,
         description="The ID of the parent media item for multi-turn conversation editing.",
+    )
+    resolution: Literal["1K", "2K"] = Field(
+        default="1K",
+        description="Resolution of the generated videos.",
     )
 
     @model_validator(mode="after")

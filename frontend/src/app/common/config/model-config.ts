@@ -76,7 +76,7 @@ export const MODEL_CONFIGS: GenerationModelConfig[] = [
         '1:8',
         '8:1',
       ], // All
-      supportedResolutions: ['1K', '2K', '4K'], // All
+      supportedResolutions: ['1K', '2K', '4K'],
       supportsGoogleSearch: true,
     },
   },
@@ -101,7 +101,7 @@ export const MODEL_CONFIGS: GenerationModelConfig[] = [
         '5:4',
         '21:9',
       ], // All
-      supportedResolutions: ['1K', '2K', '4K'], // All
+      supportedResolutions: ['1K', '2K', '4K'],
       supportsGoogleSearch: true,
     },
   },
@@ -126,7 +126,7 @@ export const MODEL_CONFIGS: GenerationModelConfig[] = [
         '5:4',
         '21:9',
       ],
-      supportedResolutions: ['1K', '2K', '4K'], // All
+      supportedResolutions: ['1K', '2K', '4K'],
     },
   },
 
@@ -197,7 +197,7 @@ export const MODEL_CONFIGS: GenerationModelConfig[] = [
       ],
       maxReferenceImages: 3,
       supportedAspectRatios: ['16:9', '9:16'],
-      supportedResolutions: ['1K', '2K', '4K'], // All
+      supportedResolutions: ['1K', '2K'],
       supportsAudio: true,
     },
   },
@@ -214,7 +214,7 @@ export const MODEL_CONFIGS: GenerationModelConfig[] = [
       ], // Assuming ingredients = image-to-video
       maxReferenceImages: 3,
       supportedAspectRatios: ['16:9', '9:16'],
-      supportedResolutions: ['1K', '2K', '4K'], // All
+      supportedResolutions: ['1K', '2K'],
       supportsAudio: true,
     },
   },
@@ -231,7 +231,7 @@ export const MODEL_CONFIGS: GenerationModelConfig[] = [
       ],
       maxReferenceImages: 3,
       supportedAspectRatios: ['16:9', '9:16'],
-      supportedResolutions: ['1K', '2K', '4K'], // All
+      supportedResolutions: ['1K', '2K'],
       supportsAudio: true,
     },
   },
@@ -248,7 +248,7 @@ export const MODEL_CONFIGS: GenerationModelConfig[] = [
       ],
       maxReferenceImages: 3,
       supportedAspectRatios: ['16:9', '9:16'],
-      supportedResolutions: ['1K', '2K', '4K'], // All
+      supportedResolutions: ['1K', '2K'],
       supportsAudio: true,
     },
   },

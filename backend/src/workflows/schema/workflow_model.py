@@ -212,6 +212,7 @@ class GenerateVideoSettings(BaseModel):
     brand_guidelines: bool
     aspect_ratio: str
     input_mode: str | None = None
+    resolution: Literal["1K", "2K"] = "1K"
 
 
 class GenerateVideoStep(BaseStep[GenerateVideoInputs, GenerateVideoSettings]):

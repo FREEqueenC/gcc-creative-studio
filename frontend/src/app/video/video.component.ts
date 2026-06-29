@@ -147,6 +147,7 @@ export class VideoComponent implements OnInit, AfterViewInit {
     useBrandGuidelines: false,
     enhancePrompt: false,
     referenceImages: [],
+    resolution: '1K',
   };
 
   // --- Negative Prompt Chips ---
@@ -306,6 +307,7 @@ export class VideoComponent implements OnInit, AfterViewInit {
     this.videoStateService.updateState({
       prompt: this.searchRequest.prompt,
       aspectRatio: this.searchRequest.aspectRatio,
+      resolution: this.searchRequest.resolution,
       model: this.searchRequest.generationModel,
       style: this.searchRequest.style,
       colorAndTone: this.searchRequest.colorAndTone,
@@ -329,6 +331,7 @@ export class VideoComponent implements OnInit, AfterViewInit {
     const state = this.videoStateService.getState();
     this.searchRequest.prompt = state.prompt;
     this.searchRequest.aspectRatio = state.aspectRatio;
+    this.searchRequest.resolution = state.resolution || '1K';
     this.searchRequest.generationModel = state.model;
     this.searchRequest.style = state.style;
     this.searchRequest.colorAndTone = state.colorAndTone;
@@ -430,6 +433,11 @@ export class VideoComponent implements OnInit, AfterViewInit {
       this.searchRequest.aspectRatio = ratio.value;
       this.selectedAspectRatio = ratio.viewValue;
     }
+    this.saveState();
+  }
+
+  onResolutionChanged(resolution: '1K' | '2K' | '4K') {
+    this.searchRequest.resolution = resolution == '4K' ? '2K' : resolution;
     this.saveState();
   }
 

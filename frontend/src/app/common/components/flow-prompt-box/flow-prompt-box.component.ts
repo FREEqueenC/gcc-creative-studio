@@ -66,6 +66,17 @@ export class FlowPromptBoxComponent {
   }[] = [];
   @Input() modes: {value: string; icon: string; label: string}[] = [];
 
+  @Input() set resolution(val: '1K' | '2K' | '4K' | undefined) {
+    if (val) {
+      this.selectedResolution.set(val);
+    }
+  }
+  @Input() set duration(val: number | undefined) {
+    if (val) {
+      this.selectedDuration.set(val);
+    }
+  }
+
   @Output() generateClicked = new EventEmitter<void>();
   @Output() rewriteClicked = new EventEmitter<void>();
   @Output() modelSelected = new EventEmitter<any>();
@@ -182,8 +193,11 @@ export class FlowPromptBoxComponent {
     this.selectedMode.set(mode);
     this.modeChanged.emit(mode);
     this.isModeMenuOpen.set(false);
-    if (this.isExtendVideo())
-      this.selectResolution(this.getSelectedModelResolutions()[0]);
+    
+    if (this.isExtendVideo()) {
+      const smallest = this.getSelectedModelResolutions()[0];
+      if (smallest) this.selectResolution(smallest);
+    }
 
     if (!this.isTextToVideo()) {
       const longest = this.getSelectedModelDurations().slice(-1)?.[0];

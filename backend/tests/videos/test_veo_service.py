@@ -417,6 +417,103 @@ class TestBackgroundWorkers:
             mock_media_repo.update.assert_called_once()
 
     @patch("src.database.WorkerDatabase")
+    @patch("src.videos.veo_service.GenAIModelSetup.init")
+    @patch("src.videos.veo_service.generate_thumbnail")
+    def test_process_video_in_background_duration_and_resolution_4k(
+        self,
+        mock_thumb,
+        mock_genai_init,
+        mock_worker_db_class,
+    ):
+        sample_dto = CreateVeoDto(
+            workspace_id=1,
+            prompt="Test",
+            generation_model=GenerationModelEnum.VEO_3_QUALITY,
+            aspect_ratio="16:9",
+            duration_seconds=6,
+            resolution="4K",
+            enhance_prompt=True,
+        )
+
+        # Mock WorkerDatabase Context
+        mock_db_context = AsyncMock()
+        mock_db_factory = MagicMock(return_value=mock_db_context)
+        mock_worker_db_class.return_value.__aenter__.return_value = (
+            mock_db_factory
+        )
+
+        # Mock GenAI SDK client
+        mock_client = MagicMock()
+        mock_genai_init.return_value = mock_client
+
+        mock_operation = MagicMock()
+        mock_operation.done = True
+        mock_operation.error = None
+        from src.config.config_service import config_service as cfg
+
+        mock_generated_video = MagicMock()
+        mock_generated_video.video.uri = (
+            f"gs://{cfg.GENMEDIA_BUCKET}/output_0.mp4"
+        )
+        mock_operation.response.generated_videos = [mock_generated_video]
+
+        mock_client.models.generate_videos.return_value = mock_operation
+        mock_client.operations.get.return_value = mock_operation
+
+        mock_thumb.return_value = "/tmp/thumbnails/thumb.png"
+
+        # Patch Repos inside _async_worker execution
+        with (
+            patch(
+                "src.videos.veo_service.MediaRepository",
+            ) as mock_media_repo_class,
+            patch(
+                "src.videos.veo_service.SourceAssetRepository",
+            ) as mock_source_asset_repo_class,
+            patch(
+                "src.videos.veo_service.GeminiService",
+            ) as mock_gemini_service_class,
+            patch(
+                "src.videos.veo_service.GcsService",
+            ) as mock_gcs_class,
+        ):
+            mock_media_repo = AsyncMock()
+            mock_media_repo_class.return_value = mock_media_repo
+
+            mock_gemini_service = AsyncMock()
+            mock_gemini_service_class.return_value = mock_gemini_service
+            mock_gemini_service.enhance_prompt_from_dto.return_value = (
+                "Enhanced Prompt"
+            )
+
+            mock_gcs_service = MagicMock()
+            mock_gcs_class.return_value = mock_gcs_service
+            mock_gcs_service.download_from_gcs.return_value = "/tmp/local.mp4"
+            mock_gcs_service.upload_file_to_gcs.return_value = (
+                "gs://bucket/uploaded.png"
+            )
+
+            # Execute the outer worker function
+            _process_video_in_background(
+                media_item_id=123,
+                request_dto=sample_dto,
+                user_email="test@user.com",
+            )
+
+            # Assertions
+            mock_gemini_service.enhance_prompt_from_dto.assert_called_once()
+            mock_client.models.generate_videos.assert_called_once()
+
+            # Extract kwargs passed to generate_videos
+            called_args, called_kwargs = (
+                mock_client.models.generate_videos.call_args
+            )
+            config = called_kwargs.get("config")
+            assert config is not None
+            assert config.duration_seconds == 6
+            assert config.resolution == "4k"
+
+    @patch("src.database.WorkerDatabase")
     @patch("src.videos.veo_service.concatenate_videos")
     @patch("src.videos.veo_service.generate_thumbnail")
     def test_process_video_concatenation_in_background_sync(

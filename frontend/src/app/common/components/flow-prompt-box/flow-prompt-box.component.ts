@@ -193,12 +193,13 @@ export class FlowPromptBoxComponent {
     console.log('Selected Mode:', mode);
   }
 
-  selectResolution(resolution: '1K' | '2K' | '4K') {
+  selectResolution(resolution: '1K' | '2K' | '4K', model?: any) {
     this.selectedResolution.set(resolution);
     this.resolutionChanged.emit(resolution);
     this.isSettingsDropdownOpen.set(null);
+
     if (resolution !== '1K') {
-      const longest = this.getSelectedModelDurations().slice(-1)?.[0];
+      const longest = this.getSelectedModelDurations(model).slice(-1)?.[0];
       if (longest) this.selectDuration(longest);
     }
 
@@ -229,8 +230,8 @@ export class FlowPromptBoxComponent {
     this.isSettingsDropdownOpen.set(null);
     this.modelSelected.emit(model);
 
-    const smallest = this.getSelectedModelResolutions()[0];
-    if (smallest) this.selectResolution(smallest);
+    const smallest = this.getSelectedModelResolutions(model)[0];
+    if (smallest) this.selectResolution(smallest, model);
   }
 
   selectPreset(preset: string) {
@@ -244,24 +245,25 @@ export class FlowPromptBoxComponent {
     );
   }
 
-  getSelectedModelResolutions(): ('1K' | '2K' | '4K')[] {
-    const model = this.getSelectedModelObject();
+  getSelectedModelResolutions(model?: any): ('1K' | '2K' | '4K')[] {
+    const activeModel = model || this.getSelectedModelObject();
     if (this.isExtendVideo()) {
-      const smallest = model?.capabilities?.supportedResolutions?.[0];
+      const smallest = activeModel?.capabilities?.supportedResolutions?.[0];
       return smallest ? [smallest] : [];
     }
-    return model?.capabilities?.supportedResolutions ?? [];
+    return activeModel?.capabilities?.supportedResolutions ?? [];
   }
 
-  getSelectedModelDurations(): number[] {
-    const model = this.getSelectedModelObject();
+  getSelectedModelDurations(model?: any): number[] {
+    const activeModel = model || this.getSelectedModelObject();
     // only 'text to video' mode supports shorter durations
     // resolutions above 1K support only longest duration
     if (!this.isTextToVideo() || this.selectedResolution() !== '1K') {
-      const longest = model?.capabilities?.supportedDurations?.slice(-1)?.[0];
+      const longest =
+        activeModel?.capabilities?.supportedDurations?.slice(-1)?.[0];
       return longest ? [longest] : [];
     }
 
-    return model?.capabilities?.supportedDurations ?? [];
+    return activeModel?.capabilities?.supportedDurations ?? [];
   }
 }

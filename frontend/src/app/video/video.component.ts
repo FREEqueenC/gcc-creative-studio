@@ -198,7 +198,6 @@ export class VideoComponent implements OnInit, AfterViewInit {
     'Warm',
   ];
   numberOfVideosOptions = [1, 2, 3, 4];
-  durationOptions = [8];
   compositions = [
     'Closeup',
     'Knolling',
@@ -469,11 +468,6 @@ export class VideoComponent implements OnInit, AfterViewInit {
 
   selectNumberOfVideos(num: number): void {
     this.searchRequest.numberOfMedia = num;
-    this.saveState();
-  }
-
-  selectDuration(seconds: number): void {
-    this.searchRequest.durationSeconds = seconds;
     this.saveState();
   }
 

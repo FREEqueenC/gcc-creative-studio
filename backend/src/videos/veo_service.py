@@ -760,10 +760,11 @@ def _process_video_in_background(
                             }
 
                         else:
-                            # Map DTO resolution ("1K", "2K") to GenAI SDK supported resolutions ("720p", "1080p")
+                            # Map DTO resolution ("1K", "2K", "4K") to GenAI SDK supported resolutions ("720p", "1080p", "4K")
                             resolution_map = {
                                 "1K": "720p",
                                 "2K": "1080p",
+                                "4K": "4k",
                             }
                             api_resolution = resolution_map.get(
                                 request_dto.resolution, "720p"

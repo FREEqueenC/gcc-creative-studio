@@ -52,7 +52,6 @@ import {MatTooltipModule} from '@angular/material/tooltip';
 export class FlowPromptBoxComponent {
   @Input() searchRequest!: any; // Keep for now, but prefer individual inputs
   @Input() generationModels: GenerationModelConfig[] = [];
-  @Input() selectedResolution: '1K' | '2K' | '4K' = '1K';
   @Input() isLoading = false;
   @Input() selectedGenerationModel = '';
   @Input() prompt = '';
@@ -72,6 +71,7 @@ export class FlowPromptBoxComponent {
   @Output() modelSelected = new EventEmitter<any>();
   @Output() promptChanged = new EventEmitter<string>();
   @Output() resolutionChanged = new EventEmitter<'1K' | '2K' | '4K'>();
+  @Output() durationChanged = new EventEmitter<number>();
   @Output() aspectRatioChanged = new EventEmitter<string>();
   @Output() outputsChanged = new EventEmitter<number>();
   @Output() modeChanged = new EventEmitter<string>();
@@ -135,10 +135,26 @@ export class FlowPromptBoxComponent {
   isModeMenuOpen = signal<boolean>(false);
   isSettingsMenuOpen = signal<boolean>(false);
   isSettingsDropdownOpen = signal<
-    'aspect' | 'outputs' | 'model' | 'resolution' | null
+    'aspect' | 'outputs' | 'model' | 'resolution' | 'duration' | null
   >(null);
   selectedMode = signal<string>('Text to Video');
   selectedPreset = signal<string>('');
+  selectedResolution = signal<'1K' | '2K' | '4K'>('1K');
+  selectedDuration = signal<number>(4);
+
+  // --- Computed Values ---
+  isExtendVideo = computed(() => this.selectedMode() === 'Extend Video');
+  isTextToVideo = computed(() => this.selectedMode() === 'Text to Video');
+  hasResolutionOptions = computed(
+    () =>
+      (this.getSelectedModelObject()?.capabilities?.supportedResolutions ?? [])
+        .length > 0,
+  );
+  hasDurationOptions = computed(
+    () =>
+      (this.getSelectedModelObject()?.capabilities?.supportedDurations ?? [])
+        .length > 0,
+  );
 
   // --- Event Handlers ---
 
@@ -166,14 +182,34 @@ export class FlowPromptBoxComponent {
     this.selectedMode.set(mode);
     this.modeChanged.emit(mode);
     this.isModeMenuOpen.set(false);
+    if (this.isExtendVideo())
+      this.selectResolution(this.getSelectedModelResolutions()[0]);
+
+    if (!this.isTextToVideo()) {
+      const longest = this.getSelectedModelDurations().slice(-1)?.[0];
+      if (longest) this.selectDuration(longest);
+    }
+
     console.log('Selected Mode:', mode);
   }
 
   selectResolution(resolution: '1K' | '2K' | '4K') {
-    this.selectedResolution = resolution;
+    this.selectedResolution.set(resolution);
     this.resolutionChanged.emit(resolution);
     this.isSettingsDropdownOpen.set(null);
+    if (resolution !== '1K') {
+      const longest = this.getSelectedModelDurations().slice(-1)?.[0];
+      if (longest) this.selectDuration(longest);
+    }
+
     console.log('Selected Resolution:', resolution);
+  }
+
+  selectDuration(duration: number) {
+    this.selectedDuration.set(duration);
+    this.durationChanged.emit(duration);
+    this.isSettingsDropdownOpen.set(null);
+    console.log('Selected Duration:', duration);
   }
 
   selectNewAspectRatio(ratio: string) {
@@ -192,6 +228,9 @@ export class FlowPromptBoxComponent {
   selectInternalModel(model: any) {
     this.isSettingsDropdownOpen.set(null);
     this.modelSelected.emit(model);
+
+    const smallest = this.getSelectedModelResolutions()[0];
+    if (smallest) this.selectResolution(smallest);
   }
 
   selectPreset(preset: string) {
@@ -207,6 +246,22 @@ export class FlowPromptBoxComponent {
 
   getSelectedModelResolutions(): ('1K' | '2K' | '4K')[] {
     const model = this.getSelectedModelObject();
+    if (this.isExtendVideo()) {
+      const smallest = model?.capabilities?.supportedResolutions?.[0];
+      return smallest ? [smallest] : [];
+    }
     return model?.capabilities?.supportedResolutions ?? [];
+  }
+
+  getSelectedModelDurations(): number[] {
+    const model = this.getSelectedModelObject();
+    // only 'text to video' mode supports shorter durations
+    // resolutions above 1K support only longest duration
+    if (!this.isTextToVideo() || this.selectedResolution() !== '1K') {
+      const longest = model?.capabilities?.supportedDurations?.slice(-1)?.[0];
+      return longest ? [longest] : [];
+    }
+
+    return model?.capabilities?.supportedDurations ?? [];
   }
 }

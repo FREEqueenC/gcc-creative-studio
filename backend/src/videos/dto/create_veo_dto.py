@@ -150,7 +150,7 @@ class CreateVeoDto(BaseDto):
         default=None,
         description="The ID of the parent media item for multi-turn conversation editing.",
     )
-    resolution: Literal["1K", "2K"] = Field(
+    resolution: Literal["1K", "2K", "4K"] = Field(
         default="1K",
         description="Resolution of the generated videos.",
     )

@@ -159,7 +159,7 @@ export class FlowPromptBoxComponent {
   hasResolutionOptions = computed(
     () =>
       (this.getSelectedModelObject()?.capabilities?.supportedResolutions ?? [])
-        .length > 0,
+        .length > 1,
   );
   hasDurationOptions = computed(
     () =>

@@ -56,6 +56,12 @@ from src.videos.dto.create_veo_dto import CreateVeoDto
 
 logger = logging.getLogger(__name__)
 
+VIDEO_RESOLUTION_MAP = {
+    "1K": "720p",
+    "2K": "1080p",
+    "4K": "4k",
+}
+
 
 # --- STANDALONE WORKER FUNCTION ---
 # This function will run in the background thread. It is defined outside the class.
@@ -761,12 +767,7 @@ def _process_video_in_background(
 
                         else:
                             # Map DTO resolution ("1K", "2K", "4K") to GenAI SDK supported resolutions ("720p", "1080p", "4k")
-                            resolution_map = {
-                                "1K": "720p",
-                                "2K": "1080p",
-                                "4K": "4k",
-                            }
-                            api_resolution = resolution_map.get(
+                            api_resolution = VIDEO_RESOLUTION_MAP.get(
                                 request_dto.resolution, "720p"
                             )
 

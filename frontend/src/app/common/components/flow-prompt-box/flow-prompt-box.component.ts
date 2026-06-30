@@ -193,7 +193,7 @@ export class FlowPromptBoxComponent {
     this.selectedMode.set(mode);
     this.modeChanged.emit(mode);
     this.isModeMenuOpen.set(false);
-    
+
     if (this.isExtendVideo()) {
       const smallest = this.getSelectedModelResolutions()[0];
       if (smallest) this.selectResolution(smallest);

@@ -244,8 +244,14 @@ export class FlowPromptBoxComponent {
     this.isSettingsDropdownOpen.set(null);
     this.modelSelected.emit(model);
 
-    const smallest = this.getSelectedModelResolutions(model)[0];
-    if (smallest) this.selectResolution(smallest, model);
+    const supported = this.getSelectedModelResolutions(model);
+    if (supported.length > 0) {
+      if (supported.includes(this.selectedResolution())) {
+        this.selectResolution(this.selectedResolution(), model);
+      } else {
+        this.selectResolution(supported[0], model);
+      }
+    }
   }
 
   selectPreset(preset: string) {

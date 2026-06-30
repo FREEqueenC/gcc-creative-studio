@@ -116,7 +116,10 @@
               <mat-icon class="text-neutral-500">add</mat-icon>
             </ng-container>
             <ng-container *ngIf="image1Preview">
-              <img [src]="image1Preview" class="h-full w-full rounded-lg object-cover" />
+              <div class="group absolute inset-0 rounded-lg overflow-hidden">
+                <img [src]="image1Preview" class="h-full w-full object-cover" />
+                <ng-container *ngTemplateOutlet="editOverlay; context: { num: 1 }"></ng-container>
+              </div>
               <button
                 (click)="$event.stopPropagation(); clearImage.emit({num: 1, event: $event})"
                 class="absolute -right-2 -top-2 rounded-full bg-neutral-900 p-0.5 text-neutral-400 hover:text-white"
@@ -141,7 +144,10 @@
               <mat-icon class="text-neutral-500">add</mat-icon>
             </ng-container>
             <ng-container *ngIf="image2Preview">
-              <img [src]="image2Preview" class="h-full w-full rounded-lg object-cover" />
+              <div class="group absolute inset-0 rounded-lg overflow-hidden">
+                <img [src]="image2Preview" class="h-full w-full object-cover" />
+                <ng-container *ngTemplateOutlet="editOverlay; context: { num: 2 }"></ng-container>
+              </div>
               <button
                 (click)="$event.stopPropagation(); clearImage.emit({num: 2, event: $event})"
                 class="absolute -right-2 -top-2 rounded-full bg-neutral-900 p-0.5 text-neutral-400 hover:text-white"
@@ -168,16 +174,17 @@
               </div>
               <!-- Show small previews of reference images -->
             <div class="flex flex-wrap gap-1">
-              <div *ngFor="let ref of referenceImages; let i = index" class="relative h-12 w-12 flex-shrink-0"
+              <div *ngFor="let ref of referenceImages; let i = index" class="relative h-12 w-12 flex-shrink-0 group rounded-lg overflow-hidden"
                 [class.highlight-new]="ref.isNew">
-                <img [src]="ref.previewUrl" class="h-full w-full rounded-lg object-cover" />
+                <img [src]="ref.previewUrl" class="h-full w-full object-cover" />
+                <ng-container *ngTemplateOutlet="editOverlay; context: { index: i, ref: ref, small: true }"></ng-container>
                 <button (click)="$event.stopPropagation(); clearReferenceImage.emit({index: i, event: $event})"
                   class="absolute -right-1 -top-1 rounded-full bg-neutral-900 p-0.5 text-neutral-400 hover:text-white">
                   <mat-icon class="!h-3 !w-3 text-xs">close</mat-icon>
                 </button>
-                </div>
-                </div>
-                </ng-container>
+              </div>
+            </div>
+          </ng-container>
 
             <!-- Video Reference Slot (only for Ingredients to Video mode AND only for Gemini Omni) -->
             <div *ngIf="mode === 'Ingredients to Video' && getSelectedModelObject()?.value === 'gemini-omni-generate-preview'"
@@ -548,3 +555,13 @@
   }
 
 </div>
+
+<ng-template #editOverlay let-num="num" let-index="index" let-ref="ref" let-small="small">
+  <div
+    (click)="$event.stopPropagation(); onEditOverlayClick(num, index, ref)"
+    class="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100 cursor-pointer"
+    matTooltip="Edit Image"
+  >
+    <mat-icon [class]="'text-white flex items-center justify-center ' + (small ? '!h-4 !w-4 text-xs' : '!h-5 !w-5 text-base')">edit</mat-icon>
+  </div>
+</ng-template>

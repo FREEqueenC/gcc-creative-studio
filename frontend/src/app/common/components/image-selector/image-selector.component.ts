@@ -91,13 +91,13 @@ export class ImageSelectorComponent implements OnInit {
           enableUpscale: this.data.enableUpscale,
         });
 
-        cropperDialogRef
-          .afterClosed()
-          .subscribe((asset: SourceAssetResponseDto | undefined) => {
+        cropperDialogRef.subscribe(
+          (asset: SourceAssetResponseDto | undefined) => {
             if (asset) {
               this.dialogRef.close(asset);
             }
-          });
+          },
+        );
       } else {
         // If shouldCrop is false, upload directly
         this.isUploading = true;

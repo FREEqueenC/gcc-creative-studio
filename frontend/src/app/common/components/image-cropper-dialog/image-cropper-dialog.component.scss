@@ -78,6 +78,10 @@
   gap: 16px;
 }
 
+.image-cropper {
+  padding: 0;
+}
+
 /* Vertical Toolbar Dock */
 .vertical-toolbar {
   width: 72px;
@@ -112,8 +116,11 @@
     }
 
     &.active {
-      color: #3b82f6;
-      background: rgba(59, 130, 246, 0.15);
+      background: rgba(59, 130, 246, 0.15) !important;
+    }
+    
+    &.opened {
+      border-bottom: 2px solid white;
     }
   }
 }
@@ -127,15 +134,37 @@
   overflow: hidden;
 }
 
-/* Minimalist Drawing Configuration Panel */
+/* Common Floated Sub-Panels (Crop Panel & Drawing Panel) */
+.crop-panel,
 .drawing-panel {
   position: absolute;
-  width: 240px;
+  top: 16px;
+  left: 16px;
+  width: 260px;
+  max-height: calc(100% - 32px);
   z-index: 50;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
+  padding: 16px;
+  box-sizing: border-box;
+
+  /* Glassmorphism Surface */
+  background: rgba(18, 18, 24, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  box-shadow: 0 12px 32px 0 rgba(0, 0, 0, 0.4);
   animation: panelSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+  }
 
   @keyframes panelSlideIn {
     from {
@@ -161,11 +190,75 @@
     }
   }
 
+  .panel-actions {
+    display: flex;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.04);
+    padding: 4px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+
+    button {
+      height: 36px;
+      width: 36px;
+      border-radius: 6px;
+      color: rgba(255, 255, 255, 0.7);
+      background: transparent;
+      border: none;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      &:hover:not([disabled]) {
+        color: white;
+        background: rgba(255, 255, 255, 0.1);
+      }
+    }
+  }
+
+  .move-actions {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .toggle-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .color-picker-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    input[type="color"] {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: transparent;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .color-value {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.8);
+      font-family: monospace;
+    }
+  }
+
   /* Tool Selector Buttons */
   .tool-selector {
     display: flex;
     padding: 4px;
     justify-content: space-around;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
 
     button {
       height: 38px;
@@ -185,8 +278,7 @@
       }
 
       &.active {
-        color: white;
-        background: rgba(255, 255, 255, 0.12);
+        border-bottom: 2px solid white;
       }
     }
   }
@@ -304,6 +396,9 @@
     display: flex;
     padding: 4px;
     justify-content: space-around;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
 
     button {
       color: rgba(255, 255, 255, 0.7);
@@ -321,38 +416,20 @@
   }
 }
 
-/* Crop Controls Toolbar at the top of main workspace */
-.controls-toolbar {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin-bottom: 1rem;
-
-  .control-group {
-    display: flex;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 4px;
-
-    button {
-      color: white;
-    }
-  }
-}
-
 .flip-vertical {
   transform: rotate(90deg);
 }
 
 .aspect-ratio-dropdown {
-  width: 150px;
-  
+  width: 100%;
+  margin-top: 4px;
+
   ::ng-deep .mat-mdc-text-field-wrapper {
     background-color: rgba(255, 255, 255, 0.03) !important;
   }
 }
 
-/* Unified Workspace Viewport */
+/* Unified Full-Modal Workspace Viewport */
 .workspace-viewport {
   flex: 1;
   display: flex;
@@ -408,47 +485,17 @@
 mat-dialog-actions {
   margin-top: 16px;
   display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 16px;
+  justify-content: flex-end;
+  align-items: center;
   padding: 0;
   background: transparent;
-
-  .controls-row {
-    display: flex;
-    justify-content: flex-start;
-    
-    .footer-controls {
-      display: flex;
-      align-items: center;
-      gap: 24px;
-      flex-wrap: wrap;
-    }
-  }
 
   .buttons-row {
     display: flex;
     justify-content: flex-end;
     gap: 12px;
   }
-
-  .color-picker {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    
-    input[type="color"] {
-      width: 32px;
-      height: 32px;
-      border-radius: 6px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      background: transparent;
-      cursor: pointer;
-      padding: 0;
-    }
-  }
 }
-
 
 /* Material Dialog Overrides */
 ::ng-deep .mat-mdc-dialog-content {

@@ -18,6 +18,7 @@ import {
   AfterViewInit,
   Component,
   ElementRef,
+  HostListener,
   Inject,
   OnDestroy,
   ViewChild,
@@ -43,12 +44,12 @@ import {
   AssetScopeEnum,
   AssetTypeEnum,
 } from '../../../admin/source-assets-management/source-asset.model';
+import {ReferenceImage} from '../../models/search.model';
 import {environment} from '../../../../environments/environment';
 import {CanvasDrawer} from './canvas-drawer';
 
 export enum ImageEditorMode {
   CROP = 'crop',
-  ADJUST = 'adjust',
   DRAW = 'draw',
 }
 
@@ -65,8 +66,9 @@ interface AspectRatio {
 }
 
 interface ImageCropperDialogData {
-  imageFile: File;
-  assetType: AssetTypeEnum;
+  imageFile?: File;
+  imageUrl?: string;
+  assetType?: AssetTypeEnum;
   aspectRatios?: AspectRatio[];
   enableUpscale?: boolean;
 }
@@ -90,7 +92,7 @@ export class ImageCropperDialogComponent implements AfterViewInit, OnDestroy {
   readonly DrawingTool = DrawingTool;
 
   isUploading = false;
-  isConverting = false; // New state for the conversion step
+  loadingMessage: string | null = null;
   imageFile: File | null = null; // Initialize as null
 
   canvasDrawer: CanvasDrawer | null = null;
@@ -98,6 +100,7 @@ export class ImageCropperDialogComponent implements AfterViewInit, OnDestroy {
 
   // Signals for drawing controls
   activeMode = signal<ImageEditorMode>(ImageEditorMode.CROP);
+  isPanelOpen = signal<boolean>(true);
   activeDrawTool = signal<DrawingTool>(DrawingTool.BRUSH);
   brushColor = signal<string>('#ff3b30');
   brushSize = signal<number>(16);
@@ -134,14 +137,44 @@ export class ImageCropperDialogComponent implements AfterViewInit, OnDestroy {
   static open(
     dialog: MatDialog,
     data: ImageCropperDialogData,
-  ): MatDialogRef<ImageCropperDialogComponent, SourceAssetResponseDto> {
-    return dialog.open(ImageCropperDialogComponent, {
-      data,
-      width: '95vw',
-      height: '95vh',
-      maxWidth: '95vw',
-      maxHeight: '95vh',
-    });
+  ): Observable<SourceAssetResponseDto | undefined> {
+    const dialogData: ImageCropperDialogData = {
+      assetType: AssetTypeEnum.GENERIC_IMAGE,
+      ...data,
+    };
+    return dialog
+      .open(ImageCropperDialogComponent, {
+        data: dialogData,
+        width: '95vw',
+        height: '95vh',
+        maxWidth: '95vw',
+        maxHeight: '95vh',
+      })
+      .afterClosed();
+  }
+
+  static openEditPromptReferenceImage(
+    dialog: MatDialog,
+    data: {index: number; ref: ReferenceImage},
+    referenceImages: ReferenceImage[],
+    saveState: () => void,
+  ): void {
+    const previewUrl = data.ref?.previewUrl;
+    if (!previewUrl) return;
+
+    ImageCropperDialogComponent.open(dialog, {imageUrl: previewUrl}).subscribe(
+      result => {
+        if (result && result.id) {
+          referenceImages[data.index] = {
+            ...referenceImages[data.index],
+            sourceAssetId: result.id,
+            previewUrl:
+              result.presignedUrl || result.presignedThumbnailUrl || previewUrl,
+          };
+          saveState();
+        }
+      },
+    );
   }
 
   constructor(
@@ -169,7 +202,28 @@ export class ImageCropperDialogComponent implements AfterViewInit, OnDestroy {
       autoCrop: true,
     };
     this.dialogRef.addPanelClass('image-cropper-dialog');
-    this.handleFile(this.data.imageFile); // Handle the file on init
+    this.loadImage();
+  }
+
+  private loadImage(): void {
+    if (this.data.imageUrl && !this.data.imageFile) {
+      this.loadingMessage = 'Loading image...';
+      this.http.get(this.data.imageUrl, {responseType: 'blob'}).subscribe({
+        next: blob => {
+          const file = new File([blob], 'remote-image.png', {
+            type: blob.type || 'image/png',
+          });
+          this.handleFile(file);
+        },
+        error: err => {
+          console.error('Failed to load image from URL:', err);
+          this.loadingMessage = null;
+          this.dialogRef.close();
+        },
+      });
+    } else if (this.data.imageFile) {
+      this.handleFile(this.data.imageFile); // Handle the file on init
+    }
   }
 
   // --- Start: New file handling logic ---
@@ -184,11 +238,12 @@ export class ImageCropperDialogComponent implements AfterViewInit, OnDestroy {
     if (supportedTypes.includes(file.type)) {
       // If the format is supported, load it directly into the cropper
       this.imageFile = file;
+      this.loadingMessage = null;
     } else {
       // If the format is unsupported (like AVIF), convert it via the backend
-      this.isConverting = true;
+      this.loadingMessage = 'Converting image...';
       this.convertImageOnBackend(file)
-        .pipe(finalize(() => (this.isConverting = false)))
+        .pipe(finalize(() => (this.loadingMessage = null)))
         .subscribe({
           next: pngBlob => {
             // Create a new File from the returned PNG blob and load it
@@ -300,8 +355,8 @@ export class ImageCropperDialogComponent implements AfterViewInit, OnDestroy {
     if (!this.drawingCanvas?.nativeElement) return;
     this.canvasDrawer = new CanvasDrawer(this.drawingCanvas.nativeElement);
     this.syncCanvasDrawerSettings();
-    this.canvasDrawer.onTextRequested =
-      (x, y, clientX, clientY) => this.handleTextRequested(x, y, clientX, clientY);
+    this.canvasDrawer.onTextRequested = (x, y, clientX, clientY) =>
+      this.handleTextRequested(x, y, clientX, clientY);
     this.canvasDrawer.onHistoryChange = () => this.updateHistorySignals();
   }
 
@@ -326,10 +381,9 @@ export class ImageCropperDialogComponent implements AfterViewInit, OnDestroy {
     clientY: number,
   ): void {
     this.commitText();
-    const rect =
-      this.drawingCanvas?.nativeElement?.parentElement
-        ? this.drawingCanvas.nativeElement.parentElement.getBoundingClientRect()
-        : {left: 0, top: 0};
+    const rect = this.drawingCanvas?.nativeElement?.parentElement
+      ? this.drawingCanvas.nativeElement.parentElement.getBoundingClientRect()
+      : {left: 0, top: 0};
     this.textInputCanvas = {
       value: '',
       position: {
@@ -355,16 +409,36 @@ export class ImageCropperDialogComponent implements AfterViewInit, OnDestroy {
     this.textInputCanvas = null;
   }
 
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (!this.isPanelOpen()) return;
+    const target = event.target as HTMLElement;
+    if (!target) return;
+
+    const isInsidePanel =
+      target.closest('.crop-panel') || target.closest('.drawing-panel');
+    const isInsideDock = target.closest('.vertical-toolbar');
+    const isInsideMatOverlay = target.closest('.cdk-overlay-container');
+
+    if (!isInsidePanel && !isInsideDock && !isInsideMatOverlay) {
+      this.isPanelOpen.set(false);
+    }
+  }
+
   // Drawing control methods
   setMode(mode: ImageEditorMode): void {
     const currentMode = this.activeMode();
-    if (currentMode === mode) return;
+    if (currentMode === mode) {
+      this.isPanelOpen.set(!this.isPanelOpen());
+      return;
+    }
+    this.isPanelOpen.set(true);
     let canvaChangesPending = false;
     if (mode === ImageEditorMode.DRAW) {
       const blobToLoad = this.croppedImageBlob || this.imageFile;
       if (blobToLoad) {
         const img = new Image();
-        const url = URL.createObjectURL(blobToLoad);
+        const url = window.URL.createObjectURL(blobToLoad);
         img.onload = () => {
           if (!this.canvasDrawer && this.drawingCanvas?.nativeElement) {
             this.initCanvasDrawer();
@@ -374,15 +448,15 @@ export class ImageCropperDialogComponent implements AfterViewInit, OnDestroy {
             this.syncCanvasDrawerSettings();
             this.updateHistorySignals();
           }
-          URL.revokeObjectURL(url);
+          window.URL.revokeObjectURL(url);
         };
         img.src = url;
       }
     } else if (currentMode === ImageEditorMode.DRAW) {
-        canvaChangesPending = this.canvasToImage((croppedFile) => {
-          this.imageFile = croppedFile;
-          this.activeMode.set(ImageEditorMode.CROP);
-        });
+      canvaChangesPending = this.canvasToImage(croppedFile => {
+        this.imageFile = croppedFile;
+        this.activeMode.set(ImageEditorMode.CROP);
+      });
     }
     if (!canvaChangesPending) this.activeMode.set(mode);
   }
@@ -457,7 +531,7 @@ export class ImageCropperDialogComponent implements AfterViewInit, OnDestroy {
 
   uploadCroppedImage() {
     if (this.activeMode() === ImageEditorMode.DRAW) {
-      this.canvasToImage((croppedFile) => {
+      this.canvasToImage(croppedFile => {
         this.isUploading = true;
         const selectedRatio = this.aspectRatios.find(
           r => r.value === this.currentAspectRatio,

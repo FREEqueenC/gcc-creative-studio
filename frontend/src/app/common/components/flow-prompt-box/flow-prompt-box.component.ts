@@ -21,19 +21,20 @@ import {
   Output,
   signal,
   HostListener,
-  SimpleChanges,
   ViewChild,
   ElementRef,
   computed,
 } from '@angular/core';
-import {VeoRequest} from '../../models/search.model';
+import {ReferenceImage} from '../../models/search.model';
 import {GenerationModelConfig} from '../../config/model-config';
-import {MatIcon, MatIconModule} from '@angular/material/icon';
+import {MatIconModule} from '@angular/material/icon';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {MatButtonModule} from '@angular/material/button';
 import {MatMenuModule} from '@angular/material/menu';
 import {MatTooltipModule} from '@angular/material/tooltip';
+
+export type NumPos = 1 | 2;
 
 @Component({
   standalone: true,
@@ -86,10 +87,15 @@ export class FlowPromptBoxComponent {
   @Output() aspectRatioChanged = new EventEmitter<string>();
   @Output() outputsChanged = new EventEmitter<number>();
   @Output() modeChanged = new EventEmitter<string>();
-  @Output() openImageSelector = new EventEmitter<1 | 2>();
-  @Output() clearImage = new EventEmitter<{num: 1 | 2; event: Event}>();
+  @Output() openImageSelector = new EventEmitter<NumPos>();
+  @Output() editImage = new EventEmitter<{num: NumPos}>();
+  @Output() clearImage = new EventEmitter<{num: NumPos; event: Event}>();
   @Output() openImageSelectorForReference = new EventEmitter<void>();
   @Output() onReferenceImageDrop = new EventEmitter<DragEvent>();
+  @Output() editReferenceImage = new EventEmitter<{
+    index: number;
+    ref: ReferenceImage;
+  }>();
   @Output() clearReferenceImage = new EventEmitter<{
     index: number;
     event: Event;
@@ -102,7 +108,7 @@ export class FlowPromptBoxComponent {
 
   @Input() image1Preview: string | null = null;
   @Input() image2Preview: string | null = null;
-  @Input() referenceImages: any[] = [];
+  @Input() referenceImages: ReferenceImage[] = [];
   @Input() referenceImagesType: 'ASSET' | 'STYLE' = 'ASSET';
   @Input() referenceVideo: any | null = null;
   @Input() referenceAudio: any | null = null;
@@ -172,6 +178,14 @@ export class FlowPromptBoxComponent {
   onPromptInput(event: Event) {
     const target = event.target as HTMLTextAreaElement;
     this.promptChanged.emit(target.value);
+  }
+
+  onEditOverlayClick(num?: NumPos, index?: number, ref?: ReferenceImage): void {
+    if (num) {
+      this.editImage.emit({num});
+    } else if (index !== undefined && ref) {
+      this.editReferenceImage.emit({index, ref});
+    }
   }
 
   // --- Menu Toggles ---

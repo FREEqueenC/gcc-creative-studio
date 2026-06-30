@@ -72,6 +72,7 @@ import {
   handleInfoSnackbar,
   handleSuccessSnackbar,
 } from '../utils/handleMessageSnackbar';
+import {NumPos} from '../common/components/flow-prompt-box/flow-prompt-box.component';
 
 @Component({
   selector: 'app-video',
@@ -906,7 +907,7 @@ export class VideoComponent implements OnInit, AfterViewInit {
     this.saveState();
   }
 
-  openImageSelector(imageNumber: 1 | 2): void {
+  openImageSelector(imageNumber: NumPos): void {
     const dialogRef = this.dialog.open(ImageSelectorComponent, {
       width: '90vw',
       height: '80vh',
@@ -933,7 +934,7 @@ export class VideoComponent implements OnInit, AfterViewInit {
 
   private processInput(
     result: MediaItemSelection | SourceAssetResponseDto,
-    imageNumber: 1 | 2,
+    imageNumber: NumPos,
   ) {
     // 1. Determine if the new input is a video
     const isVideo =
@@ -1005,7 +1006,7 @@ export class VideoComponent implements OnInit, AfterViewInit {
   }
 
   private setInputSource(
-    imageNumber: 1 | 2,
+    imageNumber: NumPos,
     result: MediaItemSelection | SourceAssetResponseDto,
     role: string,
   ) {
@@ -1033,7 +1034,7 @@ export class VideoComponent implements OnInit, AfterViewInit {
   }
 
   // This method is called by both click and drop events
-  handleFileUpload(file: File, imageNumber: 1 | 2): void {
+  handleFileUpload(file: File, imageNumber: NumPos): void {
     if (file.type.startsWith('image/')) {
       // If it's an image, upload directly
       this.uploadImageDirectly(file, imageNumber);
@@ -1049,7 +1050,7 @@ export class VideoComponent implements OnInit, AfterViewInit {
     }
   }
 
-  uploadImageDirectly(file: File, imageNumber: 1 | 2) {
+  uploadImageDirectly(file: File, imageNumber: NumPos) {
     this.isLoading = true;
     this.sourceAssetService
       .uploadAsset(file, {assetType: AssetTypeEnum.GENERIC_IMAGE})
@@ -1066,24 +1067,43 @@ export class VideoComponent implements OnInit, AfterViewInit {
       });
   }
 
-  openCropperDialog(file: File, imageNumber: 1 | 2) {
-    const dialogRef = ImageCropperDialogComponent.open(this.dialog, {
-      imageFile: file,
-      assetType: AssetTypeEnum.GENERIC_IMAGE,
-    });
-
-    dialogRef
-      .afterClosed()
-      .subscribe((result: SourceAssetResponseDto | undefined) => {
+  openCropperDialog(file: File, imageNumber: NumPos) {
+    ImageCropperDialogComponent.open(this.dialog, {imageFile: file}).subscribe(
+      result => {
         if (result && result.id) {
           this.processInput(result, imageNumber);
           this.updateModeAndNotify();
           this.clearOtherImage(imageNumber);
         }
-      });
+      },
+    );
   }
 
-  uploadVideoDirectly(file: File, imageNumber: 1 | 2) {
+  onEditPromptImage(data: {num: NumPos}) {
+    const previewUrl = data.num === 1 ? this.image1Preview : this.image2Preview;
+    if (!previewUrl) return;
+
+    ImageCropperDialogComponent.open(this.dialog, {
+      imageUrl: previewUrl,
+    }).subscribe(result => {
+      if (result && result.id) {
+        this.processInput(result, data.num);
+        this.updateModeAndNotify();
+        this.saveState();
+      }
+    });
+  }
+
+  onEditPromptReferenceImage(data: {index: number; ref: ReferenceImage}) {
+    ImageCropperDialogComponent.openEditPromptReferenceImage(
+      this.dialog,
+      data,
+      this.referenceImages,
+      () => this.saveState(),
+    );
+  }
+
+  uploadVideoDirectly(file: File, imageNumber: NumPos) {
     this.isLoading = true;
     // No aspectRatio is sent for videos, so we don't pass the second argument
     this.sourceAssetService
@@ -1101,7 +1121,7 @@ export class VideoComponent implements OnInit, AfterViewInit {
       });
   }
 
-  onDrop(event: DragEvent, imageNumber: 1 | 2) {
+  onDrop(event: DragEvent, imageNumber: NumPos) {
     event.preventDefault();
     const file = event.dataTransfer?.files[0];
     if (file) {
@@ -1121,7 +1141,7 @@ export class VideoComponent implements OnInit, AfterViewInit {
     }
   }
 
-  clearInput(imageNumber: 1 | 2) {
+  clearInput(imageNumber: NumPos) {
     if (imageNumber === 1) {
       this.startImageAssetId = null;
       this.image1Preview = null;
@@ -1147,30 +1167,30 @@ export class VideoComponent implements OnInit, AfterViewInit {
     this.updateModeAndNotify();
   }
 
-  clearVideo(imageNumber: 1 | 2) {
+  clearVideo(imageNumber: NumPos) {
     this.clearInput(imageNumber);
   }
 
-  onClearImage(data: {num: 1 | 2; event: Event}) {
+  onClearImage(data: {num: NumPos; event: Event}) {
     data.event.stopPropagation();
     this.clearInput(data.num);
   }
 
-  private clearImageAssetId(imageNumber: 1 | 2) {
+  private clearImageAssetId(imageNumber: NumPos) {
     const targetAssetId =
       imageNumber === 1 ? 'startImageAssetId' : 'endImageAssetId';
     this[targetAssetId] = null;
     this.clearSourceMediaItem(imageNumber); // Clear the corresponding media item slot
   }
 
-  private clearSourceMediaItem(imageNumber: 1 | 2) {
+  private clearSourceMediaItem(imageNumber: NumPos) {
     // Set the specific index to null to clear the slot for that image.
     if (this.sourceMediaItems.length >= imageNumber) {
       this.sourceMediaItems[imageNumber - 1] = null;
     }
   }
 
-  private clearOtherImage(imageNumberJustSet: 1 | 2) {
+  private clearOtherImage(imageNumberJustSet: NumPos) {
     const isVeo3 = [
       'veo-3.0-fast-generate-001',
       'veo-3.0-generate-001',
@@ -1663,23 +1683,18 @@ export class VideoComponent implements OnInit, AfterViewInit {
     const file = event.dataTransfer?.files[0];
     if (file && file.type.startsWith('image/')) {
       // For a direct drop, go straight to the cropper
-      const dialogRef = ImageCropperDialogComponent.open(this.dialog, {
+      ImageCropperDialogComponent.open(this.dialog, {
         imageFile: file,
-        assetType: AssetTypeEnum.GENERIC_IMAGE,
+      }).subscribe(result => {
+        if (result && result.id) {
+          this.referenceImages.push({
+            sourceAssetId: result.id,
+            previewUrl: result.presignedUrl || '',
+          });
+          this.handleReferenceImageAdded();
+          this.saveState();
+        }
       });
-
-      dialogRef
-        .afterClosed()
-        .subscribe((result: SourceAssetResponseDto | undefined) => {
-          if (result && result.id) {
-            this.referenceImages.push({
-              sourceAssetId: result.id,
-              previewUrl: result.presignedUrl || '',
-            });
-            this.handleReferenceImageAdded();
-            this.saveState();
-          }
-        });
     }
   }
 

@@ -200,7 +200,7 @@ export class FlowPromptBoxComponent {
     }
 
     if (!this.isTextToVideo()) {
-      const longest = this.getSelectedModelDurations().slice(-1)?.[0];
+      const longest = this.getSelectedModelDurations().at(-1);
       if (longest) this.selectDuration(longest);
     }
 
@@ -213,7 +213,7 @@ export class FlowPromptBoxComponent {
     this.isSettingsDropdownOpen.set(null);
 
     if (resolution !== '1K') {
-      const longest = this.getSelectedModelDurations(model).slice(-1)?.[0];
+      const longest = this.getSelectedModelDurations(model).at(-1);
       if (longest) this.selectDuration(longest);
     }
 
@@ -273,8 +273,7 @@ export class FlowPromptBoxComponent {
     // only 'text to video' mode supports shorter durations
     // resolutions above 1K support only longest duration
     if (!this.isTextToVideo() || this.selectedResolution() !== '1K') {
-      const longest =
-        activeModel?.capabilities?.supportedDurations?.slice(-1)?.[0];
+      const longest = activeModel?.capabilities?.supportedDurations?.at(-1);
       return longest ? [longest] : [];
     }
 

@@ -531,11 +531,9 @@
                 @for (resolution of ALL_RESOLUTIONS; track resolution) {
                   <button
                     (click)="selectResolution(resolution)"
-                    class="block w-full px-3 py-1.5 text-left text-sm rounded hover:bg-neutral-600 whitespace-pre-wrap"
+                    class="block w-full px-3 py-1.5 text-left text-sm rounded hover:enabled:bg-neutral-600 disabled:opacity-50 disabled:cursor-not-allowed whitespace-pre-wrap"
                     [class.bg-neutral-600]="selectedResolution() === resolution"
                     [disabled]="!supportedResolutions().includes(resolution)"
-                    [class.opacity-50]="!supportedResolutions().includes(resolution)"
-                    [class.cursor-not-allowed]="!supportedResolutions().includes(resolution)"
                   >
                     <div class="flex items-center gap-2">
                       {{ resolution }}

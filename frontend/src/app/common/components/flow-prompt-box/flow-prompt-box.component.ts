@@ -26,6 +26,7 @@ import {
   ElementRef,
   computed,
   OnInit,
+  OnDestroy,
 } from '@angular/core';
 import {VeoRequest} from '../../models/search.model';
 import {GenerationModelConfig} from '../../config/model-config';
@@ -50,7 +51,7 @@ import {MatTooltipModule} from '@angular/material/tooltip';
     MatTooltipModule,
   ],
 })
-export class FlowPromptBoxComponent implements OnInit {
+export class FlowPromptBoxComponent implements OnInit, OnDestroy {
   @Input() searchRequest!: any; // Keep for now, but prefer individual inputs
   @Input() isLoading = false;
   @Input() prompt = '';
@@ -66,17 +67,20 @@ export class FlowPromptBoxComponent implements OnInit {
 
   // --- setter inputs ---
   private _generationModels: GenerationModelConfig[] = [];
+  private generationModelsSignal = signal<GenerationModelConfig[]>([]);
   @Input() set generationModels(val: GenerationModelConfig[]) {
     this._generationModels = val || [];
+    this.generationModelsSignal.set(val || []);
     this.updateSupportedResolutions();
   }
   get generationModels(): GenerationModelConfig[] {
     return this._generationModels;
   }
-
   private _selectedGenerationModel = '';
+  private selectedGenerationModelSignal = signal<string>('');
   @Input() set selectedGenerationModel(val: string) {
     this._selectedGenerationModel = val;
+    this.selectedGenerationModelSignal.set(val);
     this.updateSupportedResolutions();
   }
   get selectedGenerationModel(): string {
@@ -140,6 +144,8 @@ export class FlowPromptBoxComponent implements OnInit {
   @ViewChild('settingsTrigger') settingsTrigger!: ElementRef;
   @ViewChild('settingsMenu') settingsMenu!: ElementRef;
 
+  private resolutionTimeoutId: any = null;
+
   constructor(private eRef: ElementRef) {}
 
   @HostListener('document:click', ['$event'])
@@ -202,6 +208,12 @@ export class FlowPromptBoxComponent implements OnInit {
   // --- Lifecycle Hooks ---
   ngOnInit(): void {
     this.updateSupportedResolutions();
+  }
+
+  ngOnDestroy(): void {
+    if (this.resolutionTimeoutId) {
+      clearTimeout(this.resolutionTimeoutId);
+    }
   }
 
   // --- Event Handlers ---
@@ -294,8 +306,8 @@ export class FlowPromptBoxComponent implements OnInit {
   }
 
   getSelectedModelObject(): GenerationModelConfig | undefined {
-    return this.generationModels.find(
-      m => m.viewValue === this.selectedGenerationModel,
+    return this.generationModelsSignal().find(
+      m => m.viewValue === this.selectedGenerationModelSignal(),
     );
   }
 
@@ -330,7 +342,10 @@ export class FlowPromptBoxComponent implements OnInit {
       const fallbackResolution = supported[0];
       this.selectedResolution.set(fallbackResolution);
       // Defer event emission to avoid ExpressionChangedAfterItHasBeenCheckedError in parent during change detection
-      setTimeout(() => this.resolutionChanged.emit(fallbackResolution));
+      if (this.resolutionTimeoutId) clearTimeout(this.resolutionTimeoutId);
+      this.resolutionTimeoutId = setTimeout(() =>
+        this.resolutionChanged.emit(fallbackResolution),
+      );
     }
   }
 }

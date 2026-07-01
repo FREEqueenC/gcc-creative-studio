@@ -144,7 +144,7 @@ export class FlowPromptBoxComponent implements OnInit, OnDestroy {
   @ViewChild('settingsTrigger') settingsTrigger!: ElementRef;
   @ViewChild('settingsMenu') settingsMenu!: ElementRef;
 
-  private resolutionTimeoutId: any = null;
+  private resolutionTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
   constructor(private eRef: ElementRef) {}
 
@@ -243,10 +243,11 @@ export class FlowPromptBoxComponent implements OnInit, OnDestroy {
     this.modeChanged.emit(mode);
     this.isModeMenuOpen.set(false);
 
-    this.supportedResolutions.set(this.getSelectedModelResolutions());
+    const resolutions = this.getSelectedModelResolutions();
+    this.supportedResolutions.set(resolutions);
 
     if (this.isExtendVideo() || this.isIngredientsToImage()) {
-      const smallest = this.supportedResolutions()[0];
+      const smallest = resolutions[0];
       if (smallest) this.selectResolution(smallest);
     }
 
@@ -333,8 +334,8 @@ export class FlowPromptBoxComponent implements OnInit, OnDestroy {
   }
 
   private updateSupportedResolutions(model?: any) {
-    this.supportedResolutions.set(this.getSelectedModelResolutions(model));
-    const supported = this.supportedResolutions();
+    const supported = this.getSelectedModelResolutions(model);
+    this.supportedResolutions.set(supported);
     if (
       supported.length > 0 &&
       !supported.includes(this.selectedResolution())

@@ -201,7 +201,7 @@ export class FlowPromptBoxComponent implements OnInit {
 
   // --- Lifecycle Hooks ---
   ngOnInit(): void {
-    this.supportedResolutions.set(this.getSelectedModelResolutions());
+    this.updateSupportedResolutions();
   }
 
   // --- Event Handlers ---
@@ -327,7 +327,10 @@ export class FlowPromptBoxComponent implements OnInit {
       supported.length > 0 &&
       !supported.includes(this.selectedResolution())
     ) {
-      this.selectResolution(supported[0], model);
+      const fallbackResolution = supported[0];
+      this.selectedResolution.set(fallbackResolution);
+      // Defer event emission to avoid ExpressionChangedAfterItHasBeenCheckedError in parent during change detection
+      setTimeout(() => this.resolutionChanged.emit(fallbackResolution));
     }
   }
 }

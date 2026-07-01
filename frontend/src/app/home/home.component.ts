@@ -109,7 +109,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     useBrandGuidelines: false,
     enhancePrompt: false,
     googleSearch: false,
-    resolution: '4K',
+    resolution: '1K',
   };
 
   modes = [
@@ -406,9 +406,9 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
       this.searchRequest.addWatermark = state.watermark;
       this.searchRequest.googleSearch = state.googleSearch;
       this.searchRequest.resolution = state.resolution as
-        | '4K'
         | '1K'
         | '2K'
+        | '4K'
         | undefined;
       this.searchRequest.style = state.style;
       this.searchRequest.colorAndTone = state.colorAndTone;
@@ -468,9 +468,9 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     this.searchRequest.addWatermark = state.watermark;
     this.searchRequest.googleSearch = state.googleSearch;
     this.searchRequest.resolution = state.resolution as
-      | '4K'
       | '1K'
       | '2K'
+      | '4K'
       | undefined;
     this.searchRequest.style = state.style;
     this.searchRequest.colorAndTone = state.colorAndTone;
@@ -645,6 +645,11 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     if (option) {
       this.selectAspectRatio(option);
     }
+  }
+
+  onResolutionChanged(resolution: '1K' | '2K' | '4K') {
+    this.searchRequest.resolution = resolution;
+    this.saveState();
   }
 
   onOutputsChanged(count: number) {
@@ -860,7 +865,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
       negativePrompt: '',
       useBrandGuidelines: false,
       googleSearch: false,
-      resolution: '4K',
+      resolution: '1K',
     };
     this.negativePhrases = [];
     this.referenceImages = [];

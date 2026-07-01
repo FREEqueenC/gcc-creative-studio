@@ -24,6 +24,7 @@ import {
   SimpleChanges,
   ViewChild,
   ElementRef,
+  computed,
 } from '@angular/core';
 import {VeoRequest} from '../../models/search.model';
 import {GenerationModelConfig} from '../../config/model-config';
@@ -65,10 +66,23 @@ export class FlowPromptBoxComponent {
   }[] = [];
   @Input() modes: {value: string; icon: string; label: string}[] = [];
 
+  @Input() set resolution(val: '1K' | '2K' | '4K' | undefined) {
+    if (val) {
+      this.selectedResolution.set(val);
+    }
+  }
+  @Input() set duration(val: number | undefined) {
+    if (val) {
+      this.selectedDuration.set(val);
+    }
+  }
+
   @Output() generateClicked = new EventEmitter<void>();
   @Output() rewriteClicked = new EventEmitter<void>();
   @Output() modelSelected = new EventEmitter<any>();
   @Output() promptChanged = new EventEmitter<string>();
+  @Output() resolutionChanged = new EventEmitter<'1K' | '2K' | '4K'>();
+  @Output() durationChanged = new EventEmitter<number>();
   @Output() aspectRatioChanged = new EventEmitter<string>();
   @Output() outputsChanged = new EventEmitter<number>();
   @Output() modeChanged = new EventEmitter<string>();
@@ -131,9 +145,27 @@ export class FlowPromptBoxComponent {
   // Menu open/close states
   isModeMenuOpen = signal<boolean>(false);
   isSettingsMenuOpen = signal<boolean>(false);
-  isSettingsDropdownOpen = signal<'aspect' | 'outputs' | 'model' | null>(null);
+  isSettingsDropdownOpen = signal<
+    'aspect' | 'outputs' | 'model' | 'resolution' | 'duration' | null
+  >(null);
   selectedMode = signal<string>('Text to Video');
   selectedPreset = signal<string>('');
+  selectedResolution = signal<'1K' | '2K' | '4K'>('1K');
+  selectedDuration = signal<number>(4);
+
+  // --- Computed Values ---
+  isExtendVideo = computed(() => this.selectedMode() === 'Extend Video');
+  isTextToVideo = computed(() => this.selectedMode() === 'Text to Video');
+  hasResolutionOptions = computed(
+    () =>
+      (this.getSelectedModelObject()?.capabilities?.supportedResolutions ?? [])
+        .length > 1,
+  );
+  hasDurationOptions = computed(
+    () =>
+      (this.getSelectedModelObject()?.capabilities?.supportedDurations ?? [])
+        .length > 0,
+  );
 
   // --- Event Handlers ---
 
@@ -161,7 +193,38 @@ export class FlowPromptBoxComponent {
     this.selectedMode.set(mode);
     this.modeChanged.emit(mode);
     this.isModeMenuOpen.set(false);
+
+    if (this.isExtendVideo()) {
+      const smallest = this.getSelectedModelResolutions()[0];
+      if (smallest) this.selectResolution(smallest);
+    }
+
+    if (!this.isTextToVideo()) {
+      const longest = this.getSelectedModelDurations().at(-1);
+      if (longest) this.selectDuration(longest);
+    }
+
     console.log('Selected Mode:', mode);
+  }
+
+  selectResolution(resolution: '1K' | '2K' | '4K', model?: any) {
+    this.selectedResolution.set(resolution);
+    this.resolutionChanged.emit(resolution);
+    this.isSettingsDropdownOpen.set(null);
+
+    if (resolution !== '1K') {
+      const longest = this.getSelectedModelDurations(model).at(-1);
+      if (longest) this.selectDuration(longest);
+    }
+
+    console.log('Selected Resolution:', resolution);
+  }
+
+  selectDuration(duration: number) {
+    this.selectedDuration.set(duration);
+    this.durationChanged.emit(duration);
+    this.isSettingsDropdownOpen.set(null);
+    console.log('Selected Duration:', duration);
   }
 
   selectNewAspectRatio(ratio: string) {
@@ -180,6 +243,15 @@ export class FlowPromptBoxComponent {
   selectInternalModel(model: any) {
     this.isSettingsDropdownOpen.set(null);
     this.modelSelected.emit(model);
+
+    const supported = this.getSelectedModelResolutions(model);
+    if (supported.length > 0) {
+      if (supported.includes(this.selectedResolution())) {
+        this.selectResolution(this.selectedResolution(), model);
+      } else {
+        this.selectResolution(supported[0], model);
+      }
+    }
   }
 
   selectPreset(preset: string) {
@@ -191,5 +263,26 @@ export class FlowPromptBoxComponent {
     return this.generationModels.find(
       m => m.viewValue === this.selectedGenerationModel,
     );
+  }
+
+  getSelectedModelResolutions(model?: any): ('1K' | '2K' | '4K')[] {
+    const activeModel = model || this.getSelectedModelObject();
+    if (this.isExtendVideo()) {
+      const smallest = activeModel?.capabilities?.supportedResolutions?.[0];
+      return smallest ? [smallest] : [];
+    }
+    return activeModel?.capabilities?.supportedResolutions ?? [];
+  }
+
+  getSelectedModelDurations(model?: any): number[] {
+    const activeModel = model || this.getSelectedModelObject();
+    // only 'text to video' mode supports shorter durations
+    // resolutions above 1K support only longest duration
+    if (!this.isTextToVideo() || this.selectedResolution() !== '1K') {
+      const longest = activeModel?.capabilities?.supportedDurations?.at(-1);
+      return longest ? [longest] : [];
+    }
+
+    return activeModel?.capabilities?.supportedDurations ?? [];
   }
 }

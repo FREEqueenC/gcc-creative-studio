@@ -105,7 +105,7 @@ class CreateImagenDto(BaseDto):
         description="Whether to use Google Search for image generation.",
     )
     resolution: Literal["1K", "2K", "4K"] = Field(
-        default="4K",
+        default="1K",
         description="Resolution of the generated image.",
     )
 

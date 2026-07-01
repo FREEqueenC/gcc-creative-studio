@@ -56,6 +56,12 @@ from src.videos.dto.create_veo_dto import CreateVeoDto
 
 logger = logging.getLogger(__name__)
 
+VIDEO_RESOLUTION_MAP = {
+    "1K": "720p",
+    "2K": "1080p",
+    "4K": "4k",
+}
+
 
 # --- STANDALONE WORKER FUNCTION ---
 # This function will run in the background thread. It is defined outside the class.
@@ -760,6 +766,11 @@ def _process_video_in_background(
                             }
 
                         else:
+                            # Map DTO resolution ("1K", "2K", "4K") to GenAI SDK supported resolutions ("720p", "1080p", "4k")
+                            api_resolution = VIDEO_RESOLUTION_MAP.get(
+                                request_dto.resolution, "720p"
+                            )
+
                             # Run sync API call in thread
                             operation: types.GenerateVideosOperation = (
                                 await asyncio.to_thread(
@@ -772,6 +783,7 @@ def _process_video_in_background(
                                         number_of_videos=request_dto.number_of_media,
                                         output_gcs_uri=gcs_output_directory,
                                         aspect_ratio=request_dto.aspect_ratio,
+                                        resolution=api_resolution,
                                         negative_prompt=request_dto.negative_prompt,
                                         generate_audio=request_dto.generate_audio,
                                         # TODO: Pass from dto the secs if extending video (4, 5, 6, 7)

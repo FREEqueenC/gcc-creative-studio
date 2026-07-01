@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import Query
 from pydantic import Field, field_validator, model_validator
@@ -150,6 +150,10 @@ class CreateVeoDto(BaseDto):
         default=None,
         description="The ID of the parent media item for multi-turn conversation editing.",
     )
+    resolution: Literal["1K", "2K", "4K"] = Field(
+        default="1K",
+        description="Resolution of the generated videos.",
+    )
 
     @model_validator(mode="after")
     def validate_cross_fields(self) -> "CreateVeoDto":
@@ -221,6 +225,23 @@ class CreateVeoDto(BaseDto):
                 raise ValueError(
                     "Reference media cannot be used at the same time as a start frame, end frame, or source video.",
                 )
+
+        # Validate model-specific resolution limits
+        if model in (
+            GenerationModelEnum.GEMINI_OMNI,
+            GenerationModelEnum.GEMINI_OMNI_GENERATE_PREVIEW,
+        ):
+            allowed_resolutions = {"1K"}
+        elif model == GenerationModelEnum.VEO_3_1_LITE_GENERATE_001:
+            allowed_resolutions = {"1K", "2K"}
+        else:
+            allowed_resolutions = {"1K", "2K", "4K"}
+
+        if self.resolution not in allowed_resolutions:
+            raise ValueError(
+                f"Model '{model.value}' does not support resolution '{self.resolution}'. "
+                f"Supported resolutions: {sorted(list(allowed_resolutions))}"
+            )
 
         return self
 

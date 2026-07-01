@@ -147,6 +147,7 @@ export class VideoComponent implements OnInit, AfterViewInit {
     useBrandGuidelines: false,
     enhancePrompt: false,
     referenceImages: [],
+    resolution: '1K',
   };
 
   // --- Negative Prompt Chips ---
@@ -197,7 +198,6 @@ export class VideoComponent implements OnInit, AfterViewInit {
     'Warm',
   ];
   numberOfVideosOptions = [1, 2, 3, 4];
-  durationOptions = [8];
   compositions = [
     'Closeup',
     'Knolling',
@@ -306,6 +306,7 @@ export class VideoComponent implements OnInit, AfterViewInit {
     this.videoStateService.updateState({
       prompt: this.searchRequest.prompt,
       aspectRatio: this.searchRequest.aspectRatio,
+      resolution: this.searchRequest.resolution,
       model: this.searchRequest.generationModel,
       style: this.searchRequest.style,
       colorAndTone: this.searchRequest.colorAndTone,
@@ -329,6 +330,7 @@ export class VideoComponent implements OnInit, AfterViewInit {
     const state = this.videoStateService.getState();
     this.searchRequest.prompt = state.prompt;
     this.searchRequest.aspectRatio = state.aspectRatio;
+    this.searchRequest.resolution = state.resolution || '1K';
     this.searchRequest.generationModel = state.model;
     this.searchRequest.style = state.style;
     this.searchRequest.colorAndTone = state.colorAndTone;
@@ -433,6 +435,16 @@ export class VideoComponent implements OnInit, AfterViewInit {
     this.saveState();
   }
 
+  onResolutionChanged(resolution: '1K' | '2K' | '4K') {
+    this.searchRequest.resolution = resolution;
+    this.saveState();
+  }
+
+  onDurationChanged(duration: number) {
+    this.searchRequest.durationSeconds = duration;
+    this.saveState();
+  }
+
   selectVideoStyle(style: string): void {
     this.searchRequest.style === style
       ? (this.searchRequest.style = null)
@@ -456,11 +468,6 @@ export class VideoComponent implements OnInit, AfterViewInit {
 
   selectNumberOfVideos(num: number): void {
     this.searchRequest.numberOfMedia = num;
-    this.saveState();
-  }
-
-  selectDuration(seconds: number): void {
-    this.searchRequest.durationSeconds = seconds;
     this.saveState();
   }
 

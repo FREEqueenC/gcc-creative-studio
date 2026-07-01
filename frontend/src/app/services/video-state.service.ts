@@ -27,6 +27,7 @@ import {
 interface VideoState {
   prompt: string;
   aspectRatio: string;
+  resolution: '1K' | '2K' | '4K';
   model: string;
   style: string | null;
   colorAndTone: string | null;
@@ -59,6 +60,7 @@ export class VideoStateService {
     this.initialState = {
       prompt: '',
       aspectRatio: '16:9',
+      resolution: '1K',
       model: showOmni ? 'gemini-omni-generate-preview' : 'veo-3.1-generate-001',
       style: null,
       colorAndTone: null,

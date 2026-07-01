@@ -154,19 +154,6 @@ export class ImageSelectorComponent implements OnInit {
     }
   }
 
-  openCropperDialog(file: File): void {
-    if (file.type.startsWith('image/')) {
-      this.dialogRef.close();
-
-      ImageCropperDialogComponent.open(this.dialog, {
-        imageFile: file,
-        assetType: this.data.assetType,
-      });
-    } else {
-      console.log('File is not an image, cannot open cropper.');
-    }
-  }
-
   onMediaSelected(selection: MediaItemSelection): void {
     const item = selection.mediaItem as any;
     const id = `${item.itemType || 'media_item'}:${item.id}`;

@@ -25,6 +25,7 @@ import {
   ViewChild,
   ElementRef,
   computed,
+  OnInit,
 } from '@angular/core';
 import {VeoRequest} from '../../models/search.model';
 import {GenerationModelConfig} from '../../config/model-config';
@@ -49,7 +50,7 @@ import {MatTooltipModule} from '@angular/material/tooltip';
     MatTooltipModule,
   ],
 })
-export class FlowPromptBoxComponent {
+export class FlowPromptBoxComponent implements OnInit {
   @Input() searchRequest!: any; // Keep for now, but prefer individual inputs
   @Input() generationModels: GenerationModelConfig[] = [];
   @Input() isLoading = false;
@@ -138,6 +139,9 @@ export class FlowPromptBoxComponent {
     }
   }
 
+  // All possible resolutions
+  ALL_RESOLUTIONS: ('1K' | '2K' | '4K')[] = ['1K', '2K', '4K'];
+
   // --- Logic moved from VideoComponent ---
 
   promptText = signal<string>('');
@@ -153,19 +157,25 @@ export class FlowPromptBoxComponent {
   selectedResolution = signal<'1K' | '2K' | '4K'>('1K');
   selectedDuration = signal<number>(4);
 
+  supportedResolutions = signal<('1K' | '2K' | '4K')[]>([]);
+
   // --- Computed Values ---
   isExtendVideo = computed(() => this.selectedMode() === 'Extend Video');
-  isTextToVideo = computed(() => this.selectedMode() === 'Text to Video');
-  hasResolutionOptions = computed(
-    () =>
-      (this.getSelectedModelObject()?.capabilities?.supportedResolutions ?? [])
-        .length > 1,
+  isIngredientsToImage = computed(
+    () => this.selectedMode() === 'Ingredients to Image',
   );
+  isTextToVideo = computed(() => this.selectedMode() === 'Text to Video');
+  hasResolutionOptions = computed(() => this.supportedResolutions().length > 0);
   hasDurationOptions = computed(
     () =>
       (this.getSelectedModelObject()?.capabilities?.supportedDurations ?? [])
         .length > 0,
   );
+
+  // --- Lifecycle Hooks ---
+  ngOnInit(): void {
+    this.supportedResolutions.set(this.getSelectedModelResolutions());
+  }
 
   // --- Event Handlers ---
 
@@ -194,8 +204,10 @@ export class FlowPromptBoxComponent {
     this.modeChanged.emit(mode);
     this.isModeMenuOpen.set(false);
 
-    if (this.isExtendVideo()) {
-      const smallest = this.getSelectedModelResolutions()[0];
+    this.supportedResolutions.set(this.getSelectedModelResolutions());
+
+    if (this.isExtendVideo() || this.isIngredientsToImage()) {
+      const smallest = this.supportedResolutions()[0];
       if (smallest) this.selectResolution(smallest);
     }
 
@@ -208,6 +220,8 @@ export class FlowPromptBoxComponent {
   }
 
   selectResolution(resolution: '1K' | '2K' | '4K', model?: any) {
+    if (!this.supportedResolutions().includes(resolution)) return;
+
     this.selectedResolution.set(resolution);
     this.resolutionChanged.emit(resolution);
     this.isSettingsDropdownOpen.set(null);
@@ -244,7 +258,8 @@ export class FlowPromptBoxComponent {
     this.isSettingsDropdownOpen.set(null);
     this.modelSelected.emit(model);
 
-    const supported = this.getSelectedModelResolutions(model);
+    this.supportedResolutions.set(this.getSelectedModelResolutions(model));
+    const supported = this.supportedResolutions();
     if (supported.length > 0) {
       if (supported.includes(this.selectedResolution())) {
         this.selectResolution(this.selectedResolution(), model);
@@ -267,7 +282,7 @@ export class FlowPromptBoxComponent {
 
   getSelectedModelResolutions(model?: any): ('1K' | '2K' | '4K')[] {
     const activeModel = model || this.getSelectedModelObject();
-    if (this.isExtendVideo()) {
+    if (this.isExtendVideo() || this.isIngredientsToImage()) {
       const smallest = activeModel?.capabilities?.supportedResolutions?.[0];
       return smallest ? [smallest] : [];
     }

@@ -47,7 +47,7 @@ export class ImageStateService {
     lighting: '',
     watermark: false,
     googleSearch: false,
-    resolution: '1K',
+    resolution: '4K',
     style: null,
     colorAndTone: null,
     numberOfMedia: 4,

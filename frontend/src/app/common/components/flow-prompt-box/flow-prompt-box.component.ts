@@ -52,13 +52,10 @@ import {MatTooltipModule} from '@angular/material/tooltip';
 })
 export class FlowPromptBoxComponent implements OnInit {
   @Input() searchRequest!: any; // Keep for now, but prefer individual inputs
-  @Input() generationModels: GenerationModelConfig[] = [];
   @Input() isLoading = false;
-  @Input() selectedGenerationModel = '';
   @Input() prompt = '';
   @Input() aspectRatio = '16:9';
   @Input() outputs = 4;
-  @Input() mode = 'Text to Video';
   @Input() aspectRatioOptions: {
     value: string;
     viewValue: string;
@@ -66,6 +63,35 @@ export class FlowPromptBoxComponent implements OnInit {
     icon?: string;
   }[] = [];
   @Input() modes: {value: string; icon: string; label: string}[] = [];
+
+  // --- setter inputs ---
+  private _generationModels: GenerationModelConfig[] = [];
+  @Input() set generationModels(val: GenerationModelConfig[]) {
+    this._generationModels = val || [];
+    this.updateSupportedResolutions();
+  }
+  get generationModels(): GenerationModelConfig[] {
+    return this._generationModels;
+  }
+
+  private _selectedGenerationModel = '';
+  @Input() set selectedGenerationModel(val: string) {
+    this._selectedGenerationModel = val;
+    this.updateSupportedResolutions();
+  }
+  get selectedGenerationModel(): string {
+    return this._selectedGenerationModel;
+  }
+
+  @Input() set mode(val: string) {
+    if (val) {
+      this.selectedMode.set(val);
+      this.updateSupportedResolutions();
+    }
+  }
+  get mode(): string {
+    return this.selectedMode();
+  }
 
   @Input() set resolution(val: '1K' | '2K' | '4K' | undefined) {
     if (val) {
@@ -78,6 +104,7 @@ export class FlowPromptBoxComponent implements OnInit {
     }
   }
 
+  // --- outputs ---
   @Output() generateClicked = new EventEmitter<void>();
   @Output() rewriteClicked = new EventEmitter<void>();
   @Output() modelSelected = new EventEmitter<any>();
@@ -140,7 +167,7 @@ export class FlowPromptBoxComponent implements OnInit {
   }
 
   // All possible resolutions
-  ALL_RESOLUTIONS: ('1K' | '2K' | '4K')[] = ['1K', '2K', '4K'];
+  readonly ALL_RESOLUTIONS: ('1K' | '2K' | '4K')[] = ['1K', '2K', '4K'];
 
   // --- Logic moved from VideoComponent ---
 
@@ -258,15 +285,7 @@ export class FlowPromptBoxComponent implements OnInit {
     this.isSettingsDropdownOpen.set(null);
     this.modelSelected.emit(model);
 
-    this.supportedResolutions.set(this.getSelectedModelResolutions(model));
-    const supported = this.supportedResolutions();
-    if (supported.length > 0) {
-      if (supported.includes(this.selectedResolution())) {
-        this.selectResolution(this.selectedResolution(), model);
-      } else {
-        this.selectResolution(supported[0], model);
-      }
-    }
+    this.updateSupportedResolutions(model);
   }
 
   selectPreset(preset: string) {
@@ -299,5 +318,16 @@ export class FlowPromptBoxComponent implements OnInit {
     }
 
     return activeModel?.capabilities?.supportedDurations ?? [];
+  }
+
+  private updateSupportedResolutions(model?: any) {
+    this.supportedResolutions.set(this.getSelectedModelResolutions(model));
+    const supported = this.supportedResolutions();
+    if (
+      supported.length > 0 &&
+      !supported.includes(this.selectedResolution())
+    ) {
+      this.selectResolution(supported[0], model);
+    }
   }
 }

@@ -85,22 +85,19 @@ export class ImageSelectorComponent implements OnInit {
     if (file.type.startsWith('image/')) {
       if (this.shouldCrop) {
         // If shouldCrop is true, open the cropper dialog
-        const cropperDialogRef = this.dialog.open(ImageCropperDialogComponent, {
-          data: {
-            imageFile: file,
-            assetType: this.data.assetType,
-            enableUpscale: this.data.enableUpscale,
-          },
-          width: '600px',
+        const cropperDialogRef = ImageCropperDialogComponent.open(this.dialog, {
+          imageFile: file,
+          assetType: this.data.assetType,
+          enableUpscale: this.data.enableUpscale,
         });
 
-        cropperDialogRef
-          .afterClosed()
-          .subscribe((asset: SourceAssetResponseDto) => {
+        cropperDialogRef.subscribe(
+          (asset: SourceAssetResponseDto | undefined) => {
             if (asset) {
               this.dialogRef.close(asset);
             }
-          });
+          },
+        );
       } else {
         // If shouldCrop is false, upload directly
         this.isUploading = true;
@@ -154,22 +151,6 @@ export class ImageSelectorComponent implements OnInit {
     this.isDragging = false;
     if (event.dataTransfer?.files[0]) {
       this.handleFileSelect(event.dataTransfer.files[0]);
-    }
-  }
-
-  openCropperDialog(file: File): void {
-    if (file.type.startsWith('image/')) {
-      this.dialogRef.close();
-
-      this.dialog.open(ImageCropperDialogComponent, {
-        data: {
-          imageFile: file,
-          assetType: this.data.assetType,
-        },
-        width: '600px',
-      });
-    } else {
-      console.log('File is not an image, cannot open cropper.');
     }
   }
 

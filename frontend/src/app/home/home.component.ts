@@ -1057,19 +1057,22 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   openCropperDialog(file: File, index?: number) {
-    const dialogRef = this.dialog.open(ImageCropperDialogComponent, {
-      data: {
-        imageFile: file,
-        assetType: AssetTypeEnum.GENERIC_IMAGE,
+    ImageCropperDialogComponent.open(this.dialog, {imageFile: file}).subscribe(
+      result => {
+        if (result && result.id) {
+          this.processInput(result, index);
+        }
       },
-      width: '600px',
-    });
+    );
+  }
 
-    dialogRef.afterClosed().subscribe((result: SourceAssetResponseDto) => {
-      if (result && result.id) {
-        this.processInput(result, index);
-      }
-    });
+  onEditPromptReferenceImage(data: {index: number; ref: ReferenceImage}) {
+    ImageCropperDialogComponent.openEditPromptReferenceImage(
+      this.dialog,
+      data,
+      this.referenceImages,
+      () => this.saveState(),
+    );
   }
 
   private processInput(

@@ -62,9 +62,9 @@ describe('ImageStateService', () => {
   it('should update state and save to localStorage when updateState is called', () => {
     TestBed.configureTestingModule({});
     service = TestBed.inject(ImageStateService);
-    
+
     service.updateState({prompt: 'new prompt', aspectRatio: '4:3'});
-    
+
     const state = service.getState();
     expect(state.prompt).toBe('new prompt');
     expect(state.aspectRatio).toBe('4:3');
@@ -81,12 +81,21 @@ describe('ImageStateService', () => {
   it('should reset state and remove from localStorage when resetState is called', () => {
     TestBed.configureTestingModule({});
     service = TestBed.inject(ImageStateService);
-    
+
     service.updateState({prompt: 'temporary prompt'});
     expect(localStorage.getItem('image_state')).toBeTruthy();
 
     service.resetState();
     expect(service.getState().prompt).toBe('');
     expect(localStorage.getItem('image_state')).toBeNull();
+  });
+
+  it('should fallback to default state and not crash if localStorage contains invalid JSON', () => {
+    localStorage.setItem('image_state', 'invalid { json');
+    TestBed.configureTestingModule({});
+    service = TestBed.inject(ImageStateService);
+    const state = service.getState();
+    expect(state.prompt).toBe('');
+    expect(state.aspectRatio).toBe('1:1');
   });
 });

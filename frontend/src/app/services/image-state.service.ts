@@ -42,9 +42,19 @@ export interface ImageState {
 })
 export class ImageStateService {
   constructor() {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      this.state.next(JSON.parse(saved));
+    if (typeof localStorage !== 'undefined') {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          this.state.next({...this.initialState, ...parsed});
+        } catch (e) {
+          console.error(
+            'Failed to parse saved image state from localStorage',
+            e,
+          );
+        }
+      }
     }
   }
 
@@ -72,7 +82,9 @@ export class ImageStateService {
   updateState(newState: Partial<ImageState>) {
     const updated = {...this.state.value, ...newState};
     this.state.next(updated);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    }
   }
 
   getState(): ImageState {
@@ -81,6 +93,8 @@ export class ImageStateService {
 
   resetState() {
     this.state.next(this.initialState);
-    localStorage.removeItem(STORAGE_KEY);
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem(STORAGE_KEY);
+    }
   }
 }

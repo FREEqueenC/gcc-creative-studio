@@ -114,4 +114,13 @@ describe('VideoStateService', () => {
     expect(service.getState().prompt).toBe('');
     expect(localStorage.getItem('video_state')).toBeNull();
   });
+
+  it('should fallback to default state and not crash if localStorage contains invalid JSON', () => {
+    settingsServiceSpy.getShowGeminiOmni.and.returnValue(false);
+    localStorage.setItem('video_state', 'invalid { json');
+    initService();
+    const state = service.getState();
+    expect(state.prompt).toBe('');
+    expect(state.aspectRatio).toBe('16:9');
+  });
 });

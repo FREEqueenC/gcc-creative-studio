@@ -31,8 +31,14 @@
         class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded inline-flex items-center">
         <mat-icon>auto_stories</mat-icon>
         <span class="ml-2">Create Template</span>
-        </button>
-        </div>
+      </button>
+
+      <button (click)="openMintDialog()" matTooltip="Mint this asset as an NFT"
+        class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-2 px-4 rounded inline-flex items-center">
+        <mat-icon>toll</mat-icon>
+        <span class="ml-2">Mint NFT</span>
+      </button>
+    </div>
   </div>
 
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">

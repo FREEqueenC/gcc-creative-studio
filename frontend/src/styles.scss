@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Google LLC
+ * Copyright 2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,43 +49,44 @@ $creative-studio-theme: mat.define-theme(
 :root {
   @include mat.all-component-themes($creative-studio-theme);
 
-  --color-bg1: #2e3031;
+  --color-bg1: #0a0b0d;
+  --color-bg2: #0e1014;
   --color-primary-value: #{mat.get-theme-color($creative-studio-theme, primary)};
-  --color-bg2: #2e3031;
-  --color1: 238, 77, 93; // #EE4D5D red
-  --color2: 45, 124, 239; // #2D7CEF dark blue
-  --color3: 238, 77, 93; // #EE4D5D red
-  --color4: 29, 141, 248; // #1D8DF8 light blue
-  --color5: 238, 77, 93; // #EE4D5D red
-  // --color5: 251, 188, 4; // #fbbc04 yellow
+  --color1: 0, 242, 254;      // Cyan
+  --color2: 79, 172, 254;     // Soft Blue
+  --color3: 156, 39, 176;     // Luminous Purple
+  --color4: 103, 58, 183;     // Violet
+  --color5: 233, 30, 99;      // Pink/Magenta
   --color-interactive: 140, 100, 255;
-  --circle-size: 90%;
-  --blending: hard-light;
-  --gem-sys-color--brand-blue:#3186FF;
-  --gem-sys-color--brand-transition-blue-1:#346BF1;
-  --gem-sys-color--brand-transition-blue-2:#4FA0FF;
-  --Greeting-gradient:linear-gradient(77deg, var(--gem-sys-color--brand-blue) 6.99%, var(--gem-sys-color--brand-transition-blue-1) 45.46%, var(--gem-sys-color--brand-transition-blue-2) 88.2%);
+  --circle-size: 80%;
+  --blending: screen;
+  --gem-sys-color--brand-blue: #00f2fe;
+  --gem-sys-color--brand-transition-blue-1: #4facfe;
+  --gem-sys-color--brand-transition-blue-2: #9c27b0;
+  --Greeting-gradient: linear-gradient(77deg, var(--gem-sys-color--brand-blue) 6.99%, var(--gem-sys-color--brand-transition-blue-1) 45.46%, var(--gem-sys-color--brand-transition-blue-2) 88.2%);
   --z-index-notification: 99999;
-
 }
 
-// Comment out the line below if you want to use the pre-defined typography utility classes.
-// For more information: https://material.angular.io/guide/typography#using-typography-styles-in-your-application.
-// @include mat.typography-hierarchy($creative-studio-theme);
-
-// Comment out the line below if you want to use the deprecated `color` inputs.
-// @include mat.color-variants-backwards-compatibility($creative-studio-theme);
-/* You can add global styles to this file, and also import other style files */
-
-@import url(//fonts.googleapis.com/css2?family=Google+Sans);
+// Importing premium fonts
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
 
 html,
 body {
-  background-color: transparent;
+  background-color: #08090c;
+  color: #f3f4f6;
 }
 body {
   margin: 0;
-  font-family: 'Google Sans', Roboto, Arial, 'Helvetica Neue', sans-serif !important;
+  font-family: 'Outfit', 'Inter', sans-serif !important;
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.02) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4) !important;
+  border-radius: 16px !important;
 }
 
 body,
@@ -447,7 +448,7 @@ app-workspace-switcher .workspace-name {
   html {
     min-height: 100vh;
     height: auto;
-    background: radial-gradient(ellipse 100% 100% at 50% 0%, #4D4D4D 0%, #161616 100%) !important;
+    background: radial-gradient(ellipse 100% 100% at 50% 0%, #100b26 0%, #06070a 100%) !important;
     background-attachment: fixed;
     background-repeat: no-repeat;
     background-size: cover;
@@ -494,5 +495,50 @@ app-workspace-switcher .workspace-name {
   .mat-mdc-snack-bar-action {
     color: #004a99 !important; // Darker blue for better visibility on light snackbar background
     font-weight: 600;
+  }
+}
+
+/* --- Aether Glassmorphism Styling Overrides --- */
+.mat-menu-floating {
+  background: rgba(13, 14, 18, 0.45) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4) !important;
+  border-radius: 24px !important;
+  
+  .menu-item-active {
+    background: rgba(0, 242, 254, 0.1) !important;
+    border: 1px solid rgba(0, 242, 254, 0.3) !important;
+  }
+}
+
+.workflow-card, .unified-gallery-item, .workspace-card, .studio-card {
+  background: rgba(255, 255, 255, 0.02) !important;
+  backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 16px !important;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+  
+  &:hover {
+    transform: translateY(-4px);
+    border-color: rgba(0, 242, 254, 0.3) !important;
+    box-shadow: 0 12px 40px rgba(0, 242, 254, 0.15) !important;
+    background: rgba(255, 255, 255, 0.04) !important;
+  }
+}
+
+.workspace-switcher-trigger, .workspace-selector-container {
+  background: rgba(255, 255, 255, 0.03) !important;
+  backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 12px !important;
+}
+
+// Glassmorphism panels for dialogs
+.glass-dialog-panel {
+  .mat-mdc-dialog-container {
+    background: transparent !important;
+    box-shadow: none !important;
   }
 }

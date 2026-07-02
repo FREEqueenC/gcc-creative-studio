@@ -41,9 +41,8 @@ services:
       - ./backend:/app
       # KEEP THIS: It preserves the virtual environment from the image build.
       - backend_venv:/app/.venv
-      # Mount the gcloud ADC directory. Replace with the correct path for your OS if different. :ro - read-only for better security
-      - ~/.config/gcloud/:/root/.config/gcloud:ro # Linux/macOS example:
-      # - %APPDATA%/gcloud:/root/.config/gcloud:ro # Windows example:
+      # - ~/.config/gcloud/:/root/.config/gcloud:ro # Linux/macOS example:
+      - ~/AppData/Roaming/gcloud:/root/.config/gcloud:ro # Windows example:
 
   frontend:
     build:
@@ -57,6 +56,9 @@ services:
       - "4200:8080"
     # To change the env variables in the frontend, change the environment.ts file
     restart: unless-stopped
+
+    environment:
+      - NODE_OPTIONS=--max-old-space-size=4096
 
     # Reset the entrypoint from the base 'node' image.
     # This allows our 'command:' to run directly.

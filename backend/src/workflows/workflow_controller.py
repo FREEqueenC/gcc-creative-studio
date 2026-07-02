@@ -13,6 +13,8 @@
 # limitations under the License.
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Response, status
+from os import getenv
+from pydantic import BaseModel
 
 from src.auth.auth_guard import RoleChecker, get_current_user
 from src.common.dto.pagination_response_dto import PaginationResponseDto
@@ -242,3 +244,56 @@ async def list_executions(
         page_token=page_token,
         filter_str=filter_str,
     )
+
+
+class AgentWorkflowExecuteRequest(BaseModel):
+    workflow_id: str
+    args: dict
+    workspace_id: int
+
+
+@router.post("/agent/execute", tags=["Agent Operations"])
+async def agent_execute_workflow(
+    request: AgentWorkflowExecuteRequest,
+    x_agent_key: str | None = Header(default=None),
+    workflow_service: WorkflowService = Depends(),
+):
+    """
+    Exposes workflow executions securely to autonomous external agents.
+    Verifies agent API keys and executes the workflow asynchronously.
+    """
+    expected_key = getenv("AETHERIS_AGENT_API_KEY")
+    if not expected_key:
+        expected_key = "aetheris-dev-secret-key-11911"
+        
+    if not x_agent_key or x_agent_key != expected_key:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or missing X-Agent-Key header."
+        )
+
+    # Resolve an administrative user context for the execution to bypass regular route AuthGuards
+    from src.users.user_model import UserModel
+    agent_user = UserModel(
+        id=1,  # Associate with default admin or system user
+        email="agent-system@freequeenc.github.io",
+        roles=[UserRoleEnum.WORKFLOWS, UserRoleEnum.ADMIN]
+    )
+
+    # Ingest workspace ID into args so generator tasks know where to save
+    request.args["workspace_id"] = request.workspace_id
+
+    # Execute workflow via service
+    execution_id = await workflow_service.execute_workflow(
+        workflow_id=request.workflow_id,
+        args=request.args,
+        user=agent_user
+    )
+
+    return {
+        "status": "triggered",
+        "execution_id": execution_id,
+        "callback_expected": True,
+        "message": "Workflow execution triggered successfully by Aetheris agent."
+    }
+

@@ -37,6 +37,7 @@ import {
 import {GalleryService} from '../gallery.service';
 import {ConfirmationDialogComponent} from '../../common/components/confirmation-dialog/confirmation-dialog.component';
 import {WorkspaceStateService} from '../../services/workspace/workspace-state.service';
+import {MintDialogComponent} from '../../components/mint-dialog/mint-dialog.component';
 
 @Component({
   selector: 'app-media-detail',
@@ -177,6 +178,14 @@ export class MediaDetailComponent implements OnDestroy {
   ngOnDestroy(): void {
     this.routeSub?.unsubscribe();
     this.mediaSub?.unsubscribe();
+  }
+
+  openMintDialog(): void {
+    if (!this.mediaItem) return;
+    this.dialog.open(MintDialogComponent, {
+      data: { mediaItem: this.mediaItem },
+      panelClass: 'glass-dialog-panel'
+    });
   }
 
   fetchMediaDetails(id: number, isAsset = false): void {

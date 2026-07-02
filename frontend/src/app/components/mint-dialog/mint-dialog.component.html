@@ -1,0 +1,159 @@
+<div class="glass-dialog-container text-white p-6 rounded-2xl max-w-lg border border-white/10 backdrop-blur-xl bg-slate-900/90 shadow-2xl relative overflow-hidden">
+  <!-- Glowing Background Accent -->
+  <div class="absolute -top-24 -left-24 w-48 h-48 rounded-full bg-indigo-500/20 blur-3xl"></div>
+  <div class="absolute -bottom-24 -right-24 w-48 h-48 rounded-full bg-purple-500/20 blur-3xl"></div>
+
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-6 relative z-10">
+    <h3 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-400 flex items-center gap-2">
+      <mat-icon class="!w-6 !h-6 !text-lg leading-6">toll</mat-icon>
+      Tokenize Creative Asset
+    </h3>
+    <button (click)="close()" class="text-gray-400 hover:text-white transition-colors duration-150">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Step: Select Chain -->
+  <div *ngIf="step === 'select-chain'" class="relative z-10 space-y-4">
+    <p class="text-sm text-gray-300">
+      Select the destination blockchain ledger to mint your high-fidelity generative asset.
+    </p>
+
+    <div class="grid grid-cols-2 gap-4 pt-2">
+      <!-- Base Mainnet -->
+      <button (click)="selectChain('base')" 
+        class="flex flex-col items-center justify-center p-5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-cyan-400/40 transition-all duration-300 text-center group">
+        <div class="w-12 h-12 rounded-full bg-blue-600/20 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+          <mat-icon class="text-blue-400">layers</mat-icon>
+        </div>
+        <strong class="text-sm">Base Mainnet</strong>
+        <span class="text-xs text-gray-400 mt-1">Paid in LEV tokens</span>
+      </button>
+
+      <!-- Flow Blockchain -->
+      <button (click)="selectChain('flow')" 
+        class="flex flex-col items-center justify-center p-5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-purple-400/40 transition-all duration-300 text-center group">
+        <div class="w-12 h-12 rounded-full bg-green-600/20 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+          <mat-icon class="text-green-400">electric_bolt</mat-icon>
+        </div>
+        <strong class="text-sm">Flow Cadence</strong>
+        <span class="text-xs text-gray-400 mt-1">Zero Gas Resource</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Step: Connect Wallet -->
+  <div *ngIf="step === 'connect-wallet'" class="relative z-10 text-center space-y-6 py-4">
+    <div class="w-16 h-16 rounded-full bg-indigo-500/10 flex items-center justify-center mx-auto">
+      <mat-icon class="text-indigo-400 !text-3xl !w-8 !h-8 flex items-center justify-center">account_balance_wallet</mat-icon>
+    </div>
+    
+    <div class="space-y-2">
+      <h4 class="font-bold text-lg">Connect Web3 Wallet</h4>
+      <p class="text-xs text-gray-400 max-w-xs mx-auto">
+        Please link your wallet to sign the transaction on the {{ selectedChain === 'base' ? 'Base' : 'Flow' }} network.
+      </p>
+    </div>
+
+    <div class="pt-2">
+      <button (click)="connectWallet()" 
+        class="w-full bg-gradient-to-r from-cyan-500 to-indigo-500 hover:from-cyan-600 hover:to-indigo-600 text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 shadow-lg shadow-indigo-500/20">
+        Connect Wallet
+      </button>
+    </div>
+
+    <div *ngIf="errorMessage" class="text-rose-400 text-xs mt-2 bg-rose-500/10 border border-rose-500/20 p-2 rounded-lg">
+      {{ errorMessage }}
+    </div>
+  </div>
+
+  <!-- Step: Confirm Mint -->
+  <div *ngIf="step === 'confirm-mint'" class="relative z-10 space-y-4">
+    <div class="flex items-center gap-4 bg-white/5 border border-white/10 p-3 rounded-xl">
+      <div class="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-black/20">
+        <img *ngIf="data.mediaItem.presignedUrls" [src]="data.mediaItem.presignedUrls[0]" alt="Preview" class="w-full h-full object-cover">
+      </div>
+      <div class="min-w-0">
+        <strong class="block text-sm truncate">{{ data.mediaItem.prompt || 'Untitled Asset' }}</strong>
+        <span class="text-xs text-gray-400 capitalize">Model: {{ data.mediaItem.model }}</span>
+      </div>
+    </div>
+
+    <div class="space-y-2 text-sm bg-white/5 border border-white/10 p-4 rounded-xl divide-y divide-white/5">
+      <div class="flex justify-between pb-2">
+        <span class="text-gray-400">Target Chain:</span>
+        <strong class="capitalize text-cyan-400">{{ selectedChain }}</strong>
+      </div>
+      <div class="flex justify-between py-2">
+        <span class="text-gray-400">Contract Address:</span>
+        <strong class="font-mono text-xs truncate max-w-[200px]" [matTooltip]="prepData?.contractAddress || ''">
+          {{ prepData?.contractAddress }}
+        </strong>
+      </div>
+      <div class="flex justify-between pt-2">
+        <span class="text-gray-400">Minting Fee:</span>
+        <strong class="text-purple-400">{{ prepData?.mintFee }}</strong>
+      </div>
+    </div>
+
+    <div class="pt-4 flex gap-3">
+      <button (click)="step = 'select-chain'" 
+        class="flex-1 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold py-3 rounded-xl transition-all">
+        Back
+      </button>
+      <button (click)="confirmMint()" 
+        class="flex-1 bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white font-bold py-3 rounded-xl transition-all shadow-lg">
+        Confirm Mint
+      </button>
+    </div>
+  </div>
+
+  <!-- Step: Loading / Minting -->
+  <div *ngIf="step === 'minting'" class="relative z-10 text-center py-8 space-y-6">
+    <div class="relative w-16 h-16 mx-auto">
+      <mat-progress-spinner color="accent" mode="indeterminate" class="mx-auto"></mat-progress-spinner>
+    </div>
+    <div class="space-y-2">
+      <h4 class="font-bold text-lg">Executing Transaction...</h4>
+      <p class="text-xs text-gray-400 max-w-xs mx-auto">
+        Please check your wallet and approve the transaction signature request.
+      </p>
+    </div>
+  </div>
+
+  <!-- Step: Success -->
+  <div *ngIf="step === 'success'" class="relative z-10 text-center py-6 space-y-6">
+    <div class="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto">
+      <mat-icon class="text-emerald-400 !text-4xl !w-10 !h-10 flex items-center justify-center">check_circle</mat-icon>
+    </div>
+
+    <div class="space-y-2">
+      <h4 class="font-bold text-xl bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-teal-400">
+        Minted Successfully!
+      </h4>
+      <p class="text-xs text-gray-300 max-w-xs mx-auto">
+        Your creative asset has been securely tokenized and stored on the {{ selectedChain === 'base' ? 'Base' : 'Flow' }} blockchain ledger.
+      </p>
+    </div>
+
+    <div class="bg-white/5 border border-white/10 p-3 rounded-xl max-w-sm mx-auto text-left space-y-1">
+      <div class="text-xs text-gray-400">Transaction Signature Hash:</div>
+      <div class="font-mono text-xs truncate text-emerald-300">
+        {{ txHash }}
+      </div>
+    </div>
+
+    <div class="pt-4 flex gap-3">
+      <a [href]="getExplorerLink()" target="_blank" 
+        class="flex-1 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold py-3 rounded-xl transition-all inline-flex justify-center items-center gap-2">
+        <mat-icon class="!text-sm flex items-center justify-center w-4 h-4">open_in_new</mat-icon>
+        View Explorer
+      </a>
+      <button (click)="close()" 
+        class="flex-1 bg-gradient-to-r from-cyan-500 to-indigo-500 hover:from-cyan-600 hover:to-indigo-600 text-white font-bold py-3 rounded-xl transition-all">
+        Done
+      </button>
+    </div>
+  </div>
+</div>

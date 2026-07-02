@@ -57,7 +57,7 @@ describe('HomeComponent', () => {
     lighting: null,
     watermark: false,
     googleSearch: false,
-    resolution: '1K',
+    resolution: '4K',
     style: null,
     colorAndTone: null,
     numberOfMedia: 4,
@@ -144,7 +144,7 @@ describe('HomeComponent', () => {
       negativePrompt: '',
       useBrandGuidelines: false,
       googleSearch: false,
-      resolution: '1K' as const,
+      resolution: '4K' as const,
     };
     expect(component.searchRequest).toEqual(defaultSearchRequest);
   });

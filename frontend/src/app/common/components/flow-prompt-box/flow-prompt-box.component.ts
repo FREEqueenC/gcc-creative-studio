@@ -24,6 +24,8 @@ import {
   ViewChild,
   ElementRef,
   computed,
+  OnInit,
+  OnDestroy,
 } from '@angular/core';
 import {ReferenceImage} from '../../models/search.model';
 import {GenerationModelConfig} from '../../config/model-config';
@@ -50,15 +52,12 @@ export type NumPos = 1 | 2;
     MatTooltipModule,
   ],
 })
-export class FlowPromptBoxComponent {
+export class FlowPromptBoxComponent implements OnInit, OnDestroy {
   @Input() searchRequest!: any; // Keep for now, but prefer individual inputs
-  @Input() generationModels: GenerationModelConfig[] = [];
   @Input() isLoading = false;
-  @Input() selectedGenerationModel = '';
   @Input() prompt = '';
   @Input() aspectRatio = '16:9';
   @Input() outputs = 4;
-  @Input() mode = 'Text to Video';
   @Input() aspectRatioOptions: {
     value: string;
     viewValue: string;
@@ -66,6 +65,38 @@ export class FlowPromptBoxComponent {
     icon?: string;
   }[] = [];
   @Input() modes: {value: string; icon: string; label: string}[] = [];
+
+  // --- setter inputs ---
+  private _generationModels: GenerationModelConfig[] = [];
+  private generationModelsSignal = signal<GenerationModelConfig[]>([]);
+  @Input() set generationModels(val: GenerationModelConfig[]) {
+    this._generationModels = val || [];
+    this.generationModelsSignal.set(val || []);
+    this.updateSupportedResolutions();
+  }
+  get generationModels(): GenerationModelConfig[] {
+    return this._generationModels;
+  }
+  private _selectedGenerationModel = '';
+  private selectedGenerationModelSignal = signal<string>('');
+  @Input() set selectedGenerationModel(val: string) {
+    this._selectedGenerationModel = val;
+    this.selectedGenerationModelSignal.set(val);
+    this.updateSupportedResolutions();
+  }
+  get selectedGenerationModel(): string {
+    return this._selectedGenerationModel;
+  }
+
+  @Input() set mode(val: string) {
+    if (val) {
+      this.selectedMode.set(val);
+      this.updateSupportedResolutions();
+    }
+  }
+  get mode(): string {
+    return this.selectedMode();
+  }
 
   @Input() set resolution(val: '1K' | '2K' | '4K' | undefined) {
     if (val) {
@@ -78,6 +109,7 @@ export class FlowPromptBoxComponent {
     }
   }
 
+  // --- outputs ---
   @Output() generateClicked = new EventEmitter<void>();
   @Output() rewriteClicked = new EventEmitter<void>();
   @Output() modelSelected = new EventEmitter<any>();
@@ -118,6 +150,8 @@ export class FlowPromptBoxComponent {
   @ViewChild('settingsTrigger') settingsTrigger!: ElementRef;
   @ViewChild('settingsMenu') settingsMenu!: ElementRef;
 
+  private resolutionTimeoutId: ReturnType<typeof setTimeout> | null = null;
+
   constructor(private eRef: ElementRef) {}
 
   @HostListener('document:click', ['$event'])
@@ -144,6 +178,9 @@ export class FlowPromptBoxComponent {
     }
   }
 
+  // All possible resolutions
+  readonly ALL_RESOLUTIONS: ('1K' | '2K' | '4K')[] = ['1K', '2K', '4K'];
+
   // --- Logic moved from VideoComponent ---
 
   promptText = signal<string>('');
@@ -159,19 +196,31 @@ export class FlowPromptBoxComponent {
   selectedResolution = signal<'1K' | '2K' | '4K'>('1K');
   selectedDuration = signal<number>(4);
 
+  supportedResolutions = signal<('1K' | '2K' | '4K')[]>([]);
+
   // --- Computed Values ---
   isExtendVideo = computed(() => this.selectedMode() === 'Extend Video');
-  isTextToVideo = computed(() => this.selectedMode() === 'Text to Video');
-  hasResolutionOptions = computed(
-    () =>
-      (this.getSelectedModelObject()?.capabilities?.supportedResolutions ?? [])
-        .length > 1,
+  isIngredientsToImage = computed(
+    () => this.selectedMode() === 'Ingredients to Image',
   );
+  isTextToVideo = computed(() => this.selectedMode() === 'Text to Video');
+  hasResolutionOptions = computed(() => this.supportedResolutions().length > 0);
   hasDurationOptions = computed(
     () =>
       (this.getSelectedModelObject()?.capabilities?.supportedDurations ?? [])
         .length > 0,
   );
+
+  // --- Lifecycle Hooks ---
+  ngOnInit(): void {
+    this.updateSupportedResolutions();
+  }
+
+  ngOnDestroy(): void {
+    if (this.resolutionTimeoutId) {
+      clearTimeout(this.resolutionTimeoutId);
+    }
+  }
 
   // --- Event Handlers ---
 
@@ -208,8 +257,11 @@ export class FlowPromptBoxComponent {
     this.modeChanged.emit(mode);
     this.isModeMenuOpen.set(false);
 
-    if (this.isExtendVideo()) {
-      const smallest = this.getSelectedModelResolutions()[0];
+    const resolutions = this.getSelectedModelResolutions();
+    this.supportedResolutions.set(resolutions);
+
+    if (this.isExtendVideo() || this.isIngredientsToImage()) {
+      const smallest = resolutions[0];
       if (smallest) this.selectResolution(smallest);
     }
 
@@ -222,6 +274,8 @@ export class FlowPromptBoxComponent {
   }
 
   selectResolution(resolution: '1K' | '2K' | '4K', model?: any) {
+    if (!this.supportedResolutions().includes(resolution)) return;
+
     this.selectedResolution.set(resolution);
     this.resolutionChanged.emit(resolution);
     this.isSettingsDropdownOpen.set(null);
@@ -258,14 +312,7 @@ export class FlowPromptBoxComponent {
     this.isSettingsDropdownOpen.set(null);
     this.modelSelected.emit(model);
 
-    const supported = this.getSelectedModelResolutions(model);
-    if (supported.length > 0) {
-      if (supported.includes(this.selectedResolution())) {
-        this.selectResolution(this.selectedResolution(), model);
-      } else {
-        this.selectResolution(supported[0], model);
-      }
-    }
+    this.updateSupportedResolutions(model);
   }
 
   selectPreset(preset: string) {
@@ -274,14 +321,14 @@ export class FlowPromptBoxComponent {
   }
 
   getSelectedModelObject(): GenerationModelConfig | undefined {
-    return this.generationModels.find(
-      m => m.viewValue === this.selectedGenerationModel,
+    return this.generationModelsSignal().find(
+      m => m.viewValue === this.selectedGenerationModelSignal(),
     );
   }
 
   getSelectedModelResolutions(model?: any): ('1K' | '2K' | '4K')[] {
     const activeModel = model || this.getSelectedModelObject();
-    if (this.isExtendVideo()) {
+    if (this.isExtendVideo() || this.isIngredientsToImage()) {
       const smallest = activeModel?.capabilities?.supportedResolutions?.[0];
       return smallest ? [smallest] : [];
     }
@@ -298,5 +345,22 @@ export class FlowPromptBoxComponent {
     }
 
     return activeModel?.capabilities?.supportedDurations ?? [];
+  }
+
+  private updateSupportedResolutions(model?: any) {
+    const supported = this.getSelectedModelResolutions(model);
+    this.supportedResolutions.set(supported);
+    if (
+      supported.length > 0 &&
+      !supported.includes(this.selectedResolution())
+    ) {
+      const fallbackResolution = supported[0];
+      this.selectedResolution.set(fallbackResolution);
+      // Defer event emission to avoid ExpressionChangedAfterItHasBeenCheckedError in parent during change detection
+      if (this.resolutionTimeoutId) clearTimeout(this.resolutionTimeoutId);
+      this.resolutionTimeoutId = setTimeout(() =>
+        this.resolutionChanged.emit(fallbackResolution),
+      );
+    }
   }
 }

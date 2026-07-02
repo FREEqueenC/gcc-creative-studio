@@ -17,6 +17,8 @@
 import {Injectable} from '@angular/core';
 import {BehaviorSubject} from 'rxjs';
 
+const STORAGE_KEY = 'image_state';
+
 export interface ImageState {
   prompt: string;
   negativePrompt: string;
@@ -39,6 +41,13 @@ export interface ImageState {
   providedIn: 'root',
 })
 export class ImageStateService {
+  constructor() {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      this.state.next(JSON.parse(saved));
+    }
+  }
+
   private initialState: ImageState = {
     prompt: '',
     negativePrompt: '',
@@ -61,7 +70,9 @@ export class ImageStateService {
   state$ = this.state.asObservable();
 
   updateState(newState: Partial<ImageState>) {
-    this.state.next({...this.state.value, ...newState});
+    const updated = {...this.state.value, ...newState};
+    this.state.next(updated);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
   }
 
   getState(): ImageState {
@@ -70,5 +81,6 @@ export class ImageStateService {
 
   resetState() {
     this.state.next(this.initialState);
+    localStorage.removeItem(STORAGE_KEY);
   }
 }

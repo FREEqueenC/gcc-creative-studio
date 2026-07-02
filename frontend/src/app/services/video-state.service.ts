@@ -24,6 +24,8 @@ import {
   ReferenceAudio,
 } from '../common/models/search.model';
 
+const STORAGE_KEY = 'video_state';
+
 interface VideoState {
   prompt: string;
   aspectRatio: string;
@@ -79,12 +81,19 @@ export class VideoStateService {
       referenceAudio: null,
     };
 
-    this.state = new BehaviorSubject<VideoState>(this.initialState);
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      this.state = new BehaviorSubject<VideoState>(JSON.parse(saved));
+    } else {
+      this.state = new BehaviorSubject<VideoState>(this.initialState);
+    }
     this.state$ = this.state.asObservable();
   }
 
   updateState(newState: Partial<VideoState>) {
-    this.state.next({...this.state.value, ...newState});
+    const updated = {...this.state.value, ...newState};
+    this.state.next(updated);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
   }
 
   getState(): VideoState {
@@ -93,5 +102,6 @@ export class VideoStateService {
 
   resetState() {
     this.state.next(this.initialState);
+    localStorage.removeItem(STORAGE_KEY);
   }
 }

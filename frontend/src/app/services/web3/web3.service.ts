@@ -1,3 +1,6 @@
+// Copyright 2026 FREEqueenC
+// SPDX-License-Identifier: Apache-2.0
+
 import {Injectable} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
 import {BehaviorSubject, firstValueFrom, Observable} from 'rxjs';

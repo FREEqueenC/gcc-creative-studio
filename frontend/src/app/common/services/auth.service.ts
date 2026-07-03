@@ -19,7 +19,7 @@ import {Router} from '@angular/router';
 import {UserModel, UserRolesEnum} from '../models/user.model';
 import {HttpClient, HttpHeaders, HttpErrorResponse} from '@angular/common/http';
 import {environment} from '../../../environments/environment';
-import {Auth, IdTokenResult} from '@angular/fire/auth';
+import {Auth, IdTokenResult, onIdTokenChanged, User} from '@angular/fire/auth';
 import {UserService} from '../services/user.service';
 import {
   GoogleAuthProvider,
@@ -67,6 +67,40 @@ export class AuthService {
       prompt: 'select_account',
     });
     this.loadSessionFromStorage();
+
+    if (isPlatformBrowser(this.platformId)) {
+      onIdTokenChanged(this.auth, async (user: User | null) => {
+        if (user) {
+          try {
+            const idTokenResult = await user.getIdTokenResult();
+            const token = idTokenResult.token;
+            const expirationTime = Date.parse(idTokenResult.expirationTime);
+
+            this.firebaseIdToken = token;
+            this.firebaseTokenExpiry = expirationTime;
+
+            const session: FirebaseSession = {token, expiry: expirationTime};
+            localStorage.setItem(FIREBASE_SESSION_KEY, JSON.stringify(session));
+
+            this.syncUserWithBackend$(token).subscribe({
+              next: () => {
+                void this.settingsService.loadSettings();
+              },
+              error: (err) => {
+                console.error('Failed to sync user with backend on token change:', err);
+              }
+            });
+          } catch (error) {
+            console.error('Error handling Firebase ID token change:', error);
+          }
+        } else {
+          this.firebaseIdToken = null;
+          this.firebaseTokenExpiry = null;
+          localStorage.removeItem(FIREBASE_SESSION_KEY);
+          localStorage.removeItem(USER_DETAILS);
+        }
+      });
+    }
   }
 
   /**

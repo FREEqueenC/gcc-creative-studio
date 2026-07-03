@@ -192,4 +192,19 @@ describe('VideoStateService', () => {
       jasmine.any(Error),
     );
   });
+
+  it('should fallback to default video model if saved state contains Gemini Omni but Gemini Omni is disabled', () => {
+    settingsServiceSpy.getShowGeminiOmni.and.returnValue(false);
+    const savedState = {
+      prompt: 'a cinematic shot',
+      model: 'gemini-omni-generate-preview',
+      numberOfMedia: 1,
+    };
+    localStorage.setItem('video_state', JSON.stringify(savedState));
+    initService();
+    const state = service.getState();
+    expect(state.prompt).toBe('a cinematic shot');
+    expect(state.model).toBe('veo-3.1-generate-001');
+    expect(state.numberOfMedia).toBe(4);
+  });
 });

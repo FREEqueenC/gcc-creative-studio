@@ -15,7 +15,7 @@
  */
 
 import {Injectable} from '@angular/core';
-import {BehaviorSubject} from 'rxjs';
+import {BehaviorSubject, Observable} from 'rxjs';
 
 const STORAGE_KEY = 'image_state';
 
@@ -41,40 +41,48 @@ export interface ImageState {
   providedIn: 'root',
 })
 export class ImageStateService {
+  private initialState: ImageState;
+  private state: BehaviorSubject<ImageState>;
+  state$: Observable<ImageState>;
+
   constructor() {
+    this.initialState = {
+      prompt: '',
+      negativePrompt: '',
+      aspectRatio: '1:1',
+      model: 'gemini-3.1-flash-image',
+      lighting: '',
+      watermark: false,
+      googleSearch: false,
+      resolution: '4K',
+      style: null,
+      colorAndTone: null,
+      numberOfMedia: 4,
+      composition: null,
+      useBrandGuidelines: false,
+      enhancePrompt: false,
+      mode: 'Text to Image',
+    };
+
+    let savedState: ImageState | null = null;
     if (typeof localStorage !== 'undefined') {
       try {
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved) {
           const parsed = JSON.parse(saved);
-          this.state.next({...this.initialState, ...parsed});
+          savedState = {...this.initialState, ...parsed};
         }
       } catch (e) {
         console.error('Failed to load saved image state from localStorage', e);
       }
     }
+    if (savedState) {
+      this.state = new BehaviorSubject<ImageState>(savedState);
+    } else {
+      this.state = new BehaviorSubject<ImageState>(this.initialState);
+    }
+    this.state$ = this.state.asObservable();
   }
-
-  private initialState: ImageState = {
-    prompt: '',
-    negativePrompt: '',
-    aspectRatio: '1:1',
-    model: 'gemini-3.1-flash-image',
-    lighting: '',
-    watermark: false,
-    googleSearch: false,
-    resolution: '4K',
-    style: null,
-    colorAndTone: null,
-    numberOfMedia: 4,
-    composition: null,
-    useBrandGuidelines: false,
-    enhancePrompt: false,
-    mode: 'Text to Image',
-  };
-
-  private state = new BehaviorSubject<ImageState>(this.initialState);
-  state$ = this.state.asObservable();
 
   updateState(newState: Partial<ImageState>) {
     const updated = {...this.state.value, ...newState};

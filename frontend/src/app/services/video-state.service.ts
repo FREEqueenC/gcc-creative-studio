@@ -87,7 +87,18 @@ export class VideoStateService {
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved) {
           const parsed = JSON.parse(saved);
-          savedState = {...this.initialState, ...parsed};
+          let loadedModel = parsed.model;
+          let loadedNumMedia = parsed.numberOfMedia;
+          if (!showOmni && loadedModel === 'gemini-omni-generate-preview') {
+            loadedModel = 'veo-3.1-generate-001';
+            loadedNumMedia = 4;
+          }
+          savedState = {
+            ...this.initialState,
+            ...parsed,
+            model: loadedModel,
+            numberOfMedia: loadedNumMedia,
+          };
         }
       } catch (e) {
         console.error('Failed to parse saved video state from localStorage', e);

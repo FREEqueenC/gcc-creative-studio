@@ -87,7 +87,7 @@ export class VideoStateService {
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved) {
           const parsed = JSON.parse(saved);
-          if (parsed && typeof parsed === 'object') {
+          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
             let loadedModel = parsed.model ?? this.initialState.model;
             let loadedNumMedia =
               parsed.numberOfMedia ?? this.initialState.numberOfMedia;
@@ -139,7 +139,10 @@ export class VideoStateService {
   }
 
   resetState() {
-    this.state.next({...this.initialState});
+    this.state.next({
+      ...this.initialState,
+      referenceImages: [],
+    });
     if (typeof localStorage !== 'undefined') {
       try {
         localStorage.removeItem(STORAGE_KEY);

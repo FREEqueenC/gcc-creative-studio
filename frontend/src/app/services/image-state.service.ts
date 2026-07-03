@@ -70,7 +70,7 @@ export class ImageStateService {
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved) {
           const parsed = JSON.parse(saved);
-          if (parsed && typeof parsed === 'object') {
+          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
             savedState = {...this.initialState, ...parsed};
           }
         }

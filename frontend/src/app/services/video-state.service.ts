@@ -17,7 +17,6 @@
 import {Injectable} from '@angular/core';
 import {BehaviorSubject, Observable} from 'rxjs';
 
-import {SettingsService} from './settings.service';
 import {
   ReferenceImage,
   ReferenceVideo,
@@ -54,18 +53,16 @@ export class VideoStateService {
   private state: BehaviorSubject<VideoState>;
   state$: Observable<VideoState>;
 
-  constructor(private settingsService: SettingsService) {
-    const showOmni = this.settingsService.getShowGeminiOmni();
-
+  constructor() {
     this.initialState = {
       prompt: '',
       aspectRatio: '16:9',
       resolution: '1K',
-      model: showOmni ? 'gemini-omni-generate-preview' : 'veo-3.1-generate-001',
+      model: 'gemini-omni-flash-preview',
       style: null,
       colorAndTone: null,
       lighting: null,
-      numberOfMedia: showOmni ? 1 : 4,
+      numberOfMedia: 1,
       durationSeconds: 8,
       composition: null,
       generateAudio: true,

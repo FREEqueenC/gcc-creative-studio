@@ -16,13 +16,12 @@
 
 export const environment = {
   firebase: {
-    apiKey: '',
-    authDomain: '',
-    projectId: '',
-    storageBucket: '',
-    messagingSenderId: '',
-    appId: '',
-    measurementId: '',
+    apiKey: "AIzaSyAFXyJn3gzt99HDACrBJavMnQ2hzxzOYSc",
+    authDomain: "gentle-scene-485705-n4.firebaseapp.com",
+    projectId: "gentle-scene-485705-n4",
+    storageBucket: "gentle-scene-485705-n4.firebasestorage.app",
+    messagingSenderId: "766520697417",
+    appId: "1:766520697417:web:b2ca7bf0bf195efff91598",
   },
   production: true,
   isLocal: false,

@@ -21,12 +21,20 @@ describe('ImageStateService', () => {
   let service: ImageStateService;
 
   beforeEach(() => {
-    localStorage.clear();
+    try {
+      localStorage.removeItem('image_state');
+    } catch (e) {
+      /* ignore */
+    }
     TestBed.configureTestingModule({});
   });
 
   afterEach(() => {
-    localStorage.clear();
+    try {
+      localStorage.removeItem('image_state');
+    } catch (e) {
+      /* ignore */
+    }
   });
 
   it('should be created', () => {
@@ -123,7 +131,9 @@ describe('ImageStateService', () => {
 
   it('should not crash if localStorage.removeItem throws an error during resetState', () => {
     service = TestBed.inject(ImageStateService);
-    spyOn(localStorage, 'removeItem').and.throwError('SecurityError');
+    const removeSpy = spyOn(localStorage, 'removeItem').and.throwError(
+      'SecurityError',
+    );
     const consoleSpy = spyOn(console, 'error');
     expect(() => {
       service.resetState();
@@ -133,5 +143,6 @@ describe('ImageStateService', () => {
       'Failed to remove image state from localStorage',
       jasmine.any(Error),
     );
+    removeSpy.and.stub();
   });
 });

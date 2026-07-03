@@ -23,13 +23,21 @@ describe('VideoStateService', () => {
   let settingsServiceSpy: jasmine.SpyObj<SettingsService>;
 
   beforeEach(() => {
-    localStorage.clear();
+    try {
+      localStorage.removeItem('video_state');
+    } catch (e) {
+      /* ignore */
+    }
     const spy = jasmine.createSpyObj('SettingsService', ['getShowGeminiOmni']);
     settingsServiceSpy = spy;
   });
 
   afterEach(() => {
-    localStorage.clear();
+    try {
+      localStorage.removeItem('video_state');
+    } catch (e) {
+      /* ignore */
+    }
   });
 
   function initService() {
@@ -187,7 +195,9 @@ describe('VideoStateService', () => {
   it('should not crash if localStorage.removeItem throws an error during resetState', () => {
     settingsServiceSpy.getShowGeminiOmni.and.returnValue(false);
     initService();
-    spyOn(localStorage, 'removeItem').and.throwError('SecurityError');
+    const removeSpy = spyOn(localStorage, 'removeItem').and.throwError(
+      'SecurityError',
+    );
     const consoleSpy = spyOn(console, 'error');
     expect(() => {
       service.resetState();
@@ -197,6 +207,7 @@ describe('VideoStateService', () => {
       'Failed to remove video state from localStorage',
       jasmine.any(Error),
     );
+    removeSpy.and.stub();
   });
 
   it('should fallback to default video model if saved state contains Gemini Omni but Gemini Omni is disabled', () => {

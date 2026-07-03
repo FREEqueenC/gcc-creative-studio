@@ -100,6 +100,9 @@ export class VideoStateService {
               ...parsed,
               model: loadedModel,
               numberOfMedia: loadedNumMedia,
+              referenceVideo: null,
+              referenceAudio: null,
+              referenceImages: [],
             };
           }
         }
@@ -121,12 +124,10 @@ export class VideoStateService {
     if (typeof localStorage !== 'undefined') {
       try {
         // Don't save reference files to localStorage
-        const {
-          referenceVideo: _referenceVideo,
-          referenceAudio: _referenceAudio,
-          referenceImages: _referenceImages,
-          ...partialState
-        } = updated;
+        const partialState: Partial<VideoState> = {...updated};
+        delete partialState.referenceVideo;
+        delete partialState.referenceAudio;
+        delete partialState.referenceImages;
         localStorage.setItem(STORAGE_KEY, JSON.stringify(partialState));
       } catch (e) {
         console.error('Failed to save video state to localStorage', e);

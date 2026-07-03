@@ -132,9 +132,13 @@ describe('VideoStateService', () => {
 
     service.updateState({
       prompt: 'video with references',
-      referenceImages: [{id: 'img1', url: 'http://example.com/img.png'} as any],
-      referenceVideo: {id: 'vid1'} as any,
-      referenceAudio: {id: 'aud1'} as any,
+      referenceImages: [{previewUrl: 'http://example.com/img.png'}],
+      referenceVideo: {
+        id: 1,
+        type: 'source_asset',
+        previewUrl: 'http://example.com/vid.mp4',
+      },
+      referenceAudio: {id: 1, type: 'source_asset', name: 'audio.mp3'},
     });
 
     const state = service.getState();

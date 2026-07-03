@@ -122,9 +122,9 @@ export class VideoStateService {
       try {
         // Don't save reference files to localStorage
         const {
-          referenceVideo,
-          referenceAudio,
-          referenceImages,
+          referenceVideo: _referenceVideo,
+          referenceAudio: _referenceAudio,
+          referenceImages: _referenceImages,
           ...partialState
         } = updated;
         localStorage.setItem(STORAGE_KEY, JSON.stringify(partialState));

@@ -23,6 +23,8 @@ import {
   ReferenceAudio,
 } from '../common/models/search.model';
 
+const STORAGE_KEY = 'video_state';
+
 interface VideoState {
   prompt: string;
   aspectRatio: string;
@@ -76,12 +78,58 @@ export class VideoStateService {
       referenceAudio: null,
     };
 
-    this.state = new BehaviorSubject<VideoState>(this.initialState);
+    let savedState: VideoState | null = null;
+    if (typeof localStorage !== 'undefined') {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+            let loadedModel = parsed.model ?? this.initialState.model;
+            let loadedNumMedia =
+              parsed.numberOfMedia ?? this.initialState.numberOfMedia;
+            if (!showOmni && loadedModel === 'gemini-omni-generate-preview') {
+              loadedModel = 'veo-3.1-generate-001';
+              loadedNumMedia = 4;
+            }
+            savedState = {
+              ...this.initialState,
+              ...parsed,
+              model: loadedModel,
+              numberOfMedia: loadedNumMedia,
+              referenceVideo: null,
+              referenceAudio: null,
+              referenceImages: [],
+            };
+          }
+        }
+      } catch (e) {
+        console.error('Failed to parse saved video state from localStorage', e);
+      }
+    }
+    if (savedState) {
+      this.state = new BehaviorSubject<VideoState>(savedState);
+    } else {
+      this.state = new BehaviorSubject<VideoState>({...this.initialState});
+    }
     this.state$ = this.state.asObservable();
   }
 
   updateState(newState: Partial<VideoState>) {
-    this.state.next({...this.state.value, ...newState});
+    const updated = {...this.state.value, ...newState};
+    this.state.next(updated);
+    if (typeof localStorage !== 'undefined') {
+      try {
+        // Don't save reference files to localStorage
+        const partialState: Partial<VideoState> = {...updated};
+        delete partialState.referenceVideo;
+        delete partialState.referenceAudio;
+        delete partialState.referenceImages;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(partialState));
+      } catch (e) {
+        console.error('Failed to save video state to localStorage', e);
+      }
+    }
   }
 
   getState(): VideoState {
@@ -89,6 +137,16 @@ export class VideoStateService {
   }
 
   resetState() {
-    this.state.next(this.initialState);
+    this.state.next({
+      ...this.initialState,
+      referenceImages: [],
+    });
+    if (typeof localStorage !== 'undefined') {
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch (e) {
+        console.error('Failed to remove video state from localStorage', e);
+      }
+    }
   }
 }

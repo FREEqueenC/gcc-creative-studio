@@ -87,8 +87,9 @@ export class VideoStateService {
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved) {
           const parsed = JSON.parse(saved);
-          let loadedModel = parsed.model;
-          let loadedNumMedia = parsed.numberOfMedia;
+          let loadedModel = parsed.model ?? this.initialState.model;
+          let loadedNumMedia =
+            parsed.numberOfMedia ?? this.initialState.numberOfMedia;
           if (!showOmni && loadedModel === 'gemini-omni-generate-preview') {
             loadedModel = 'veo-3.1-generate-001';
             loadedNumMedia = 4;
@@ -107,7 +108,7 @@ export class VideoStateService {
     if (savedState) {
       this.state = new BehaviorSubject<VideoState>(savedState);
     } else {
-      this.state = new BehaviorSubject<VideoState>(this.initialState);
+      this.state = new BehaviorSubject<VideoState>({...this.initialState});
     }
     this.state$ = this.state.asObservable();
   }
@@ -134,7 +135,7 @@ export class VideoStateService {
   }
 
   resetState() {
-    this.state.next(this.initialState);
+    this.state.next({...this.initialState});
     if (typeof localStorage !== 'undefined') {
       try {
         localStorage.removeItem(STORAGE_KEY);

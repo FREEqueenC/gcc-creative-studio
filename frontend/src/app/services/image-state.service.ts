@@ -79,7 +79,7 @@ export class ImageStateService {
     if (savedState) {
       this.state = new BehaviorSubject<ImageState>(savedState);
     } else {
-      this.state = new BehaviorSubject<ImageState>(this.initialState);
+      this.state = new BehaviorSubject<ImageState>({...this.initialState});
     }
     this.state$ = this.state.asObservable();
   }
@@ -101,7 +101,7 @@ export class ImageStateService {
   }
 
   resetState() {
-    this.state.next(this.initialState);
+    this.state.next({...this.initialState});
     if (typeof localStorage !== 'undefined') {
       try {
         localStorage.removeItem(STORAGE_KEY);

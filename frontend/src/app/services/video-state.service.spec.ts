@@ -123,4 +123,73 @@ describe('VideoStateService', () => {
     expect(state.prompt).toBe('');
     expect(state.aspectRatio).toBe('16:9');
   });
+
+  it('should omit referenceVideo, referenceAudio, and referenceImages when saving state to localStorage', () => {
+    settingsServiceSpy.getShowGeminiOmni.and.returnValue(false);
+    initService();
+
+    service.updateState({
+      prompt: 'video with references',
+      referenceImages: [{id: 'img1', url: 'http://example.com/img.png'} as any],
+      referenceVideo: {id: 'vid1'} as any,
+      referenceAudio: {id: 'aud1'} as any,
+    });
+
+    const state = service.getState();
+    expect(state.referenceImages.length).toBe(1);
+    expect(state.referenceVideo).toBeTruthy();
+    expect(state.referenceAudio).toBeTruthy();
+
+    const saved = localStorage.getItem('video_state');
+    expect(saved).toBeTruthy();
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      expect(parsed.prompt).toBe('video with references');
+      expect(parsed.referenceImages).toBeUndefined();
+      expect(parsed.referenceVideo).toBeUndefined();
+      expect(parsed.referenceAudio).toBeUndefined();
+    }
+  });
+
+  it('should not crash if localStorage.getItem throws an error during initialization', () => {
+    settingsServiceSpy.getShowGeminiOmni.and.returnValue(false);
+    spyOn(localStorage, 'getItem').and.throwError('SecurityError');
+    const consoleSpy = spyOn(console, 'error');
+    initService();
+    expect(service.getState().prompt).toBe('');
+    expect(consoleSpy).toHaveBeenCalledWith(
+      'Failed to parse saved video state from localStorage',
+      jasmine.any(Error),
+    );
+  });
+
+  it('should not crash if localStorage.setItem throws an error during updateState', () => {
+    settingsServiceSpy.getShowGeminiOmni.and.returnValue(false);
+    initService();
+    spyOn(localStorage, 'setItem').and.throwError('QuotaExceededError');
+    const consoleSpy = spyOn(console, 'error');
+    expect(() => {
+      service.updateState({prompt: 'quota error prompt'});
+    }).not.toThrow();
+    expect(service.getState().prompt).toBe('quota error prompt');
+    expect(consoleSpy).toHaveBeenCalledWith(
+      'Failed to save video state to localStorage',
+      jasmine.any(Error),
+    );
+  });
+
+  it('should not crash if localStorage.removeItem throws an error during resetState', () => {
+    settingsServiceSpy.getShowGeminiOmni.and.returnValue(false);
+    initService();
+    spyOn(localStorage, 'removeItem').and.throwError('SecurityError');
+    const consoleSpy = spyOn(console, 'error');
+    expect(() => {
+      service.resetState();
+    }).not.toThrow();
+    expect(service.getState().prompt).toBe('');
+    expect(consoleSpy).toHaveBeenCalledWith(
+      'Failed to remove video state from localStorage',
+      jasmine.any(Error),
+    );
+  });
 });

@@ -43,17 +43,14 @@ export interface ImageState {
 export class ImageStateService {
   constructor() {
     if (typeof localStorage !== 'undefined') {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        try {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
           const parsed = JSON.parse(saved);
           this.state.next({...this.initialState, ...parsed});
-        } catch (e) {
-          console.error(
-            'Failed to parse saved image state from localStorage',
-            e,
-          );
         }
+      } catch (e) {
+        console.error('Failed to load saved image state from localStorage', e);
       }
     }
   }
@@ -83,7 +80,11 @@ export class ImageStateService {
     const updated = {...this.state.value, ...newState};
     this.state.next(updated);
     if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      } catch (e) {
+        console.error('Failed to save image state to localStorage', e);
+      }
     }
   }
 
@@ -94,7 +95,11 @@ export class ImageStateService {
   resetState() {
     this.state.next(this.initialState);
     if (typeof localStorage !== 'undefined') {
-      localStorage.removeItem(STORAGE_KEY);
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch (e) {
+        console.error('Failed to remove image state from localStorage', e);
+      }
     }
   }
 }

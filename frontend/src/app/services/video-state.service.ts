@@ -83,17 +83,14 @@ export class VideoStateService {
 
     let savedState: VideoState | null = null;
     if (typeof localStorage !== 'undefined') {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        try {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
           const parsed = JSON.parse(saved);
           savedState = {...this.initialState, ...parsed};
-        } catch (e) {
-          console.error(
-            'Failed to parse saved video state from localStorage',
-            e,
-          );
         }
+      } catch (e) {
+        console.error('Failed to parse saved video state from localStorage', e);
       }
     }
     if (savedState) {
@@ -108,7 +105,16 @@ export class VideoStateService {
     const updated = {...this.state.value, ...newState};
     this.state.next(updated);
     if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      try {
+        const partialState: Partial<VideoState> = {...updated};
+        // Don't save reference files to localStorage
+        delete partialState.referenceVideo;
+        delete partialState.referenceAudio;
+        delete partialState.referenceImages;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(partialState));
+      } catch (e) {
+        console.error('Failed to save video state to localStorage', e);
+      }
     }
   }
 
@@ -119,7 +125,11 @@ export class VideoStateService {
   resetState() {
     this.state.next(this.initialState);
     if (typeof localStorage !== 'undefined') {
-      localStorage.removeItem(STORAGE_KEY);
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch (e) {
+        console.error('Failed to remove video state from localStorage', e);
+      }
     }
   }
 }

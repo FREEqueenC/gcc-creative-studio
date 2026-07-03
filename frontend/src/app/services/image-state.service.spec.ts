@@ -98,4 +98,46 @@ describe('ImageStateService', () => {
     expect(state.prompt).toBe('');
     expect(state.aspectRatio).toBe('1:1');
   });
+
+  it('should not crash if localStorage.getItem throws an error during initialization', () => {
+    spyOn(localStorage, 'getItem').and.throwError('SecurityError');
+    const consoleSpy = spyOn(console, 'error');
+    TestBed.configureTestingModule({});
+    service = TestBed.inject(ImageStateService);
+    expect(service.getState().prompt).toBe('');
+    expect(consoleSpy).toHaveBeenCalledWith(
+      'Failed to load saved image state from localStorage',
+      jasmine.any(Error),
+    );
+  });
+
+  it('should not crash if localStorage.setItem throws an error during updateState', () => {
+    TestBed.configureTestingModule({});
+    service = TestBed.inject(ImageStateService);
+    spyOn(localStorage, 'setItem').and.throwError('QuotaExceededError');
+    const consoleSpy = spyOn(console, 'error');
+    expect(() => {
+      service.updateState({prompt: 'prompt exceeding quota'});
+    }).not.toThrow();
+    expect(service.getState().prompt).toBe('prompt exceeding quota');
+    expect(consoleSpy).toHaveBeenCalledWith(
+      'Failed to save image state to localStorage',
+      jasmine.any(Error),
+    );
+  });
+
+  it('should not crash if localStorage.removeItem throws an error during resetState', () => {
+    TestBed.configureTestingModule({});
+    service = TestBed.inject(ImageStateService);
+    spyOn(localStorage, 'removeItem').and.throwError('SecurityError');
+    const consoleSpy = spyOn(console, 'error');
+    expect(() => {
+      service.resetState();
+    }).not.toThrow();
+    expect(service.getState().prompt).toBe('');
+    expect(consoleSpy).toHaveBeenCalledWith(
+      'Failed to remove image state from localStorage',
+      jasmine.any(Error),
+    );
+  });
 });

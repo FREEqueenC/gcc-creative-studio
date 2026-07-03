@@ -118,10 +118,12 @@ describe('VideoStateService', () => {
   it('should fallback to default state and not crash if localStorage contains invalid JSON', () => {
     settingsServiceSpy.getShowGeminiOmni.and.returnValue(false);
     localStorage.setItem('video_state', 'invalid { json');
+    const consoleSpy = spyOn(console, 'error');
     initService();
     const state = service.getState();
     expect(state.prompt).toBe('');
     expect(state.aspectRatio).toBe('16:9');
+    expect(consoleSpy).toHaveBeenCalled();
   });
 
   it('should omit referenceVideo, referenceAudio, and referenceImages when saving state to localStorage', () => {

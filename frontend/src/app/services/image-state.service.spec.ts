@@ -88,10 +88,12 @@ describe('ImageStateService', () => {
 
   it('should fallback to default state and not crash if localStorage contains invalid JSON', () => {
     localStorage.setItem('image_state', 'invalid { json');
+    const consoleSpy = spyOn(console, 'error');
     service = TestBed.inject(ImageStateService);
     const state = service.getState();
     expect(state.prompt).toBe('');
     expect(state.aspectRatio).toBe('1:1');
+    expect(consoleSpy).toHaveBeenCalled();
   });
 
   it('should not crash if localStorage.getItem throws an error during initialization', () => {

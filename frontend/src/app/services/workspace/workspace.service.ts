@@ -47,4 +47,11 @@ export class WorkspaceService {
       role,
     });
   }
+
+  updateWorkspace(
+    workspaceId: number,
+    data: {name?: string; scope?: string},
+  ): Observable<Workspace> {
+    return this.http.patch<Workspace>(`${this.apiUrl}/${workspaceId}`, data);
+  }
 }

@@ -359,6 +359,56 @@ export class WorkspaceSwitcherComponent implements OnInit {
       });
   }
 
+  toggleActiveWorkspaceScope(event: MouseEvent): void {
+    event.stopPropagation();
+    if (!this.activeWorkspace) return;
+
+    const newScope = this.activeWorkspace.scope === WorkspaceScope.PUBLIC 
+      ? WorkspaceScope.PRIVATE 
+      : WorkspaceScope.PUBLIC;
+
+    const targetAction = newScope === WorkspaceScope.PUBLIC ? 'Public' : 'Private';
+
+    const confirmationDialogRef = this.dialog.open(
+      ConfirmationDialogComponent,
+      {
+        data: {
+          title: `Make Workspace ${targetAction}?`,
+          message: `Are you sure you want to make this workspace ${targetAction.toLowerCase()}? ${
+            newScope === WorkspaceScope.PUBLIC 
+              ? 'Any registered user will be able to see and access this workspace and its media items.' 
+              : 'Only invited members will be able to see and access this workspace.'
+          }`,
+        },
+      },
+    );
+
+    confirmationDialogRef.afterClosed().subscribe(confirmed => {
+      if (confirmed && this.activeWorkspaceId) {
+        this.workspaceService
+          .updateWorkspace(this.activeWorkspaceId, { scope: newScope })
+          .subscribe({
+            next: () => {
+              handleSuccessSnackbar(
+                this.snackBar,
+                `Workspace is now ${targetAction.toLowerCase()}!`,
+              );
+              this.activeWorkspace!.scope = newScope;
+              const found = this.workspaces.find(w => w.id === this.activeWorkspaceId);
+              if (found) found.scope = newScope;
+            },
+            error: error => {
+              handleErrorSnackbar(
+                this.snackBar,
+                error,
+                `Failed to change workspace scope`,
+              );
+            }
+          });
+      }
+    });
+  }
+
   openFeedbackForm(event: MouseEvent): void {
     event.stopPropagation();
     if (this.isBrowser) {

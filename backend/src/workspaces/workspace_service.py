@@ -142,3 +142,38 @@ class WorkspaceService:
             all_workspaces_map[w.id] = w
 
         return list(all_workspaces_map.values())
+
+    async def update_workspace(
+        self,
+        workspace_id: int,
+        name: str | None,
+        scope: WorkspaceScopeEnum | None,
+        current_user: UserModel,
+    ) -> WorkspaceModel | None:
+        """Updates a workspace's name and/or scope. Restrict to owner or system admin."""
+        workspace = await self.workspace_repo.get_by_id(workspace_id)
+        if not workspace:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Workspace not found.",
+            )
+
+        is_system_admin = UserRoleEnum.ADMIN in current_user.roles
+        is_workspace_owner = current_user.id == workspace.owner_id
+
+        if not (is_system_admin or is_workspace_owner):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only the workspace owner or a system admin can update this workspace.",
+            )
+
+        update_data = {}
+        if name is not None:
+            update_data["name"] = name
+        if scope is not None:
+            update_data["scope"] = scope.value
+
+        if not update_data:
+            return workspace
+
+        return await self.workspace_repo.update(workspace_id, update_data)

@@ -1,0 +1,39 @@
+[debug] [2026-07-02T12:37:04.134Z] ----------------------------------------------------------------------
+[debug] [2026-07-02T12:37:04.142Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\Ashle\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js apps:list --project=gentle-scene-485705-n4 --json
+[debug] [2026-07-02T12:37:04.142Z] CLI Version:   15.8.0
+[debug] [2026-07-02T12:37:04.143Z] Platform:      win32
+[debug] [2026-07-02T12:37:04.143Z] Node Version:  v24.13.0
+[debug] [2026-07-02T12:37:04.144Z] Time:          Thu Jul 02 2026 07:37:04 GMT-0500 (Central Daylight Time)
+[debug] [2026-07-02T12:37:04.144Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-07-02T12:37:04.319Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-02T12:37:04.320Z] > authorizing via signed-in user (ashleighwalker@anwfoundations.com)
+[debug] [2026-07-02T12:37:04.327Z] Checked if tokens are valid: false, expires at: 1782434813762
+[debug] [2026-07-02T12:37:04.327Z] Checked if tokens are valid: false, expires at: 1782434813762
+[debug] [2026-07-02T12:37:04.327Z] > refreshing access token with scopes: []
+[debug] [2026-07-02T12:37:04.330Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-07-02T12:37:04.331Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-02T12:37:04.542Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 400
+[debug] [2026-07-02T12:37:04.543Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[error] Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[error] Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[debug] [2026-07-02T12:37:04.543Z] Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[debug] [2026-07-02T12:37:04.546Z] FirebaseError: Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+    at invalidCredentialError (C:\Users\Ashle\AppData\Roaming\npm\node_modules\firebase-tools\lib\auth.js:177:12)
+    at refreshTokens (C:\Users\Ashle\AppData\Roaming\npm\node_modules\firebase-tools\lib\auth.js:590:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getAccessToken (C:\Users\Ashle\AppData\Roaming\npm\node_modules\firebase-tools\lib\apiv2.js:49:18)
+    at async Client.addAuthHeader (C:\Users\Ashle\AppData\Roaming\npm\node_modules\firebase-tools\lib\apiv2.js:179:21)
+    at async Client.request (C:\Users\Ashle\AppData\Roaming\npm\node_modules\firebase-tools\lib\apiv2.js:126:34)
+    at async listFirebaseApps (C:\Users\Ashle\AppData\Roaming\npm\node_modules\firebase-tools\lib\management\apps.js:363:30)
+    at async Command.actionFn (C:\Users\Ashle\AppData\Roaming\npm\node_modules\firebase-tools\lib\commands\apps-list.js:43:16)
+[error] 
+[error] Error: Failed to list Firebase apps. See firebase-debug.log for more info.

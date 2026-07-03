@@ -59,7 +59,49 @@ class UserService:
         user_data["roles"] = [UserRoleEnum.USER]
 
         # 3. Call the repository's create() method
-        return await self.user_repo.create(user_data)
+        new_user = await self.user_repo.create(user_data)
+
+        # 4. Provision a default private workspace for the new user JIT
+        try:
+            from src.workspaces.repository.workspace_repository import WorkspaceRepository
+            from src.workspaces.schema.workspace_model import (
+                WorkspaceModel,
+                WorkspaceMember,
+                WorkspaceRoleEnum,
+                WorkspaceScopeEnum,
+            )
+
+            workspace_repo = WorkspaceRepository(db=self.user_repo.db)
+            
+            # Format workspace name: e.g. "Ashleigh's Workspace"
+            first_name = (name or email.split("@")[0]).strip()
+            workspace_name = f"{first_name}'s Workspace"
+
+            personal_workspace = WorkspaceModel(
+                name=workspace_name,
+                owner_id=new_user.id,
+                scope=WorkspaceScopeEnum.PRIVATE,
+            )
+
+            owner_as_member = WorkspaceMember(
+                user_id=new_user.id,
+                email=new_user.email,
+                role=WorkspaceRoleEnum.OWNER,
+            )
+
+            await workspace_repo.create(
+                personal_workspace,
+                initial_members=[owner_as_member],
+            )
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(
+                f"Failed to create default private workspace for user {email}: {e}",
+                exc_info=True,
+            )
+
+        return new_user
 
     async def get_user_by_id(self, user_id: int) -> UserModel | None:
         """Finds a single user by their ID."""

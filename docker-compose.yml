@@ -19,7 +19,7 @@ services:
       dockerfile: Dockerfile
     container_name: creative-studio-backend
     ports:
-      - "9000:8080"
+      - "8080:8080"
     restart: unless-stopped
     depends_on:
       - postgres

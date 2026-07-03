@@ -345,8 +345,9 @@ table {
 }
 
 app-workspace-switcher .top-left-container {
-  bottom: 2.5vh;
-  left: 10vw;
+  bottom: auto;
+  top: 2.5vh;
+  left: 5vw;
   display: block;
 }
 

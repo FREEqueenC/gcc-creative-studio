@@ -91,3 +91,39 @@ async def invite_user(
             detail="Workspace or user to invite not found.",
         )
     return updated_workspace
+
+
+from pydantic import BaseModel, Field
+from src.workspaces.schema.workspace_model import WorkspaceScopeEnum
+
+class UpdateWorkspaceDto(BaseModel):
+    name: str | None = Field(default=None)
+    scope: WorkspaceScopeEnum | None = Field(default=None)
+
+
+@router.patch(
+    "/{workspace_id}",
+    response_model=WorkspaceModel,
+    summary="Update Workspace Details",
+)
+async def update_workspace(
+    workspace_id: int,
+    update_dto: UpdateWorkspaceDto,
+    current_user: UserModel = Depends(get_current_user),
+    workspace_service: WorkspaceService = Depends(),
+):
+    """Updates the workspace name and/or scope.
+    Only the owner or a system admin is allowed to perform this operation.
+    """
+    updated = await workspace_service.update_workspace(
+        workspace_id=workspace_id,
+        name=update_dto.name,
+        scope=update_dto.scope,
+        current_user=current_user,
+    )
+    if not updated:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Workspace not found.",
+        )
+    return updated

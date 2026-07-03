@@ -70,7 +70,9 @@ export class ImageStateService {
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved) {
           const parsed = JSON.parse(saved);
-          savedState = {...this.initialState, ...parsed};
+          if (parsed && typeof parsed === 'object') {
+            savedState = {...this.initialState, ...parsed};
+          }
         }
       } catch (e) {
         console.error('Failed to load saved image state from localStorage', e);

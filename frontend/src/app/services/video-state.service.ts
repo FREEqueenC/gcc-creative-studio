@@ -87,19 +87,21 @@ export class VideoStateService {
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved) {
           const parsed = JSON.parse(saved);
-          let loadedModel = parsed.model ?? this.initialState.model;
-          let loadedNumMedia =
-            parsed.numberOfMedia ?? this.initialState.numberOfMedia;
-          if (!showOmni && loadedModel === 'gemini-omni-generate-preview') {
-            loadedModel = 'veo-3.1-generate-001';
-            loadedNumMedia = 4;
+          if (parsed && typeof parsed === 'object') {
+            let loadedModel = parsed.model ?? this.initialState.model;
+            let loadedNumMedia =
+              parsed.numberOfMedia ?? this.initialState.numberOfMedia;
+            if (!showOmni && loadedModel === 'gemini-omni-generate-preview') {
+              loadedModel = 'veo-3.1-generate-001';
+              loadedNumMedia = 4;
+            }
+            savedState = {
+              ...this.initialState,
+              ...parsed,
+              model: loadedModel,
+              numberOfMedia: loadedNumMedia,
+            };
           }
-          savedState = {
-            ...this.initialState,
-            ...parsed,
-            model: loadedModel,
-            numberOfMedia: loadedNumMedia,
-          };
         }
       } catch (e) {
         console.error('Failed to parse saved video state from localStorage', e);
@@ -118,11 +120,13 @@ export class VideoStateService {
     this.state.next(updated);
     if (typeof localStorage !== 'undefined') {
       try {
-        const partialState: Partial<VideoState> = {...updated};
         // Don't save reference files to localStorage
-        delete partialState.referenceVideo;
-        delete partialState.referenceAudio;
-        delete partialState.referenceImages;
+        const {
+          referenceVideo,
+          referenceAudio,
+          referenceImages,
+          ...partialState
+        } = updated;
         localStorage.setItem(STORAGE_KEY, JSON.stringify(partialState));
       } catch (e) {
         console.error('Failed to save video state to localStorage', e);

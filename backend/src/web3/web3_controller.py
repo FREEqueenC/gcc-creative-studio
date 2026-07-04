@@ -70,8 +70,9 @@ async def prepare_mint(
             detail="Invalid chain. Supported values are 'base' or 'flow'."
         )
 
-    # Metadata URL points to our public metadata resolution route
-    metadata_url = f"/api/web3/metadata/{request.item_id}"
+    # Attempt to pin media and metadata to IPFS/Pinata if configured, else fall back to local dynamic hosting.
+    ipfs_url = await service.upload_to_ipfs(item_id=request.item_id, current_user=current_user)
+    metadata_url = ipfs_url if ipfs_url else f"/api/web3/metadata/{request.item_id}"
 
     return PrepareMintResponse(
         contract_address=contract_address,

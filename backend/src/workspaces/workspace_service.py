@@ -25,6 +25,7 @@ from src.workspaces.schema.workspace_model import (
     WorkspaceMember,
     WorkspaceModel,
     WorkspaceRoleEnum,
+    WorkspaceScopeEnum,
 )
 
 

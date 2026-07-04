@@ -92,8 +92,7 @@ def test_generate_thumbnail_video_success():
         mock_run.return_value.returncode = 0
 
         res = generate_thumbnail("/tmp/video.mp4")
-
-        assert res == "/tmp/thumbnail_video.png"
+        assert res.replace("\\", "/") == "/tmp/thumbnail_video.png"
         mock_run.assert_called_once()
 
 

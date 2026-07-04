@@ -101,6 +101,9 @@ class ConfigService(BaseSettings):
     )
     BACKEND_SERVICE_ACCOUNT_EMAIL: str = ""
 
+    # --- Pinata IPFS ---
+    PINATA_JWT: str = ""
+
     @model_validator(mode="before")
     @classmethod
     def get_default_project_id(cls, values: Any) -> Any:

@@ -51,3 +51,17 @@ class RandomPromptRequestDto(BaseDto):
 
 class RewrittenOrRandomPromptResponse(BaseDto):
     prompt: str
+
+
+class ChatMessageDto(BaseDto):
+    role: str  # "user" or "model"
+    content: str
+
+
+class DocsChatRequestDto(BaseDto):
+    message: str
+    history: list[ChatMessageDto] = []
+
+
+class DocsChatResponseDto(BaseDto):
+    response: str

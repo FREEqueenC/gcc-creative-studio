@@ -208,3 +208,20 @@ def test_aggregate_brand_info_multiple_items(gemini_service):
     assert res is not None
     assert "#FF0000" in res.color_palette
     assert "#00FF00" in res.color_palette
+
+
+def test_docs_agent_chat_success(gemini_service):
+    mock_response = MagicMock()
+    mock_response.text = "Here is how to set up Docker..."
+    gemini_service.client.models.generate_content.return_value = mock_response
+
+    class MockMessage:
+        role = "user"
+        content = "How to run local?"
+
+    res = gemini_service.docs_agent_chat(
+        message="How to run local?",
+        history=[MockMessage()]
+    )
+    assert res == "Here is how to set up Docker..."
+    gemini_service.client.models.generate_content.assert_called_once()

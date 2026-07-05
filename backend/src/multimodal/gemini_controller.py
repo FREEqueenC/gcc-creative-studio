@@ -20,6 +20,8 @@ from src.multimodal.dto.gemini_prompt_enhancer_dto import (
     RandomPromptRequestDto,
     RewritePromptRequestDto,
     RewrittenOrRandomPromptResponse,
+    DocsChatRequestDto,
+    DocsChatResponseDto,
 )
 from src.multimodal.gemini_service import GeminiService
 from src.users.user_model import UserRoleEnum
@@ -88,4 +90,29 @@ async def random_prompt_endpoint(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to generate random prompt from Gemini: {e}",
+        )
+
+
+@router.post(
+    "/docs-chat",
+    response_model=DocsChatResponseDto,
+    summary="Chat with the AI documentation agent",
+)
+async def docs_chat_endpoint(
+    chat_request: DocsChatRequestDto,
+    gemini_service: GeminiService = Depends(),
+):
+    """Provides interactive Q&A capabilities about project guidelines,
+    setup instructions, Flow smart contracts, and Base Mainnet details.
+    """
+    try:
+        reply = gemini_service.docs_agent_chat(
+            message=chat_request.message,
+            history=chat_request.history,
+        )
+        return DocsChatResponseDto(response=reply)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to communicate with Docs Chat Agent: {e}",
         )

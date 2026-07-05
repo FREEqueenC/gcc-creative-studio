@@ -32,9 +32,11 @@ import {WorkflowListComponent} from './workflows/workflow-list/workflow-list.com
 import {WorkbenchComponent} from './workbench/workbench.component';
 import {UpscaleComponent} from './upscale/upscale.component';
 import {UserRolesEnum} from './common/models/user.model';
+import {DocsComponent} from './docs/docs.component';
 
 const routes: Routes = [
   {path: 'login', component: LoginComponent},
+  {path: 'docs', component: DocsComponent, canActivate: [AuthGuardService]},
   {path: '', component: HomeComponent, canActivate: [AuthGuardService]},
   {
     path: 'fun-templates',

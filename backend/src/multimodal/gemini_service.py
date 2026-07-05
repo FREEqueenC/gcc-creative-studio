@@ -500,3 +500,79 @@ class GeminiService:
                 "Failed to aggregate brand info summaries with Gemini: %s", e
             )
             return None
+
+    def docs_agent_chat(self, message: str, history: list[Any]) -> str:
+        """Handles chat conversations with the AI documentation agent, injecting
+
+        the PROJECT_DOCS.md technical instructions into context.
+        """
+        import os
+
+        # Load PROJECT_DOCS.md dynamically
+        docs_path = os.path.join(
+            os.path.dirname(
+                os.path.dirname(
+                    os.path.dirname(os.path.abspath(__file__))
+                )
+            ),
+            "PROJECT_DOCS.md",
+        )
+        docs_content = ""
+        if os.path.exists(docs_path):
+            try:
+                with open(docs_path, "r", encoding="utf-8") as f:
+                    docs_content = f.read()
+            except Exception as e:
+                logger.error(f"Failed to read PROJECT_DOCS.md: {e}")
+        else:
+            logger.warning(f"PROJECT_DOCS.md not found at {docs_path}")
+
+        system_instruction = (
+            "You are the Aetheris X Creative Studio AI Developer Support Agent. "
+            "Your purpose is to assist developers in understanding the codebase, "
+            "architecture, API routes, setup procedures, and Web3 integrations of this studio.\n\n"
+            "Here is the official project documentation to guide your answers:\n"
+            "==================================================\n"
+            f"{docs_content}\n"
+            "==================================================\n\n"
+            "Guidelines:\n"
+            "1. Focus your answers on the context, setup, and technologies in the documentation above.\n"
+            "2. If the user asks about specific contract addresses, refer directly to LEV Token: `0xf61771F3C6c2a59C8C99f7f2Fd04684b7182E340`.\n"
+            "3. If the user asks about reCAPTCHA, refer to the client site key: `6LeRPkAtAAAAAKnaiVVAsifsZcq2mSi6Zi_yKlLe`.\n"
+            "4. Be helpful, concise, technical, and accurate. If you do not know the answer based on the docs or the project, state so clearly."
+        )
+
+        contents = []
+        for msg in history:
+            role = "model" if msg.role in ("assistant", "model") else "user"
+            contents.append(
+                types.Content(
+                    role=role,
+                    parts=[types.Part.from_text(text=msg.content)],
+                )
+            )
+
+        contents.append(
+            types.Content(
+                role="user",
+                parts=[types.Part.from_text(text=message)],
+            )
+        )
+
+        try:
+            response = self.client.models.generate_content(
+                model=self.cfg.GEMINI_MODEL_ID,
+                contents=contents,
+                config=types.GenerateContentConfig(
+                    system_instruction=system_instruction,
+                    temperature=0.2,
+                ),
+            )
+            return (
+                response.text.strip()
+                if response.text
+                else "No response generated."
+            )
+        except Exception as e:
+            logger.error(f"Gemini docs agent chat generation failed: {e}")
+            raise e

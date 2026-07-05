@@ -108,12 +108,14 @@ import {WorkflowListComponent} from './workflows/workflow-list/workflow-list.com
 import {WorkflowStatusPipe} from './workflows/workflow-status.pipe';
 import {UpscaleComponent} from './upscale/upscale.component';
 import {MintDialogComponent} from './components/mint-dialog/mint-dialog.component';
+import {DocsComponent} from './docs/docs.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     HeaderComponent,
     FooterComponent,
+    DocsComponent,
     HomeComponent,
     LoginComponent,
     FunTemplatesComponent,

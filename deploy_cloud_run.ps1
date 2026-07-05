@@ -14,13 +14,16 @@ $SERVICE_NAME = "aetherisx-backend"
 $REGION = "us-central1"
 $DB_CONNECTION_NAME = "${PROJECT_ID}:${REGION}:ai-studio-7ff8410d" # Update this to match your Cloud SQL connection name if using Cloud SQL
 
+$PROJECT_NUMBER = gcloud projects describe $PROJECT_ID --format="value(projectNumber)"
+$SIGNING_SA_EMAIL = "${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
+
 # Read settings from backend/.env if available
 $ENV_VARS = @(
     "ENVIRONMENT=production",
     "GOOGLE_CLOUD_PROJECT=$PROJECT_ID",
     "PROJECT_ID=$PROJECT_ID",
     "GENMEDIA_BUCKET=$PROJECT_ID-cs-development-bucket", # Matches standard deployment bucket names
-    "SIGNING_SA_EMAIL=cs-development-read@$PROJECT_ID.iam.gserviceaccount.com"
+    "SIGNING_SA_EMAIL=$SIGNING_SA_EMAIL"
 )
 
 # Append database settings

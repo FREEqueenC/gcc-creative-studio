@@ -168,6 +168,7 @@ export class ImageCropperDialogComponent implements AfterViewInit, OnDestroy {
           referenceImages[data.index] = {
             ...referenceImages[data.index],
             sourceAssetId: result.id,
+            sourceMediaItem: undefined,
             previewUrl:
               result.presignedUrl || result.presignedThumbnailUrl || previewUrl,
           };
@@ -407,6 +408,49 @@ export class ImageCropperDialogComponent implements AfterViewInit, OnDestroy {
       );
     }
     this.textInputCanvas = null;
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  onDocumentKeydown(event: KeyboardEvent): void {
+    // Only process shortcuts if we are in draw mode and have a drawer
+    if (this.activeMode() !== ImageEditorMode.DRAW || !this.canvasDrawer) {
+      return;
+    }
+
+    const target = event.target as HTMLElement;
+    // Do not trigger undo/redo if the user is typing in an input or text area
+    if (
+      target &&
+      (target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.isContentEditable)
+    ) {
+      return;
+    }
+
+    if (event.ctrlKey || event.metaKey) {
+      if (event.key.toLowerCase() === 'z') {
+        if (event.shiftKey) {
+          // Ctrl + Shift + Z = Redo
+          if (this.canRedo()) {
+            this.redo();
+            event.preventDefault();
+          }
+        } else {
+          // Ctrl + Z = Undo
+          if (this.canUndo()) {
+            this.undo();
+            event.preventDefault();
+          }
+        }
+      } else if (event.key.toLowerCase() === 'y') {
+        // Ctrl + Y = Redo
+        if (this.canRedo()) {
+          this.redo();
+          event.preventDefault();
+        }
+      }
+    }
   }
 
   @HostListener('document:click', ['$event'])

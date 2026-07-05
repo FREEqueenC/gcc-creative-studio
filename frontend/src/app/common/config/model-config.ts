@@ -83,6 +83,36 @@ export const MODEL_CONFIGS: GenerationModelConfig[] = [
     },
   },
   {
+    value: 'gemini-3.1-flash-lite-image',
+    viewValue: 'Nano Banana 2 Lite',
+    type: 'IMAGE',
+    imageSrc: 'assets/images/banana-peel.png',
+    isImage: true,
+    capabilities: {
+      supportedModes: ['Text to Image', 'Ingredients to Image'],
+      maxReferenceImages: 14,
+      supportedAspectRatios: [
+        '1:1',
+        '16:9',
+        '9:16',
+        '3:4',
+        '4:3',
+        '2:3',
+        '3:2',
+        '4:5',
+        '5:4',
+        '21:9',
+        '1:4',
+        '4:1',
+        '1:8',
+        '8:1',
+      ], // All
+      supportedResolutions: ['1K'],
+      supportedDurations: [],
+      supportsGoogleSearch: true,
+    },
+  },
+  {
     value: 'gemini-3-pro-image',
     viewValue: 'Nano Banana Pro',
     type: 'IMAGE',
@@ -193,8 +223,8 @@ export const MODEL_CONFIGS: GenerationModelConfig[] = [
   },
   // --- Video Models ---
   {
-    value: 'gemini-omni-generate-preview',
-    viewValue: 'Gemini Omni \n (Early Access Preview)',
+    value: 'gemini-omni-flash-preview',
+    viewValue: 'Gemini Omni Flash',
     type: 'VIDEO',
     icon: 'layers',
     capabilities: {

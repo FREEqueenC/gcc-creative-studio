@@ -66,7 +66,7 @@ import {
 import {VideoStateService} from '../services/video-state.service';
 import {WorkspaceStateService} from '../services/workspace/workspace-state.service';
 import {GalleryService} from '../gallery/gallery.service';
-import {SettingsService} from '../services/settings.service';
+
 import {
   handleErrorSnackbar,
   handleInfoSnackbar,
@@ -135,7 +135,7 @@ export class VideoComponent implements OnInit, AfterViewInit {
 
   searchRequest: VeoRequest = {
     prompt: '',
-    generationModel: 'veo-3.1-generate-001',
+    generationModel: 'gemini-omni-flash-preview',
     aspectRatio: '16:9',
     numberOfMedia: 4,
     style: null,
@@ -222,24 +222,16 @@ export class VideoComponent implements OnInit, AfterViewInit {
     private workspaceStateService: WorkspaceStateService,
     private sourceAssetService: SourceAssetService,
     private videoStateService: VideoStateService,
-    private settingsService: SettingsService,
+
     @Inject(GalleryService)
     private galleryService: GalleryService,
     @Inject(PLATFORM_ID) private platformId: Object,
   ) {
-    const showOmni = this.settingsService.getShowGeminiOmni();
-    this.generationModels = MODEL_CONFIGS.filter(
-      m =>
-        m.type === 'VIDEO' &&
-        (m.value !== 'gemini-omni-generate-preview' || showOmni),
-    );
-    this.searchRequest.generationModel = showOmni
-      ? 'gemini-omni-generate-preview'
-      : 'veo-3.1-generate-001';
+    this.generationModels = MODEL_CONFIGS.filter(m => m.type === 'VIDEO');
+    this.searchRequest.generationModel = 'gemini-omni-flash-preview';
     this.selectedGenerationModel =
-      this.generationModels.find(
-        m => m.value === 'gemini-omni-generate-preview',
-      )?.viewValue || this.generationModels[0].viewValue;
+      this.generationModels.find(m => m.value === 'gemini-omni-flash-preview')
+        ?.viewValue || this.generationModels[0].viewValue;
 
     this.isBrowser = isPlatformBrowser(this.platformId);
     this.activeVideoJob$ = this.service.activeVideoJob$.pipe(
@@ -337,7 +329,7 @@ export class VideoComponent implements OnInit, AfterViewInit {
     this.searchRequest.colorAndTone = state.colorAndTone;
     this.searchRequest.lighting = state.lighting;
     this.searchRequest.numberOfMedia =
-      state.model === 'gemini-omni-generate-preview' ? 1 : state.numberOfMedia;
+      state.model === 'gemini-omni-flash-preview' ? 1 : state.numberOfMedia;
     this.selectedOutputs.set(this.searchRequest.numberOfMedia || 2);
     this.searchRequest.durationSeconds = state.durationSeconds;
     this.searchRequest.composition = state.composition;
@@ -408,7 +400,7 @@ export class VideoComponent implements OnInit, AfterViewInit {
       this.selectedAspectRatio = landscapeOption.viewValue;
     }
 
-    if (model.value === 'gemini-omni-generate-preview') {
+    if (model.value === 'gemini-omni-flash-preview') {
       this.searchRequest.numberOfMedia = 1;
       this.selectedOutputs.set(1);
     }
@@ -658,7 +650,7 @@ export class VideoComponent implements OnInit, AfterViewInit {
       !this.isConcatenateMode
     ) {
       const omniModel = this.generationModels.find(
-        m => m.value === 'gemini-omni-generate-preview',
+        m => m.value === 'gemini-omni-flash-preview',
       );
       if (omniModel) {
         this.selectModel(omniModel);
@@ -954,7 +946,7 @@ export class VideoComponent implements OnInit, AfterViewInit {
 
       if (isVeo30) {
         const omniModel = this.generationModels.find(
-          m => m.value === 'gemini-omni-generate-preview',
+          m => m.value === 'gemini-omni-flash-preview',
         );
         if (omniModel) {
           this.selectModel(omniModel);
@@ -1444,7 +1436,7 @@ export class VideoComponent implements OnInit, AfterViewInit {
     this.selectedMode.set('Ingredients to Video');
 
     const omniModel = this.generationModels.find(
-      m => m.value === 'gemini-omni-generate-preview',
+      m => m.value === 'gemini-omni-flash-preview',
     );
     if (omniModel) {
       this.selectModel(omniModel);
@@ -1595,7 +1587,7 @@ export class VideoComponent implements OnInit, AfterViewInit {
   private handleOmniModelSwitch(): void {
     if (this.referenceVideo || this.referenceAudio) {
       const omniModel = this.generationModels.find(
-        m => m.value === 'gemini-omni-generate-preview',
+        m => m.value === 'gemini-omni-flash-preview',
       );
       if (omniModel) {
         if (this.searchRequest.generationModel !== omniModel.value) {
@@ -1718,7 +1710,7 @@ export class VideoComponent implements OnInit, AfterViewInit {
       }
 
       const omniModel = this.generationModels.find(
-        m => m.value === 'gemini-omni-generate-preview',
+        m => m.value === 'gemini-omni-flash-preview',
       );
       if (omniModel) {
         if (this.searchRequest.generationModel !== omniModel.value) {

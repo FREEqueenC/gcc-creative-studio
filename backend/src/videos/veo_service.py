@@ -348,33 +348,18 @@ def _process_video_in_background(
                         permanent_thumbnail_gcs_uris = []
                         final_gcs_uris = []
                         raw_data_dict = None
-                        model_name_for_api = None
+                        model_name_for_api = request_dto.generation_model.value
 
                         start_time = time.monotonic()
 
-                        if (
-                            request_dto.generation_model
-                            == GenerationModelEnum.GEMINI_OMNI
-                        ):
+                        if request_dto.generation_model in [
+                            GenerationModelEnum.GEMINI_OMNI,
+                            GenerationModelEnum.GEMINI_OMNI_FLASH_PREVIEW,
+                        ]:
                             worker_logger.info(
                                 "Running Gemini Omni video generation via Interactions API..."
                             )
                             vertex_client = GenAIModelSetup.get_omni_client()
-
-                            # Fetch custom model name from settings
-                            from src.system_settings.repository.system_settings_repository import (
-                                SystemSettingsRepository,
-                            )
-
-                            settings_repo = SystemSettingsRepository(db)
-                            omni_model_setting = await settings_repo.get_by_id(
-                                "gemini_omni_model_name"
-                            )
-                            model_name_for_api = (
-                                omni_model_setting.value
-                                if omni_model_setting is not None
-                                else ""
-                            )
 
                             interaction_id = None
                             thought_signature = None

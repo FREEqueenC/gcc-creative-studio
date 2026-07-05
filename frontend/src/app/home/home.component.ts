@@ -97,7 +97,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   // This object holds the current state of all user selections.
   searchRequest: ImagenRequest = {
     prompt: '',
-    generationModel: 'gemini-3.1-flash-image',
+    generationModel: 'gemini-3.1-flash-lite-image',
     aspectRatio: '1:1',
     numberOfMedia: 4,
     style: null,
@@ -109,7 +109,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     useBrandGuidelines: false,
     enhancePrompt: false,
     googleSearch: false,
-    resolution: '4K',
+    resolution: '1K',
   };
 
   modes = [
@@ -129,8 +129,11 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   generationModels: GenerationModelConfig[] = MODEL_CONFIGS.filter(
     m => m.type === 'IMAGE',
   );
-  selectedGenerationModelObject = this.generationModels[0];
-  selectedGenerationModel = this.generationModels[0].viewValue;
+  selectedGenerationModelObject =
+    this.generationModels.find(
+      m => m.value === 'gemini-3.1-flash-lite-image',
+    ) || this.generationModels[0];
+  selectedGenerationModel = this.selectedGenerationModelObject.viewValue;
   aspectRatioOptions: {
     value: string;
     viewValue: string;
@@ -865,7 +868,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
       negativePrompt: '',
       useBrandGuidelines: false,
       googleSearch: false,
-      resolution: '4K',
+      resolution: '1K',
     };
     this.negativePhrases = [];
     this.referenceImages = [];

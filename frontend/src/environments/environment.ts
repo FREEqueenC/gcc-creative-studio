@@ -25,7 +25,7 @@ export const environment = {
   },
   production: true,
   isLocal: true,
-  backendURL: 'https://freequeenc-gcc-studio.ngrok.app/api',
+  backendURL: 'http://localhost:8080/api',
   EMAIL_REGEX:
     /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
   ADMIN: 'admin',

@@ -12,7 +12,7 @@ Write-Host "Deploying Aetheris X backend to Google Cloud Run in project: $PROJEC
 # Define configuration parameters (Modify these or load them from your local backend/.env)
 $SERVICE_NAME = "aetherisx-backend"
 $REGION = "us-central1"
-$DB_CONNECTION_NAME = "$PROJECT_ID:$REGION:creative-studio-db" # Update this to match your Cloud SQL connection name if using Cloud SQL
+$DB_CONNECTION_NAME = "${PROJECT_ID}:${REGION}:creative-studio-db" # Update this to match your Cloud SQL connection name if using Cloud SQL
 
 # Read settings from backend/.env if available
 $ENV_VARS = @(

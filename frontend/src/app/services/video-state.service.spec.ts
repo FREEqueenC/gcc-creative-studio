@@ -61,7 +61,7 @@ describe('VideoStateService', () => {
     const savedState = {
       prompt: 'a cinematic shot of a forest',
       aspectRatio: '9:16',
-      model: 'custom-video-model',
+      model: 'veo-3.1-generate-001',
     };
     localStorage.setItem('video_state', JSON.stringify(savedState));
 
@@ -69,7 +69,7 @@ describe('VideoStateService', () => {
     const state = service.getState();
     expect(state.prompt).toBe('a cinematic shot of a forest');
     expect(state.aspectRatio).toBe('9:16');
-    expect(state.model).toBe('custom-video-model');
+    expect(state.model).toBe('veo-3.1-generate-001');
   });
 
   it('should update state and save to localStorage when updateState is called', () => {

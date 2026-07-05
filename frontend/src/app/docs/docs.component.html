@@ -140,13 +140,13 @@ USE_CLOUD_SQL_AUTH_PROXY=false</pre>
         <pre class="bg-black/40 p-4 rounded-xl text-[11px] text-neutral-300 border border-white/5 font-mono">
 POST http://localhost:8080/api/agent/run-workflow
 Headers:
-  Authorization: Bearer <AGENT_KEY>
+  Authorization: Bearer &lt;AGENT_KEY&gt;
   Content-Type: application/json
 Body:
-  {
+  {{ '{' }}
     "recipe_id": "image_critic_video",
-    "params": { "prompt": "Neon cyberpunk city corridor" }
-  }</pre>
+    "params": {{ '{' }} "prompt": "Neon cyberpunk city corridor" {{ '}' }}
+  {{ '}' }}</pre>
 
         <h4 class="font-semibold text-cyan-400 mt-2">2. Webhook Callbacks</h4>
         <p class="text-neutral-300 text-xs pl-2">

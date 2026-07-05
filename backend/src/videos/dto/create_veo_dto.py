@@ -196,14 +196,15 @@ class CreateVeoDto(BaseDto):
         has_any_references = has_asset_references or reference_roles_present
 
         if has_any_references:
-            if (
-                model != GenerationModelEnum.VEO_3_1_PREVIEW
-                and model != GenerationModelEnum.VEO_3_1_GENERATE_001
-                and model != GenerationModelEnum.VEO_3_1_LITE_GENERATE_001
-                and model != GenerationModelEnum.VEO_3_1_FAST_GENERATE_001
-                and model != GenerationModelEnum.GEMINI_OMNI
-                and model != GenerationModelEnum.GEMINI_OMNI_FLASH_PREVIEW
-            ):
+            supported_reference_models = {
+                GenerationModelEnum.VEO_3_1_PREVIEW,
+                GenerationModelEnum.VEO_3_1_GENERATE_001,
+                GenerationModelEnum.VEO_3_1_LITE_GENERATE_001,
+                GenerationModelEnum.VEO_3_1_FAST_GENERATE_001,
+                GenerationModelEnum.GEMINI_OMNI,
+                GenerationModelEnum.GEMINI_OMNI_FLASH_PREVIEW,
+            }
+            if model not in supported_reference_models:
                 raise ValueError(
                     "Reference images/media are only supported by the "
                     f"'{GenerationModelEnum.VEO_3_1_PREVIEW.value}' model, "

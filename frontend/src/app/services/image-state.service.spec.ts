@@ -47,7 +47,7 @@ describe('ImageStateService', () => {
     const state = service.getState();
     expect(state.prompt).toBe('');
     expect(state.aspectRatio).toBe('1:1');
-    expect(state.model).toBe('gemini-3.1-flash-image');
+    expect(state.model).toBe('gemini-3.1-flash-lite-image');
   });
 
   it('should load initial state from localStorage if present', () => {

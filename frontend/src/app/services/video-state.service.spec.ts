@@ -16,11 +16,9 @@
 
 import {TestBed} from '@angular/core/testing';
 import {VideoStateService} from './video-state.service';
-import {SettingsService} from './settings.service';
 
 describe('VideoStateService', () => {
   let service: VideoStateService;
-  let settingsServiceSpy: jasmine.SpyObj<SettingsService>;
 
   beforeEach(() => {
     try {
@@ -28,8 +26,6 @@ describe('VideoStateService', () => {
     } catch (e) {
       /* ignore */
     }
-    const spy = jasmine.createSpyObj('SettingsService', ['getShowGeminiOmni']);
-    settingsServiceSpy = spy;
   });
 
   afterEach(() => {
@@ -42,42 +38,26 @@ describe('VideoStateService', () => {
 
   function initService() {
     TestBed.configureTestingModule({
-      providers: [
-        VideoStateService,
-        {provide: SettingsService, useValue: settingsServiceSpy},
-      ],
+      providers: [VideoStateService],
     });
     service = TestBed.inject(VideoStateService);
   }
 
   it('should be created', () => {
-    settingsServiceSpy.getShowGeminiOmni.and.returnValue(false);
     initService();
     expect(service).toBeTruthy();
   });
 
-  it('should use default initial state if localStorage is empty (omni disabled)', () => {
-    settingsServiceSpy.getShowGeminiOmni.and.returnValue(false);
+  it('should use default initial state if localStorage is empty', () => {
     initService();
     const state = service.getState();
     expect(state.prompt).toBe('');
     expect(state.aspectRatio).toBe('16:9');
-    expect(state.model).toBe('veo-3.1-generate-001');
-    expect(state.numberOfMedia).toBe(4);
-  });
-
-  it('should use default initial state if localStorage is empty (omni enabled)', () => {
-    settingsServiceSpy.getShowGeminiOmni.and.returnValue(true);
-    initService();
-    const state = service.getState();
-    expect(state.prompt).toBe('');
-    expect(state.aspectRatio).toBe('16:9');
-    expect(state.model).toBe('gemini-omni-generate-preview');
+    expect(state.model).toBe('gemini-omni-flash-preview');
     expect(state.numberOfMedia).toBe(1);
   });
 
   it('should load initial state from localStorage if present', () => {
-    settingsServiceSpy.getShowGeminiOmni.and.returnValue(false);
     const savedState = {
       prompt: 'a cinematic shot of a forest',
       aspectRatio: '9:16',
@@ -93,7 +73,6 @@ describe('VideoStateService', () => {
   });
 
   it('should update state and save to localStorage when updateState is called', () => {
-    settingsServiceSpy.getShowGeminiOmni.and.returnValue(false);
     initService();
 
     service.updateState({prompt: 'updated video prompt', durationSeconds: 12});
@@ -112,7 +91,6 @@ describe('VideoStateService', () => {
   });
 
   it('should reset state and remove from localStorage when resetState is called', () => {
-    settingsServiceSpy.getShowGeminiOmni.and.returnValue(false);
     initService();
 
     service.updateState({prompt: 'temporary video prompt'});
@@ -124,7 +102,6 @@ describe('VideoStateService', () => {
   });
 
   it('should fallback to default state and not crash if localStorage contains invalid JSON', () => {
-    settingsServiceSpy.getShowGeminiOmni.and.returnValue(false);
     localStorage.setItem('video_state', 'invalid { json');
     const consoleSpy = spyOn(console, 'error');
     initService();
@@ -135,7 +112,6 @@ describe('VideoStateService', () => {
   });
 
   it('should omit referenceVideo, referenceAudio, and referenceImages when saving state to localStorage', () => {
-    settingsServiceSpy.getShowGeminiOmni.and.returnValue(false);
     initService();
 
     service.updateState({
@@ -166,7 +142,6 @@ describe('VideoStateService', () => {
   });
 
   it('should not crash if localStorage.getItem throws an error during initialization', () => {
-    settingsServiceSpy.getShowGeminiOmni.and.returnValue(false);
     spyOn(localStorage, 'getItem').and.throwError('SecurityError');
     const consoleSpy = spyOn(console, 'error');
     initService();
@@ -178,7 +153,6 @@ describe('VideoStateService', () => {
   });
 
   it('should not crash if localStorage.setItem throws an error during updateState', () => {
-    settingsServiceSpy.getShowGeminiOmni.and.returnValue(false);
     initService();
     spyOn(localStorage, 'setItem').and.throwError('QuotaExceededError');
     const consoleSpy = spyOn(console, 'error');
@@ -193,7 +167,6 @@ describe('VideoStateService', () => {
   });
 
   it('should not crash if localStorage.removeItem throws an error during resetState', () => {
-    settingsServiceSpy.getShowGeminiOmni.and.returnValue(false);
     initService();
     const removeSpy = spyOn(localStorage, 'removeItem').and.throwError(
       'SecurityError',
@@ -208,20 +181,5 @@ describe('VideoStateService', () => {
       jasmine.any(Error),
     );
     removeSpy.and.stub();
-  });
-
-  it('should fallback to default video model if saved state contains Gemini Omni but Gemini Omni is disabled', () => {
-    settingsServiceSpy.getShowGeminiOmni.and.returnValue(false);
-    const savedState = {
-      prompt: 'a cinematic shot',
-      model: 'gemini-omni-generate-preview',
-      numberOfMedia: 1,
-    };
-    localStorage.setItem('video_state', JSON.stringify(savedState));
-    initService();
-    const state = service.getState();
-    expect(state.prompt).toBe('a cinematic shot');
-    expect(state.model).toBe('veo-3.1-generate-001');
-    expect(state.numberOfMedia).toBe(4);
   });
 });

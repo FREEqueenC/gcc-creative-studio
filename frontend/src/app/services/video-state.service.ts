@@ -22,6 +22,7 @@ import {
   ReferenceVideo,
   ReferenceAudio,
 } from '../common/models/search.model';
+import {MODEL_CONFIGS} from '../common/config/model-config';
 
 const STORAGE_KEY = 'video_state';
 
@@ -88,10 +89,16 @@ export class VideoStateService {
             let loadedModel = parsed.model ?? this.initialState.model;
             let loadedNumMedia =
               parsed.numberOfMedia ?? this.initialState.numberOfMedia;
-            if (!showOmni && loadedModel === 'gemini-omni-generate-preview') {
-              loadedModel = 'veo-3.1-generate-001';
-              loadedNumMedia = 4;
+
+            const isValidVideoModel = MODEL_CONFIGS.some(
+              m => m.type === 'VIDEO' && m.value === loadedModel,
+            );
+
+            if (!isValidVideoModel) {
+              loadedModel = this.initialState.model;
+              loadedNumMedia = this.initialState.numberOfMedia;
             }
+
             savedState = {
               ...this.initialState,
               ...parsed,

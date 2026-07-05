@@ -107,7 +107,7 @@ export const MODEL_CONFIGS: GenerationModelConfig[] = [
         '1:8',
         '8:1',
       ], // All
-      supportedResolutions: ['1K', '2K', '4K'],
+      supportedResolutions: ['1K'],
       supportedDurations: [],
       supportsGoogleSearch: true,
     },

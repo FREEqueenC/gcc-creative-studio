@@ -50,9 +50,10 @@
   </div>
 
   <div class="gallery-wrapper" 
+       (dragenter)="onDragOver($event)"
        (dragover)="onDragOver($event)"
        (dragleave)="onDragLeave($event)"
-       (drop)="!isUploading && onDrop($event)"
+       (drop)="onDrop($event)"
        [class.dragging]="isDragging">
     
     <div *ngIf="isDragging" class="drop-overlay">

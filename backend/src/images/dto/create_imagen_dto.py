@@ -129,6 +129,7 @@ class CreateImagenDto(BaseDto):
             GenerationModelEnum.GEMINI_3_PRO_IMAGE,
             GenerationModelEnum.GEMINI_3_1_FLASH_IMAGE_PREVIEW,
             GenerationModelEnum.GEMINI_3_1_FLASH_IMAGE,
+            GenerationModelEnum.GEMINI_3_1_FLASH_LITE_IMAGE,
         ]
         if value not in valid_generation_models:
             raise ValueError("Invalid generation model for imagen.")
@@ -171,5 +172,12 @@ class CreateImagenDto(BaseDto):
             raise ValueError(
                 f"Model '{model.value}' does not support image editing."
             )
+
+        # Resolution Validation
+        if model == GenerationModelEnum.GEMINI_3_1_FLASH_LITE_IMAGE:
+            if self.resolution != "1K":
+                raise ValueError(
+                    f"Model '{model.value}' only supports 1K resolution."
+                )
 
         return self

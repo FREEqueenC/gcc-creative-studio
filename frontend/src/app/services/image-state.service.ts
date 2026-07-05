@@ -16,6 +16,7 @@
 
 import {Injectable} from '@angular/core';
 import {BehaviorSubject, Observable} from 'rxjs';
+import {MODEL_CONFIGS} from '../common/config/model-config';
 
 const STORAGE_KEY = 'image_state';
 
@@ -50,11 +51,11 @@ export class ImageStateService {
       prompt: '',
       negativePrompt: '',
       aspectRatio: '1:1',
-      model: 'gemini-3.1-flash-image',
+      model: 'gemini-3.1-flash-lite-image',
       lighting: '',
       watermark: false,
       googleSearch: false,
-      resolution: '4K',
+      resolution: '1K',
       style: null,
       colorAndTone: null,
       numberOfMedia: 4,
@@ -71,7 +72,17 @@ export class ImageStateService {
         if (saved) {
           const parsed = JSON.parse(saved);
           if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-            savedState = {...this.initialState, ...parsed};
+            let loadedModel = parsed.model ?? this.initialState.model;
+
+            const isValidImageModel = MODEL_CONFIGS.some(
+              m => m.type === 'IMAGE' && m.value === loadedModel,
+            );
+
+            if (!isValidImageModel) {
+              loadedModel = this.initialState.model;
+            }
+
+            savedState = {...this.initialState, ...parsed, model: loadedModel};
           }
         }
       } catch (e) {

@@ -109,7 +109,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     useBrandGuidelines: false,
     enhancePrompt: false,
     googleSearch: false,
-    resolution: '4K',
+    resolution: '1K',
   };
 
   modes = [
@@ -868,7 +868,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
       negativePrompt: '',
       useBrandGuidelines: false,
       googleSearch: false,
-      resolution: '4K',
+      resolution: '1K',
     };
     this.negativePhrases = [];
     this.referenceImages = [];

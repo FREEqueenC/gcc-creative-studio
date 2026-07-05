@@ -26,7 +26,9 @@ import {
   computed,
   OnInit,
   OnDestroy,
+  inject,
 } from '@angular/core';
+import {MatSnackBar} from '@angular/material/snack-bar';
 import {ReferenceImage} from '../../models/search.model';
 import {GenerationModelConfig} from '../../config/model-config';
 import {MatIconModule} from '@angular/material/icon';
@@ -53,6 +55,8 @@ export type NumPos = 1 | 2;
   ],
 })
 export class FlowPromptBoxComponent implements OnInit, OnDestroy {
+  private snackBar = inject(MatSnackBar);
+
   @Input() searchRequest!: any; // Keep for now, but prefer individual inputs
   @Input() isLoading = false;
   @Input() prompt = '';
@@ -90,8 +94,12 @@ export class FlowPromptBoxComponent implements OnInit, OnDestroy {
 
   @Input() set mode(val: string) {
     if (val) {
+      const oldMode = this.selectedMode();
       this.selectedMode.set(val);
-      this.updateSupportedResolutions();
+      this.updateSupportedResolutions(
+        undefined,
+        oldMode !== '' && oldMode !== val,
+      );
     }
   }
   get mode(): string {
@@ -253,24 +261,21 @@ export class FlowPromptBoxComponent implements OnInit, OnDestroy {
   // --- Select Handlers ---
 
   selectMode(mode: string) {
+    const oldMode = this.selectedMode();
     this.selectedMode.set(mode);
     this.modeChanged.emit(mode);
     this.isModeMenuOpen.set(false);
 
-    const resolutions = this.getSelectedModelResolutions();
-    this.supportedResolutions.set(resolutions);
-
-    if (this.isExtendVideo() || this.isIngredientsToImage()) {
-      const smallest = resolutions[0];
-      if (smallest) this.selectResolution(smallest);
-    }
+    // Call the centralized update method and explicitly pass modeChanged=true
+    this.updateSupportedResolutions(
+      undefined,
+      oldMode !== '' && oldMode !== mode,
+    );
 
     if (!this.isTextToVideo()) {
       const longest = this.getSelectedModelDurations().at(-1);
       if (longest) this.selectDuration(longest);
     }
-
-    console.log('Selected Mode:', mode);
   }
 
   selectResolution(resolution: '1K' | '2K' | '4K', model?: any) {
@@ -284,27 +289,22 @@ export class FlowPromptBoxComponent implements OnInit, OnDestroy {
       const longest = this.getSelectedModelDurations(model).at(-1);
       if (longest) this.selectDuration(longest);
     }
-
-    console.log('Selected Resolution:', resolution);
   }
 
   selectDuration(duration: number) {
     this.selectedDuration.set(duration);
     this.durationChanged.emit(duration);
     this.isSettingsDropdownOpen.set(null);
-    console.log('Selected Duration:', duration);
   }
 
   selectNewAspectRatio(ratio: string) {
     this.aspectRatioChanged.emit(ratio);
     this.isSettingsDropdownOpen.set(null);
-    console.log('Selected Aspect Ratio:', ratio);
   }
 
   selectOutputs(count: number) {
     this.outputsChanged.emit(count);
     this.isSettingsDropdownOpen.set(null);
-    console.log('Selected Outputs:', count);
   }
 
   // Triggered from internal dropdown
@@ -317,7 +317,6 @@ export class FlowPromptBoxComponent implements OnInit, OnDestroy {
 
   selectPreset(preset: string) {
     this.selectedPreset.set(preset);
-    console.log('Selected Preset:', preset);
   }
 
   getSelectedModelObject(): GenerationModelConfig | undefined {
@@ -347,9 +346,33 @@ export class FlowPromptBoxComponent implements OnInit, OnDestroy {
     return activeModel?.capabilities?.supportedDurations ?? [];
   }
 
-  private updateSupportedResolutions(model?: any) {
+  private updateSupportedResolutions(model?: any, modeChanged = false) {
     const supported = this.getSelectedModelResolutions(model);
     this.supportedResolutions.set(supported);
+
+    const activeModel = model || this.getSelectedModelObject();
+
+    // Notify user if resolution was artificially restricted by the current mode
+    if (
+      activeModel &&
+      activeModel.capabilities?.supportedResolutions?.length > 1 &&
+      supported.length === 1
+    ) {
+      // Only show the snackbar if the dropdown is opened or mode changed (avoid spamming on init)
+      // Actually we can just show it if they selected the model manually or it's forced to change
+      if (
+        model ||
+        modeChanged ||
+        !supported.includes(this.selectedResolution())
+      ) {
+        this.snackBar.open(
+          `For ${this.selectedMode()} mode, ${activeModel.viewValue} supports only ${supported[0]} resolution.`,
+          'Close',
+          {duration: 5000},
+        );
+      }
+    }
+
     if (
       supported.length > 0 &&
       !supported.includes(this.selectedResolution())

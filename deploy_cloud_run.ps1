@@ -24,15 +24,15 @@ $ENV_VARS = @(
     "PROJECT_ID=$PROJECT_ID",
     "FRONTEND_URL=https://aetherisx.studio",
     "GENMEDIA_BUCKET=$PROJECT_ID-cs-development-bucket", # Matches standard deployment bucket names
-    "SIGNING_SA_EMAIL=$SIGNING_SA_EMAIL"
+    "SIGNING_SA_EMAIL=$SIGNING_SA_EMAIL",
+    "INSTANCE_CONNECTION_NAME=$DB_CONNECTION_NAME"
 )
 
 # Append database settings
 $ENV_VARS += "DB_USER=studio_user"
 $ENV_VARS += "DB_PASS=studio_pass"
 $ENV_VARS += "DB_NAME=creative_studio"
-$ENV_VARS += "DB_HOST=127.0.0.1" # Cloud SQL Auth Proxy connects locally inside the container
-$ENV_VARS += "USE_CLOUD_SQL_AUTH_PROXY=true"
+$ENV_VARS += "USE_CLOUD_SQL_AUTH_PROXY=false"
 
 # Load Pinata JWT if present in local .env
 $LOCAL_ENV_PATH = Join-Path (Get-Location) "backend\.env"

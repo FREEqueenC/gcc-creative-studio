@@ -39,9 +39,9 @@ def upgrade() -> None:
 def downgrade() -> None:
     op.create_table(
         "system_settings",
-        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
-        sa.Column("key", sa.String(length=100), nullable=False),
-        sa.Column("value", sa.JSON(), nullable=False),
+        sa.Column("id", sa.String(), primary_key=True),
+        sa.Column("value", sa.String(), nullable=False),
+        sa.Column("description", sa.String(), nullable=True),
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
@@ -54,6 +54,13 @@ def downgrade() -> None:
             server_default=sa.text("now()"),
             nullable=False,
         ),
-        sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("key"),
+    )
+    # Seed default values that existed prior to this migration
+    op.execute(
+        "INSERT INTO system_settings (id, value, description) VALUES "
+        "('show_gemini_omni', 'false', 'Enable Gemini Omni model visibility')"
+    )
+    op.execute(
+        "INSERT INTO system_settings (id, value, description) VALUES "
+        "('gemini_omni_model_name', '', 'Custom model name for Gemini Omni')"
     )

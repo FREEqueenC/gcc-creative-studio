@@ -26,6 +26,8 @@ import {isPlatformBrowser} from '@angular/common';
 
 const HOME_ROUTE = '/';
 
+declare var grecaptcha: any;
+
 interface LooseObject {
   [key: string]: any;
 }
@@ -63,68 +65,85 @@ export class LoginComponent {
     this.invalidLogin = false;
     this.errorMessage = '';
 
-    if (environment?.isLocal) {
-      // This will use the Google Identity Services library to get an FIREBASE-compatible token.
-      this.authService.signInWithGoogleFirebase().subscribe({
-        next: (firebaseToken: string) => {
-          // The signInForGoogleIdentityPlatform method already stored the token and minimal user details
-          // in localStorage. We just need to redirect to trigger the AuthGuard.
-          this.ngZone.run(() => {
+    const executeLoginFlow = () => {
+      if (environment?.isLocal) {
+        // This will use the Google Identity Services library to get an FIREBASE-compatible token.
+        this.authService.signInWithGoogleFirebase().subscribe({
+          next: (firebaseToken: string) => {
+            // The signInForGoogleIdentityPlatform method already stored the token and minimal user details
+            // in localStorage. We just need to redirect to trigger the AuthGuard.
+            this.ngZone.run(() => {
+              this.loader = false;
+              void this.router.navigate([HOME_ROUTE]);
+            });
+          },
+          error: error => {
             this.loader = false;
-            void this.router.navigate([HOME_ROUTE]);
-          });
-        },
-        error: error => {
-          this.loader = false;
-          console.log(error);
-          // Handle specific errors from the auth service
-          if (
-            error.message?.includes('timed out') ||
-            error.message?.includes('Access Denied')
-          ) {
-            this.handleLoginError(error);
-          } else {
-            this.handleLoginError(
-              error || {
-                message:
-                  'An unexpected error occurred during sign-in. Please try again.',
-              },
-            );
-          }
-          console.error('FIREBASE Login Process Error:', error);
-        },
+            console.log(error);
+            // Handle specific errors from the auth service
+            if (
+              error.message?.includes('timed out') ||
+              error.message?.includes('Access Denied')
+            ) {
+              this.handleLoginError(error);
+            } else {
+              this.handleLoginError(
+                error || {
+                  message:
+                    'An unexpected error occurred during sign-in. Please try again.',
+                },
+              );
+            }
+            console.error('FIREBASE Login Process Error:', error);
+          },
+        });
+      } else {
+        // This will use the Google Identity Services library to get an FIREBASE-compatible token.
+        this.authService.signInForGoogleIdentityPlatform().subscribe({
+          next: (firebaseToken: string) => {
+            // The signInForGoogleIdentityPlatform method already stored the token and minimal user details
+            // in localStorage. We just need to redirect to trigger the AuthGuard.
+            this.ngZone.run(() => {
+              this.loader = false;
+              void this.router.navigate([HOME_ROUTE]);
+            });
+          },
+          error: error => {
+            this.loader = false;
+            console.log(error);
+            // Handle specific errors from the auth service
+            if (
+              error.message?.includes('timed out') ||
+              error.message?.includes('Access Denied')
+            ) {
+              this.handleLoginError(error);
+            } else {
+              this.handleLoginError(
+                error || {
+                  message:
+                    'An unexpected error occurred during sign-in. Please try again.',
+                },
+              );
+            }
+            console.error('FIREBASE Login Process Error:', error);
+          },
+        });
+      }
+    };
+
+    if (typeof grecaptcha !== 'undefined' && grecaptcha.enterprise) {
+      grecaptcha.enterprise.ready(async () => {
+        try {
+          const token = await grecaptcha.enterprise.execute('6LeRPkAtAAAAAKnaiVVAsifsZcq2mSi6Zi_yKlLe', {action: 'LOGIN'});
+          console.log('reCAPTCHA Enterprise execution successful. Token obtained:', token);
+          executeLoginFlow();
+        } catch (err) {
+          console.error('reCAPTCHA Enterprise execution failed, proceeding with login:', err);
+          executeLoginFlow();
+        }
       });
     } else {
-      // This will use the Google Identity Services library to get an FIREBASE-compatible token.
-      this.authService.signInForGoogleIdentityPlatform().subscribe({
-        next: (firebaseToken: string) => {
-          // The signInForGoogleIdentityPlatform method already stored the token and minimal user details
-          // in localStorage. We just need to redirect to trigger the AuthGuard.
-          this.ngZone.run(() => {
-            this.loader = false;
-            void this.router.navigate([HOME_ROUTE]);
-          });
-        },
-        error: error => {
-          this.loader = false;
-          console.log(error);
-          // Handle specific errors from the auth service
-          if (
-            error.message?.includes('timed out') ||
-            error.message?.includes('Access Denied')
-          ) {
-            this.handleLoginError(error);
-          } else {
-            this.handleLoginError(
-              error || {
-                message:
-                  'An unexpected error occurred during sign-in. Please try again.',
-              },
-            );
-          }
-          console.error('FIREBASE Login Process Error:', error);
-        },
-      });
+      executeLoginFlow();
     }
   }
 

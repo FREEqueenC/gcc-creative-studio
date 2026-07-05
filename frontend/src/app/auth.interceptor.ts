@@ -35,18 +35,11 @@ export class AuthInterceptor implements HttpInterceptor {
     request: HttpRequest<unknown>,
     next: HttpHandler,
   ): Observable<HttpEvent<unknown>> {
-    // Add ngrok-skip-browser-warning to all outgoing requests to bypass the ngrok landing page warning screen
-    const modifiedRequest = request.clone({
-      setHeaders: {
-        'ngrok-skip-browser-warning': 'true'
-      }
-    });
-
     // Asynchronously get a valid token. This will use the cache or trigger a silent refresh.
     return this.authService.getValidIdentityPlatformToken$().pipe(
       switchMap(token => {
         // Token was retrieved successfully. Clone the request and add the auth header.
-        const authorizedRequest = modifiedRequest.clone({
+        const authorizedRequest = request.clone({
           setHeaders: {Authorization: `Bearer ${token}`},
         });
         return next.handle(authorizedRequest);

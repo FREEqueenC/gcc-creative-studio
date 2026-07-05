@@ -12,12 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
 from src.auth.auth_guard import RoleChecker, get_current_user
 from src.users.user_model import UserModel, UserRoleEnum
 from src.web3.web3_service import Web3Service
+from src.web3.providers import EvmWeb3Provider, FlowWeb3Provider
 
 router = APIRouter(
     prefix="/api/web3",
@@ -34,6 +36,8 @@ class PrepareMintResponse(BaseModel):
     metadata_url: str
     item_id: int
     mint_fee: str
+    chain_type: str
+    cadence_script: Optional[str] = None
 
 # Standard User role check for the prepare-mint endpoint
 user_only = Depends(RoleChecker(allowed_roles=[UserRoleEnum.USER, UserRoleEnum.ADMIN]))
@@ -55,30 +59,45 @@ async def prepare_mint(
             detail="Media item not found or user lacks permission to access it."
         )
 
-    # Base NFT contract address and Flow NFT contract references
-    if request.chain.lower() == "base":
-        # Target contract on Base Mainnet
-        contract_address = "0x81631e082767e0F545386420cCB1128b98C70F60" 
-        mint_fee = "10 LEV"
-    elif request.chain.lower() == "flow":
-        # Target contract on Flow Mainnet/Testnet
-        contract_address = "A.0x81631e082767e0F545386420cCB1128b98C70F60.CreativeStudioNFT"
-        mint_fee = "0 FLOW"
-    else:
+    # Instantiate the correct blockchain provider
+    try:
+        if request.chain.lower() == "base":
+            # Target contract on Base Mainnet
+            provider = EvmWeb3Provider(
+                contract_address="0x81631e082767e0F545386420cCB1128b98C70F60",
+                mint_fee="10 LEV"
+            )
+        elif request.chain.lower() == "flow":
+            # Target contract on Flow Mainnet/Testnet
+            provider = FlowWeb3Provider(
+                contract_address="A.0x81631e082767e0F545386420cCB1128b98C70F60.CreativeStudioNFT",
+                mint_fee="0 FLOW"
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid chain. Supported values are 'base' or 'flow'."
+            )
+    except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid chain. Supported values are 'base' or 'flow'."
+            detail=str(e)
         )
 
     # Attempt to pin media and metadata to IPFS/Pinata if configured, else fall back to local dynamic hosting.
     ipfs_url = await service.upload_to_ipfs(item_id=request.item_id, current_user=current_user)
     metadata_url = ipfs_url if ipfs_url else f"/api/web3/metadata/{request.item_id}"
 
+    # Generate provider mint parameters
+    mint_params = await provider.prepare_mint(item_id=request.item_id, metadata_url=metadata_url)
+
     return PrepareMintResponse(
-        contract_address=contract_address,
-        metadata_url=metadata_url,
-        item_id=request.item_id,
-        mint_fee=mint_fee,
+        contract_address=mint_params["contract_address"],
+        metadata_url=mint_params["metadata_url"],
+        item_id=mint_params["item_id"],
+        mint_fee=mint_params["mint_fee"],
+        chain_type=mint_params["chain_type"],
+        cadence_script=mint_params.get("cadence_script"),
     )
 
 # GET metadata endpoint is PUBLIC (no auth required) so NFT standard indexing works.

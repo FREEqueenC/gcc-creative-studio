@@ -47,7 +47,7 @@ def get_dummy_source_asset(**kwargs):
     return SourceAsset(**defaults)
 
 
-class TestRepository(BaseRepository[SourceAsset, SourceAssetModel]):
+class MockBaseRepository(BaseRepository[SourceAsset, SourceAssetModel]):
     def __init__(self, db):
         super().__init__(model=SourceAsset, schema=SourceAssetModel, db=db)
 
@@ -60,7 +60,7 @@ async def test_get_by_id_success():
     mock_result.scalar_one_or_none.return_value = mock_asset
     mock_db.execute.return_value = mock_result
 
-    repo = TestRepository(db=mock_db)
+    repo = MockBaseRepository(db=mock_db)
     response = await repo.get_by_id(item_id=10)
 
     assert response is not None
@@ -74,7 +74,7 @@ async def test_get_by_id_not_found():
     mock_result.scalar_one_or_none.return_value = None
     mock_db.execute.return_value = mock_result
 
-    repo = TestRepository(db=mock_db)
+    repo = MockBaseRepository(db=mock_db)
     response = await repo.get_by_id(item_id=99)
 
     assert response is None
@@ -83,7 +83,7 @@ async def test_get_by_id_not_found():
 @pytest.mark.anyio
 async def test_create_success():
     mock_db = AsyncMock()
-    repo = TestRepository(db=mock_db)
+    repo = MockBaseRepository(db=mock_db)
 
     input_model = SourceAssetModel(
         workspace_id=1,
@@ -124,7 +124,7 @@ async def test_update_success():
     mock_result.scalar_one_or_none.return_value = mock_asset
     mock_db.execute.return_value = mock_result
 
-    repo = TestRepository(db=mock_db)
+    repo = MockBaseRepository(db=mock_db)
 
     update_data = {"original_filename": "updated.png"}
     response = await repo.update(item_id=20, update_data=update_data)
@@ -141,7 +141,7 @@ async def test_delete_success():
     mock_result.rowcount = 1
     mock_db.execute.return_value = mock_result
 
-    repo = TestRepository(db=mock_db)
+    repo = MockBaseRepository(db=mock_db)
     response = await repo.delete(item_id=30)
 
     assert response is True
@@ -156,7 +156,7 @@ async def test_soft_delete_success():
     mock_result.scalar_one_or_none.return_value = mock_asset
     mock_db.execute.return_value = mock_result
 
-    repo = TestRepository(db=mock_db)
+    repo = MockBaseRepository(db=mock_db)
     response = await repo.soft_delete(item_id=40)
 
     assert response is True
@@ -175,7 +175,7 @@ async def test_restore_success():
     mock_result.scalar_one_or_none.return_value = mock_asset
     mock_db.execute.return_value = mock_result
 
-    repo = TestRepository(db=mock_db)
+    repo = MockBaseRepository(db=mock_db)
     response = await repo.restore(item_id=50)
 
     assert response is True
@@ -191,7 +191,7 @@ async def test_find_all_success():
     mock_result.scalars().all.return_value = [mock_asset]
     mock_db.execute.return_value = mock_result
 
-    repo = TestRepository(db=mock_db)
+    repo = MockBaseRepository(db=mock_db)
     response = await repo.find_all()
 
     assert len(response) == 1

@@ -22,6 +22,8 @@ from src.multimodal.dto.gemini_prompt_enhancer_dto import (
     RewrittenOrRandomPromptResponse,
     DocsChatRequestDto,
     DocsChatResponseDto,
+    FeedbackRequestDto,
+    FeedbackResponseDto,
 )
 from src.multimodal.gemini_service import GeminiService
 from src.users.user_model import UserRoleEnum
@@ -116,3 +118,31 @@ async def docs_chat_endpoint(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to communicate with Docs Chat Agent: {e}",
         )
+
+
+@router.post(
+    "/feedback",
+    response_model=FeedbackResponseDto,
+    summary="Record developer testing feedback and bug reports",
+)
+async def feedback_endpoint(
+    feedback_request: FeedbackRequestDto,
+    gemini_service: GeminiService = Depends(),
+):
+    """Logs testing comments, bug descriptions, and active pages
+
+    directly to ERROR_LOG.md and Google Cloud Logging.
+    """
+    try:
+        gemini_service.record_developer_feedback(
+            message=feedback_request.message,
+            url=feedback_request.url,
+            timestamp=feedback_request.timestamp,
+        )
+        return FeedbackResponseDto(status="success")
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to record developer feedback: {e}",
+        )
+

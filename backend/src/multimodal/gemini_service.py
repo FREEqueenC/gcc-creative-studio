@@ -576,3 +576,47 @@ class GeminiService:
         except Exception as e:
             logger.error(f"Gemini docs agent chat generation failed: {e}")
             raise e
+
+    def record_developer_feedback(
+        self, message: str, url: str | None = None, timestamp: str | None = None
+    ) -> None:
+        """Appends developer feedback / bug reports directly to the project's ERROR_LOG.md.
+        Also outputs a structured warning to stdout/stderr for Google Cloud Logging extraction.
+        """
+        import os
+        from datetime import datetime
+
+        time_str = timestamp or datetime.utcnow().isoformat()
+        log_entry = (
+            f"## [DEVELOPER FEEDBACK] - {time_str}\n"
+            f"- **URL:** {url or 'Unknown'}\n"
+            f"- **Feedback:** {message}\n"
+            f"- **System Status:** Captured during active developer testing session.\n\n"
+        )
+
+        logger.warning(
+            f"[DEVELOPER_FEEDBACK] Timestamp: {time_str} | URL: {url} | Message: {message}"
+        )
+
+        # Try to append to ERROR_LOG.md in the project root folder
+        root_path = os.path.dirname(
+            os.path.dirname(
+                os.path.dirname(os.path.abspath(__file__))
+            )
+        )
+        error_log_file = os.path.join(root_path, "ERROR_LOG.md")
+        try:
+            if not os.path.exists(error_log_file):
+                with open(error_log_file, "w", encoding="utf-8") as f:
+                    f.write("# Aetheris X Developer Error & Feedback Log\n\n")
+
+            with open(error_log_file, "a", encoding="utf-8") as f:
+                f.write(log_entry)
+            logger.info(
+                f"Successfully recorded developer feedback in {error_log_file}"
+            )
+        except Exception as e:
+            logger.error(
+                f"Failed to write developer feedback to ERROR_LOG.md: {e}"
+            )
+

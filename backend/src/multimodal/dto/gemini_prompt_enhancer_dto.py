@@ -65,3 +65,14 @@ class DocsChatRequestDto(BaseDto):
 
 class DocsChatResponseDto(BaseDto):
     response: str
+
+
+class FeedbackRequestDto(BaseDto):
+    message: str
+    url: str | None = None
+    timestamp: str | None = None
+
+
+class FeedbackResponseDto(BaseDto):
+    status: str
+

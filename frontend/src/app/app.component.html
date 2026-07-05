@@ -52,4 +52,70 @@
       <div #interactiveBubble class="interactive"></div>
     </div>
   </div>
+  
+  <!-- Floating Developer Feedback Trigger Button -->
+  <div class="fixed bottom-6 right-6 z-[999] flex flex-col items-end gap-3 font-sans">
+    <!-- Feedback Form Panel -->
+    <div
+      *ngIf="showFeedbackForm"
+      class="w-80 sm:w-96 glass-card rounded-2xl border border-white/10 bg-slate-950/90 backdrop-blur-2xl p-5 shadow-[0_12px_40px_rgba(0,242,254,0.25)] flex flex-col gap-3 transition-all duration-300 transform scale-100 origin-bottom-right"
+    >
+      <div class="flex items-center justify-between border-b border-white/10 pb-2.5">
+        <div class="flex items-center gap-2">
+          <div class="w-2.5 h-2.5 bg-cyan-400 rounded-full animate-ping"></div>
+          <h4 class="text-xs font-bold uppercase tracking-wider Outfit text-cyan-400">Antigravity Debug Transmitter</h4>
+        </div>
+        <button
+          mat-icon-button
+          (click)="toggleFeedbackForm()"
+          class="text-neutral-400 hover:text-white"
+          style="width: 28px; height: 28px; line-height: 28px;"
+        >
+          <mat-icon class="scale-75">close</mat-icon>
+        </button>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <div class="text-[10px] text-neutral-400 font-mono bg-white/5 px-2 py-1 rounded border border-white/5">
+          <span class="text-cyan-400 font-bold">PATH:</span> {{ router.url }}
+        </div>
+        <label class="text-[10px] font-bold text-neutral-300 uppercase tracking-wider">Bug Details / Notes</label>
+        <textarea
+          [(ngModel)]="feedbackText"
+          placeholder="Describe the bug, layout issue, or design change you'd like me to solve..."
+          rows="4"
+          class="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-cyan-400/50 transition-colors resize-none"
+        ></textarea>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 mt-1">
+        <button
+          (click)="toggleFeedbackForm()"
+          class="px-3.5 py-1.5 rounded-lg text-xs font-medium text-neutral-400 hover:text-white hover:bg-white/5 transition-all"
+        >
+          Cancel
+        </button>
+        <button
+          (click)="submitFeedback()"
+          [disabled]="!feedbackText.trim() || isFeedbackSending"
+          class="flex items-center gap-2 px-4 py-1.5 bg-gradient-to-r from-cyan-500 to-blue-600 disabled:from-neutral-700 disabled:to-neutral-800 disabled:text-neutral-500 text-white rounded-lg text-xs font-semibold hover:shadow-[0_0_12px_#00f2fe] hover:scale-105 active:scale-95 disabled:pointer-events-none transition-all"
+        >
+          <mat-spinner *ngIf="isFeedbackSending" [diameter]="12" class="cyan-spinner"></mat-spinner>
+          <mat-icon *ngIf="!isFeedbackSending" class="scale-75">science</mat-icon>
+          <span>Transmit to AI</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Toggle Button -->
+    <button
+      (click)="toggleFeedbackForm()"
+      mat-tooltip="Report Bug / Feedback to Agent"
+      class="flex items-center gap-2 px-4 py-3 rounded-full bg-slate-950/80 hover:bg-slate-900 border border-white/10 hover:border-cyan-400/30 backdrop-blur-xl text-neutral-200 hover:text-white shadow-[0_4px_20px_rgba(0,0,0,0.4)] hover:shadow-[0_0_20px_rgba(0,242,254,0.3)] transition-all duration-300 hover:scale-105"
+    >
+      <mat-icon class="text-cyan-400 animate-pulse">bug_report</mat-icon>
+      <span class="text-xs font-bold tracking-wider Outfit">Report Bug</span>
+    </button>
+  </div>
 </div>
+

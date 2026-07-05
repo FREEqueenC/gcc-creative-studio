@@ -18,6 +18,13 @@ import {Component} from '@angular/core';
 import {Router, NavigationEnd, Event as NavigationEvent} from '@angular/router';
 import {trigger, transition, style, query, animate} from '@angular/animations';
 import {LoadingService} from './common/services/loading.service';
+import {HttpClient} from '@angular/common/http';
+import {MatSnackBar} from '@angular/material/snack-bar';
+import {environment} from '../environments/environment';
+import {
+  handleSuccessSnackbar,
+  handleErrorSnackbar,
+} from './utils/handleMessageSnackbar';
 
 @Component({
   selector: 'app-root',
@@ -54,9 +61,16 @@ export class AppComponent {
   title = 'creative-studio';
   showHeader = true;
 
+  // Developer Feedback Widget state
+  showFeedbackForm = false;
+  feedbackText = '';
+  isFeedbackSending = false;
+
   constructor(
-    private router: Router,
+    public router: Router,
     public loadingService: LoadingService,
+    private http: HttpClient,
+    private snackBar: MatSnackBar,
   ) {
     this.router.events.subscribe((event: NavigationEvent) => {
       if (event instanceof NavigationEnd) {
@@ -75,4 +89,41 @@ export class AppComponent {
       }
     });
   }
+
+  toggleFeedbackForm() {
+    this.showFeedbackForm = !this.showFeedbackForm;
+    if (this.showFeedbackForm) {
+      this.feedbackText = '';
+    }
+  }
+
+  submitFeedback() {
+    if (!this.feedbackText.trim()) return;
+
+    this.isFeedbackSending = true;
+    const body = {
+      message: this.feedbackText,
+      url: this.router.url,
+      timestamp: new Date().toISOString(),
+    };
+
+    this.http
+      .post(`${environment.backendURL}/gemini/feedback`, body)
+      .subscribe({
+        next: () => {
+          this.isFeedbackSending = false;
+          this.showFeedbackForm = false;
+          this.feedbackText = '';
+          handleSuccessSnackbar(
+            this.snackBar,
+            'Feedback sent directly to Antigravity!',
+          );
+        },
+        error: err => {
+          this.isFeedbackSending = false;
+          handleErrorSnackbar(this.snackBar, err, 'Send Feedback');
+        },
+      });
+  }
 }
+

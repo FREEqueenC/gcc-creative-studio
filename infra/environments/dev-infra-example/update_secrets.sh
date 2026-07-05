@@ -112,7 +112,7 @@ fi
 configure_firebase_site_id "$TFVARS_FILE" "$PROJECT_ID"
 
 # Combine, de-duplicate, and sort the secret lists
-ALL_SECRETS=$(echo "${FRONTEND_SECRETS} ${BACKEND_SECRETS}" | tr ' ' '\n' | sort -u | grep .)
+ALL_SECRETS=$(echo "${FRONTEND_SECRETS} ${BACKEND_SECRETS}" | tr ' ' '\n' | sort -u | grep . || true)
 
 if [ -z "$ALL_SECRETS" ]; then
   success "No secrets listed in 'frontend_secrets' or 'backend_secrets' outputs. Nothing to do."

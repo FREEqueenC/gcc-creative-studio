@@ -96,6 +96,11 @@ const routes: Routes = [
         component: WorkflowEditorComponent,
         canActivate: [AuthGuardService],
       },
+      {
+        path: 'edit/:workflowId/run/:runId',
+        component: WorkflowEditorComponent,
+        canActivate: [AuthGuardService],
+      },
       {path: ':id/executions', component: ExecutionHistoryComponent},
     ],
   },

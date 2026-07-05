@@ -146,9 +146,12 @@ export class ExecutionHistoryComponent implements OnInit, OnDestroy {
 
     // Ensure workflow is loaded
     if (!this.workflow) {
-      this.workflowService.getWorkflowById(this.workflowId).subscribe(wf => {
-        this.workflow = wf;
-        this.openBatchDialog();
+      this.workflowService.getWorkflowById(this.workflowId).subscribe({
+        next: wf => {
+          this.workflow = wf;
+          this.openBatchDialog();
+        },
+        error: err => handleErrorSnackbar(this.snackBar, err, 'Fetch workflow'),
       });
     } else {
       this.openBatchDialog();

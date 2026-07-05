@@ -31,13 +31,13 @@ access(all) contract CreativeStudioNFT {
     access(all) resource Collection: CollectionPublic {
         access(all) var ownedNFTs: @{UInt64: NFT}
 
-        init () {
+        init() {
             self.ownedNFTs <- {}
         }
 
         // Withdraw removes an NFT from the collection and returns it
         access(WithdrawEntitlement) fun withdraw(withdrawID: UInt64): @NFT {
-            let token <- self.ownedNFTs.remove(key: withdrawID) 
+            let token <- self.ownedNFTs.remove(key: withdrawID)
                 ?? panic("Could not withdraw: NFT does not exist in the collection")
 
             emit Withdraw(id: token.id, from: self.owner?.address)
@@ -98,7 +98,7 @@ access(all) contract CreativeStudioNFT {
 
     init() {
         self.account.storage.save(<-create Collection(), to: /storage/CreativeStudioNFTCollection)
-        let cap = self.account.capabilities.storage.issue<&Collection{CollectionPublic}>(/storage/CreativeStudioNFTCollection)
+        let cap = self.account.capabilities.storage.issue<&Collection>(/storage/CreativeStudioNFTCollection)
         self.account.capabilities.publish(cap, at: /public/CreativeStudioNFTCollection)
 
         self.account.storage.save(<-create Minter(), to: /storage/CreativeStudioNFTMinter)

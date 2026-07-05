@@ -44,6 +44,7 @@ import {
   WorkflowModel,
   WorkflowRunModel,
   WorkflowUpdateDto,
+  ExecutionDetails,
 } from '../workflow.models';
 // import { STEP_CONFIGS_MAP } from '../shared/step-configs.map'; // Removed as only used by getStepConfig which is now in service (mostly)
 // But wait, template calls getStepConfig.
@@ -163,11 +164,9 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
         switchMap(params => {
           this.runId = params.get('runId');
           this.workflowId = params.get('workflowId');
-          if (this.runId) {
+          if (this.runId && this.workflowId) {
             this.mode = EditorMode.Run;
-            // TODO: Create and use a WorkflowRunService
-            // return this.workflowRunService.getWorkflowRun(this.runId);
-            return of(null); // Placeholder
+            return this.workflowService.getExecutionDetails(this.workflowId, this.runId);
           } else if (this.workflowId) {
             this.mode = EditorMode.Edit;
             return this.workflowService.getWorkflowById(this.workflowId);
@@ -178,11 +177,10 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
         }),
       )
       .subscribe({
-        next: (data: WorkflowModel | WorkflowRunModel | null) => {
+        next: (data: WorkflowModel | WorkflowRunModel | ExecutionDetails | null) => {
           if (this.mode === EditorMode.Run) {
-            this.workflowRun = data ? (data as WorkflowRunModel) : null;
-            this.displayedWorkflow = this.workflowRun?.workflowSnapshot ?? null;
-            this.workflowId = this.workflowRun?.id ?? null;
+            const execution = data as ExecutionDetails | null;
+            this.displayedWorkflow = execution?.workflow_definition ?? null;
             if (this.displayedWorkflow) {
               this.formService.patchData(this.displayedWorkflow);
             }

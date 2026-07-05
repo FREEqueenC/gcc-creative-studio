@@ -25,9 +25,9 @@ from src.common import events  # noqa: F401
 
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
-from os import getenv
 
 from fastapi import FastAPI, Request, status
+from src.config.config_service import config_service
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -65,11 +65,11 @@ from src.web3.web3_controller import router as web3_router
 
 def configure_cors(app):
     """Configures CORS middleware based on the environment."""
-    environment = getenv("ENVIRONMENT")
+    environment = config_service.ENVIRONMENT
     allowed_origins = []
 
     if environment == "production":
-        frontend_url = getenv("FRONTEND_URL")
+        frontend_url = config_service.FRONTEND_URL
         if not frontend_url:
             raise ValueError(
                 "FRONTEND_URL environment variable not set in production"

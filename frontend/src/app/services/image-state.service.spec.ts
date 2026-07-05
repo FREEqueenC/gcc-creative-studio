@@ -54,7 +54,7 @@ describe('ImageStateService', () => {
     const savedState: Partial<ImageState> = {
       prompt: 'a futuristic city',
       aspectRatio: '16:9',
-      model: 'custom-model',
+      model: 'gemini-3.1-flash-image',
     };
     localStorage.setItem('image_state', JSON.stringify(savedState));
 
@@ -62,7 +62,7 @@ describe('ImageStateService', () => {
     const state = service.getState();
     expect(state.prompt).toBe('a futuristic city');
     expect(state.aspectRatio).toBe('16:9');
-    expect(state.model).toBe('custom-model');
+    expect(state.model).toBe('gemini-3.1-flash-image');
   });
 
   it('should update state and save to localStorage when updateState is called', () => {

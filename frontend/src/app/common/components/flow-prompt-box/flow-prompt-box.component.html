@@ -187,7 +187,7 @@
           </ng-container>
 
             <!-- Video Reference Slot (only for Ingredients to Video mode AND only for Gemini Omni) -->
-            <div *ngIf="mode === 'Ingredients to Video' && getSelectedModelObject()?.value === 'gemini-omni-generate-preview'"
+            <div *ngIf="mode === 'Ingredients to Video' && getSelectedModelObject()?.value === 'gemini-omni-flash-preview'"
               class="relative h-20 w-20 cursor-pointer rounded-xl border-2 border-dashed border-neutral-700 bg-neutral-800 transition-colors hover:border-neutral-500 hover:bg-neutral-700 flex flex-col items-center justify-center"
               (click)="!referenceVideo && openVideoSelectorForReference.emit()"
             >
@@ -208,7 +208,7 @@
             </div>
 
             <!-- Audio Reference Slot (only for Ingredients to Video mode AND only for Gemini Omni) -->
-            <div *ngIf="mode === 'Ingredients to Video' && getSelectedModelObject()?.value === 'gemini-omni-generate-preview'"
+            <div *ngIf="mode === 'Ingredients to Video' && getSelectedModelObject()?.value === 'gemini-omni-flash-preview'"
               class="relative h-20 w-20 cursor-pointer rounded-xl border-2 border-dashed border-neutral-700 bg-neutral-800 transition-colors hover:border-neutral-500 hover:bg-neutral-700 flex flex-col items-center justify-center"
               (click)="!referenceAudio && openAudioSelectorForReference.emit()"
             >
@@ -455,7 +455,7 @@
               >
                 x1
               </button>
-              @if (getSelectedModelObject()?.value !== 'gemini-omni-generate-preview') {
+              @if (getSelectedModelObject()?.value !== 'gemini-omni-flash-preview') {
                 <button
                   (click)="selectOutputs(2)"
                   class="block w-full px-3 py-1.5 text-left text-sm rounded hover:bg-neutral-600"

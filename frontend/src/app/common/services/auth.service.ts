@@ -88,6 +88,7 @@ export class AuthService {
               },
               error: (err) => {
                 console.error('Failed to sync user with backend on token change:', err);
+                this.clearSessionData();
               }
             });
           } catch (error) {
@@ -138,6 +139,7 @@ export class AuthService {
       }),
       catchError((error: any) => {
         console.error('An error occurred during the sign-in process:', error);
+        this.clearSessionData();
         return throwError(
           () => new Error(`Sign-in failed. Please try again. ${error}`),
         );
@@ -210,6 +212,13 @@ export class AuthService {
         return this.syncUserWithBackend$(idToken).pipe(
           switchMap(() => from(this.settingsService.loadSettings())),
           map(() => idToken), // Pass the token along for the final result.
+        );
+      }),
+      catchError((error: any) => {
+        console.error('An error occurred during the identity platform sign-in process:', error);
+        this.clearSessionData();
+        return throwError(
+          () => new Error(`Sign-in failed. Please try again. ${error}`),
         );
       }),
     );
@@ -316,21 +325,13 @@ export class AuthService {
     return this.auth
       .signOut()
       .then(() => {
-        this.currentOAuthAccessToken = null; // Clear stored token on logout
-        // Clear Firebase session data
-        this.firebaseIdToken = null;
-        this.firebaseTokenExpiry = null;
-        localStorage.removeItem(FIREBASE_SESSION_KEY);
-        localStorage.removeItem(USER_DETAILS);
-        localStorage.removeItem('showTooltip');
+        this.clearSessionData();
         void this.router.navigateByUrl(route);
       })
       .catch(e => {
         console.error('Sign Out Error', e);
         this.settingsService.reset();
-        localStorage.removeItem(FIREBASE_SESSION_KEY);
-        localStorage.removeItem(USER_DETAILS);
-        localStorage.removeItem('showTooltip');
+        this.clearSessionData();
         void this.router.navigate([LOGIN_ROUTE]);
       });
   }
@@ -414,5 +415,19 @@ export class AuthService {
     // refresh requires re-authentication or more complex flows not covered here.
     // For a simple deploy button click, getting a fresh token on sign-in might suffice.
     return this.currentOAuthAccessToken;
+  }
+
+  /**
+   * Clears the current session data from memory and local storage.
+   */
+  clearSessionData(): void {
+    this.currentOAuthAccessToken = null;
+    this.firebaseIdToken = null;
+    this.firebaseTokenExpiry = null;
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.removeItem(FIREBASE_SESSION_KEY);
+      localStorage.removeItem(USER_DETAILS);
+      localStorage.removeItem('showTooltip');
+    }
   }
 }

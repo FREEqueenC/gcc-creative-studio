@@ -107,9 +107,7 @@ async def get_generation_health(
     )
 
 
-@router.get(
-    "/active-users-monthly", response_model=list[AdminMonthlyActiveUsers]
-)
+@router.get("/active-users-monthly", response_model=list[AdminMonthlyActiveUsers])
 async def get_active_users_monthly(
     start_date: str | None = None,
     end_date: str | None = None,

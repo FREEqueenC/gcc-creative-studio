@@ -57,7 +57,8 @@ gcloud run deploy $SERVICE_NAME `
     --add-cloudsql-instances $DB_CONNECTION_NAME `
     --timeout 3600 `
     --memory 2Gi `
-    --cpu 2
+    --cpu 2 `
+    --quiet
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host "Deployment Completed Successfully!" -ForegroundColor Green

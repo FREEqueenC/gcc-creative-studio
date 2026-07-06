@@ -25,9 +25,7 @@ class Metadata(BaseModel):
         str,
         Field(description="A descriptive name for your video project."),
     ]
-    version: float = Field(
-        default=1.0, description="Version of the prompt structure."
-    )
+    version: float = Field(default=1.0, description="Version of the prompt structure.")
     target_model: str = Field(
         default="Veo",
         description="The target video generation model.",
@@ -137,9 +135,7 @@ class TimelineEvent(BaseModel):
     ]
     action: Annotated[
         str,
-        Field(
-            description="A clear description of the visual action happening."
-        ),
+        Field(description="A clear description of the visual action happening."),
     ]
     camera_instruction: str = Field(
         default="",

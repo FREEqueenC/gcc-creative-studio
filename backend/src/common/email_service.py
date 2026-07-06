@@ -13,7 +13,6 @@
 # limitations under the License.
 """Email sending service."""
 
-
 import base64
 import logging
 from email.message import EmailMessage
@@ -56,9 +55,7 @@ class EmailService:
         If sender credentials are not configured, it will log the email content.
         """
         invitation_url = f"{self.frontend_url}?workspaceId={workspace_id}"
-        subject = (
-            f"You've been invited to join '{workspace_name}' in Creative Studio"
-        )
+        subject = f"You've been invited to join '{workspace_name}' in Creative Studio"
         plain_text_content = f"Hello,\n\n{inviter_name} has invited you to join the workspace '{workspace_name}'.\n\nClick the link below to access the workspace:\n{invitation_url}\n\nThanks,\nThe Creative Studio Team"
 
         if not self.sender_email:
@@ -95,9 +92,7 @@ class EmailService:
             message["Subject"] = subject
 
             # 5. Encode the message in base64url format as required by the API
-            encoded_message = base64.urlsafe_b64encode(
-                message.as_bytes()
-            ).decode()
+            encoded_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
 
             create_message = {"raw": encoded_message}
 

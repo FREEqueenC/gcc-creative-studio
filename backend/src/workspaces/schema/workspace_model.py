@@ -37,7 +37,9 @@ class WorkspaceRoleEnum(str, Enum):
 class WorkspaceScopeEnum(str, Enum):
     """Defines the overall visibility of the workspace in the application."""
 
-    PUBLIC = "public"  # Visible to everyone (e.g., the "Default Google Workspace" gallery)
+    PUBLIC = (
+        "public"  # Visible to everyone (e.g., the "Default Google Workspace" gallery)
+    )
     PRIVATE = "private"  # Visible only to users listed in the 'members' list.
 
 
@@ -47,9 +49,7 @@ class WorkspaceMember(BaseModel):
     """
 
     user_id: int = Field(description="The User ID of the member.")
-    email: str = Field(
-        description="The member's email (denormalized for display)."
-    )
+    email: str = Field(description="The member's email (denormalized for display).")
     role: WorkspaceRoleEnum = Field(default=WorkspaceRoleEnum.VIEWER)
 
     model_config = ConfigDict(
@@ -65,12 +65,8 @@ class Workspace(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String, nullable=False)
-    owner_id: Mapped[int] = mapped_column(
-        ForeignKey("users.id"), nullable=False
-    )
-    scope: Mapped[str] = mapped_column(
-        String, default=WorkspaceScopeEnum.PRIVATE.value
-    )
+    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    scope: Mapped[str] = mapped_column(String, default=WorkspaceScopeEnum.PRIVATE.value)
 
     # Relationships
     owner: Mapped["User"] = relationship()
@@ -104,9 +100,7 @@ class WorkspaceMemberAssociation(Base):
         ForeignKey("workspaces.id"),
         primary_key=True,
     )
-    user_id: Mapped[int] = mapped_column(
-        ForeignKey("users.id"), primary_key=True
-    )
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), primary_key=True)
     role: Mapped[WorkspaceRoleEnum] = mapped_column(
         String,
         default=WorkspaceRoleEnum.VIEWER,

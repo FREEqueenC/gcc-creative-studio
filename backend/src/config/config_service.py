@@ -49,9 +49,7 @@ class ConfigService(BaseSettings):
 
     # --- Google Identity ---
     GOOGLE_TOKEN_AUDIENCE: str = ""
-    ALLOWED_ORGS_STR: str = Field(
-        default="", alias="IDENTITY_PLATFORM_ALLOWED_ORGS"
-    )
+    ALLOWED_ORGS_STR: str = Field(default="", alias="IDENTITY_PLATFORM_ALLOWED_ORGS")
 
     # --- Storage ---
     # The defaults will be set in the validator below to prevent recursion.
@@ -81,9 +79,7 @@ class ConfigService(BaseSettings):
     LYRIA_PROJECT_ID: str = ""
 
     # --- Imagen ---
-    MODEL_IMAGEN_PRODUCT_RECONTEXT: str = (
-        "imagen-product-recontext-preview-06-30"
-    )
+    MODEL_IMAGEN_PRODUCT_RECONTEXT: str = "imagen-product-recontext-preview-06-30"
     IMAGEN_GENERATED_SUBFOLDER: str = "generated_images"
     IMAGEN_EDITED_SUBFOLDER: str = "edited_images"
     IMAGEN_RECONTEXT_SUBFOLDER: str = "recontext_images"
@@ -139,9 +135,7 @@ class ConfigService(BaseSettings):
     @property
     def ALLOWED_ORGS(self) -> set[str]:
         return set(
-            org.strip()
-            for org in self.ALLOWED_ORGS_STR.split(",")
-            if org.strip()
+            org.strip() for org in self.ALLOWED_ORGS_STR.split(",") if org.strip()
         )
 
     @computed_field

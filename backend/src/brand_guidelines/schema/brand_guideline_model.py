@@ -43,9 +43,7 @@ class BrandGuideline(Base):
         nullable=True,
     )
 
-    source_pdf_gcs_uris: Mapped[list[str]] = mapped_column(
-        ARRAY(String), default=[]
-    )
+    source_pdf_gcs_uris: Mapped[list[str]] = mapped_column(ARRAY(String), default=[])
     color_palette: Mapped[list[str]] = mapped_column(ARRAY(String), default=[])
 
     logo_asset_id: Mapped[int | None] = mapped_column(
@@ -54,12 +52,8 @@ class BrandGuideline(Base):
     )
     guideline_text: Mapped[str | None] = mapped_column(String, nullable=True)
 
-    tone_of_voice_summary: Mapped[str | None] = mapped_column(
-        String, nullable=True
-    )
-    visual_style_summary: Mapped[str | None] = mapped_column(
-        String, nullable=True
-    )
+    tone_of_voice_summary: Mapped[str | None] = mapped_column(String, nullable=True)
+    visual_style_summary: Mapped[str | None] = mapped_column(String, nullable=True)
 
     created_at: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True),

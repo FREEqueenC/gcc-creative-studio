@@ -156,9 +156,7 @@ class GalleryService:
         if parent_item.thumbnail_uris and 0 <= link.media_index < len(
             parent_item.thumbnail_uris,
         ):
-            parent_thumbnail_gcs_uri = parent_item.thumbnail_uris[
-                link.media_index
-            ]
+            parent_thumbnail_gcs_uri = parent_item.thumbnail_uris[link.media_index]
             tasks.append(
                 asyncio.to_thread(
                     self.iam_signer_credentials.generate_presigned_url,
@@ -178,9 +176,7 @@ class GalleryService:
             mime_type=parent_item.mime_type,
         )
 
-    async def _create_gallery_response(
-        self, item: MediaItemModel
-    ) -> MediaItemResponse:
+    async def _create_gallery_response(self, item: MediaItemModel) -> MediaItemResponse:
         """Helper function to convert a MediaItem into a GalleryItemResponse
         by generating presigned URLs in parallel for its GCS URIs.
         """
@@ -188,9 +184,7 @@ class GalleryService:
 
         # 1. Create tasks for main media URLs
         main_url_tasks = [
-            asyncio.to_thread(
-                self.iam_signer_credentials.generate_presigned_url, uri
-            )
+            asyncio.to_thread(self.iam_signer_credentials.generate_presigned_url, uri)
             for uri in all_gcs_uris
             if uri
         ]
@@ -198,18 +192,14 @@ class GalleryService:
         # 1.5 Create tasks for original media URLs
         all_original_gcs_uris = item.original_gcs_uris or []
         original_url_tasks = [
-            asyncio.to_thread(
-                self.iam_signer_credentials.generate_presigned_url, uri
-            )
+            asyncio.to_thread(self.iam_signer_credentials.generate_presigned_url, uri)
             for uri in all_original_gcs_uris
             if uri
         ]
 
         # 2. Create tasks for thumbnail URLs
         thumbnail_tasks = [
-            asyncio.to_thread(
-                self.iam_signer_credentials.generate_presigned_url, uri
-            )
+            asyncio.to_thread(self.iam_signer_credentials.generate_presigned_url, uri)
             for uri in (item.thumbnail_uris or "")
             if uri
         ]
@@ -218,8 +208,7 @@ class GalleryService:
         source_asset_tasks = []
         if item.source_assets:
             source_asset_tasks = [
-                self._enrich_source_asset_link(link)
-                for link in item.source_assets
+                self._enrich_source_asset_link(link) for link in item.source_assets
             ]
 
         # 4. Create tasks for generated input asset URLs
@@ -282,17 +271,13 @@ class GalleryService:
 
         # Create tasks
         url_tasks = [
-            asyncio.to_thread(
-                self.iam_signer_credentials.generate_presigned_url, uri
-            )
+            asyncio.to_thread(self.iam_signer_credentials.generate_presigned_url, uri)
             for uri in uris_to_sign
             if uri
         ]
 
         thumbnail_tasks = [
-            asyncio.to_thread(
-                self.iam_signer_credentials.generate_presigned_url, uri
-            )
+            asyncio.to_thread(self.iam_signer_credentials.generate_presigned_url, uri)
             for uri in thumbnail_uris_to_sign
             if uri
         ]
@@ -327,9 +312,7 @@ class GalleryService:
         unified_items = unified_items_query.data or []
 
         # Convert each MediaItem to a GalleryItemResponse in parallel
-        response_tasks = [
-            self._enrich_unified_item(item) for item in unified_items
-        ]
+        response_tasks = [self._enrich_unified_item(item) for item in unified_items]
         enriched_items = await asyncio.gather(*response_tasks)
 
         return PaginationResponseDto[UnifiedGalleryItemResponse](
@@ -350,9 +333,7 @@ class GalleryService:
         """
         # Run the synchronous database query in a separate thread
         is_admin = UserRoleEnum.ADMIN in current_user.roles
-        item = await self.media_repo.get_by_id(
-            item_id, include_deleted=is_admin
-        )
+        item = await self.media_repo.get_by_id(item_id, include_deleted=is_admin)
 
         if not item:
             return None
@@ -408,9 +389,7 @@ class GalleryService:
                         continue
 
                     is_admin = UserRoleEnum.ADMIN in current_user.roles
-                    is_owner = (
-                        getattr(media_item, "user_id", None) == current_user.id
-                    )
+                    is_owner = getattr(media_item, "user_id", None) == current_user.id
                     if not is_admin and not is_owner:
                         logger.warning(
                             f"User {current_user.id} unauthorized to delete media {item.id}",
@@ -434,9 +413,7 @@ class GalleryService:
                         continue
 
                     is_admin = UserRoleEnum.ADMIN in current_user.roles
-                    is_owner = (
-                        getattr(asset, "user_id", None) == current_user.id
-                    )
+                    is_owner = getattr(asset, "user_id", None) == current_user.id
                     if not is_admin and not is_owner:
                         logger.warning(
                             f"User {current_user.id} unauthorized to delete asset {item.id}",
@@ -514,9 +491,7 @@ class GalleryService:
                         filename = None
 
                         if item.type == "media_item":
-                            media_item = await self.media_repo.get_by_id(
-                                item.id
-                            )
+                            media_item = await self.media_repo.get_by_id(item.id)
                             if not media_item:
                                 continue
 
@@ -527,17 +502,13 @@ class GalleryService:
                             )
                             if media_item.gcs_uris:
                                 gcs_uri = media_item.gcs_uris[0]
-                                mime_type = getattr(
-                                    media_item, "mime_type", None
-                                )
+                                mime_type = getattr(media_item, "mime_type", None)
 
                                 # Use mimetypes library for guessing extension
                                 ext = "bin"
                                 if mime_type:
                                     ext = (
-                                        mimetypes.guess_extension(
-                                            str(mime_type)
-                                        )
+                                        mimetypes.guess_extension(str(mime_type))
                                         or "bin"
                                     )
                                     if ext.startswith("."):
@@ -547,9 +518,7 @@ class GalleryService:
 
                                 filename = f"media_{item.id}.{ext}"
                         elif item.type == "source_asset":
-                            asset = await self.source_asset_repo.get_by_id(
-                                item.id
-                            )
+                            asset = await self.source_asset_repo.get_by_id(item.id)
                             if not asset:
                                 continue
 
@@ -561,9 +530,7 @@ class GalleryService:
                             if asset.gcs_uri:
                                 gcs_uri = asset.gcs_uri
                                 ext = (
-                                    gcs_uri.split(".")[-1]
-                                    if "." in gcs_uri
-                                    else "bin"
+                                    gcs_uri.split(".")[-1] if "." in gcs_uri else "bin"
                                 )
                                 filename = f"asset_{item.id}.{ext}"
 
@@ -582,16 +549,12 @@ class GalleryService:
                                 await asyncio.to_thread(stream_to_zip)
                                 downloads_log.append(f"- Success: {filename}")
                             except Exception as e:
-                                downloads_log.append(
-                                    f"- Failed: {filename} ({e})"
-                                )
+                                downloads_log.append(f"- Failed: {filename} ({e})")
                                 logger.error(
                                     f"Error streaming {item.type} {item.id} to ZIP: {e}",
                                 )
                     except Exception as e:
-                        logger.error(
-                            f"Error processing {item.type} {item.id}: {e}"
-                        )
+                        logger.error(f"Error processing {item.type} {item.id}: {e}")
 
                 # Add failure / success manifest README
                 if downloads_log:
@@ -665,9 +628,7 @@ class GalleryService:
                             "workspace_id",
                         },
                     )
-                    new_item_data["workspace_id"] = (
-                        bulk_copy_dto.target_workspace_id
-                    )
+                    new_item_data["workspace_id"] = bulk_copy_dto.target_workspace_id
 
                     # Ensure user_id and user_email are set to the current user copying
                     new_item_data["user_id"] = current_user.id
@@ -698,9 +659,7 @@ class GalleryService:
                             "workspace_id",
                         },
                     )
-                    new_asset_data["workspace_id"] = (
-                        bulk_copy_dto.target_workspace_id
-                    )
+                    new_asset_data["workspace_id"] = bulk_copy_dto.target_workspace_id
 
                     # Ensure user_id is set to the current user copying
                     new_asset_data["user_id"] = current_user.id

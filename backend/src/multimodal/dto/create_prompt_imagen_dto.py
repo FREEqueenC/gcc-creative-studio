@@ -25,9 +25,7 @@ class ImageMetadata(BaseModel):
         str,
         Field(description="A descriptive name for your image concept."),
     ]
-    version: float = Field(
-        default=1.0, description="Version of the prompt structure."
-    )
+    version: float = Field(default=1.0, description="Version of the prompt structure.")
     target_model: str = Field(
         default="Imagen",
         description="The target image generation model (e.g., Imagen 3, Imagen 4).",

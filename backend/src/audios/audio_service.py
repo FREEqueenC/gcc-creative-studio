@@ -21,9 +21,7 @@ import os
 import sys
 import time
 import wave
-from collections.abc import MutableSequence
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any
 
 import vertexai
 from fastapi import Depends
@@ -94,9 +92,7 @@ def _process_audio_in_background(
                     cfg = config_service
 
                     try:
-                        vertexai.init(
-                            project=cfg.PROJECT_ID, location=cfg.LOCATION
-                        )
+                        vertexai.init(project=cfg.PROJECT_ID, location=cfg.LOCATION)
                         start_time = time.monotonic()
 
                         permanent_gcs_uris = []
@@ -135,14 +131,10 @@ def _process_audio_in_background(
                                     if (
                                         not response.candidates
                                         or not response.candidates[0].content
-                                        or not response.candidates[
-                                            0
-                                        ].content.parts
+                                        or not response.candidates[0].content.parts
                                     ):
                                         return None
-                                    part = response.candidates[0].content.parts[
-                                        0
-                                    ]
+                                    part = response.candidates[0].content.parts[0]
                                     pcm_bytes = None
                                     if (
                                         hasattr(part, "inline_data")
@@ -150,15 +142,11 @@ def _process_audio_in_background(
                                     ):
                                         pcm_bytes = part.inline_data.data
                                         if isinstance(pcm_bytes, str):
-                                            pcm_bytes = base64.b64decode(
-                                                pcm_bytes
-                                            )
+                                            pcm_bytes = base64.b64decode(pcm_bytes)
                                     if not pcm_bytes:
                                         return None
                                     wav_buffer = io.BytesIO()
-                                    with wave.open(
-                                        wav_buffer, "wb"
-                                    ) as wav_file:
+                                    with wave.open(wav_buffer, "wb") as wav_file:
                                         wav_file.setnchannels(1)
                                         wav_file.setsampwidth(2)
                                         wav_file.setframerate(24000)
@@ -173,9 +161,7 @@ def _process_audio_in_background(
                                         decode=False,
                                     )
                                 except Exception as e:
-                                    worker_logger.error(
-                                        f"Gemini generation error: {e}"
-                                    )
+                                    worker_logger.error(f"Gemini generation error: {e}")
                                     return None
 
                             tasks = [
@@ -190,10 +176,8 @@ def _process_audio_in_background(
 
                             async def generate_tts(index: int) -> str | None:
                                 try:
-                                    synthesis_input = (
-                                        texttospeech.SynthesisInput(
-                                            text=request_dto.prompt
-                                        )
+                                    synthesis_input = texttospeech.SynthesisInput(
+                                        text=request_dto.prompt
                                     )
                                     voice_name = (
                                         request_dto.voice_name.value
@@ -205,16 +189,13 @@ def _process_audio_in_background(
                                         if request_dto.language_code
                                         else LanguageEnum.EN_US.value
                                     )
-                                    if (
-                                        request_dto.model
-                                        == GenerationModelEnum.CHIRP_3
-                                    ):
-                                        voice_name = f"{language_code}-Chirp3-HD-{voice_name}"
-                                    voice_params = (
-                                        texttospeech.VoiceSelectionParams(
-                                            language_code=language_code,
-                                            name=voice_name,
+                                    if request_dto.model == GenerationModelEnum.CHIRP_3:
+                                        voice_name = (
+                                            f"{language_code}-Chirp3-HD-{voice_name}"
                                         )
+                                    voice_params = texttospeech.VoiceSelectionParams(
+                                        language_code=language_code,
+                                        name=voice_name,
                                     )
                                     audio_config = texttospeech.AudioConfig(
                                         audio_encoding=texttospeech.AudioEncoding.LINEAR16,
@@ -236,14 +217,11 @@ def _process_audio_in_background(
                                         decode=False,
                                     )
                                 except Exception as e:
-                                    worker_logger.error(
-                                        f"TTS generation error: {e}"
-                                    )
+                                    worker_logger.error(f"TTS generation error: {e}")
                                     return None
 
                             tasks = [
-                                generate_tts(i)
-                                for i in range(request_dto.sample_count)
+                                generate_tts(i) for i in range(request_dto.sample_count)
                             ]
                             results = await asyncio.gather(*tasks)
                             permanent_gcs_uris = [u for u in results if u]
@@ -252,10 +230,8 @@ def _process_audio_in_background(
                             client_options = {
                                 "api_endpoint": "us-central1-aiplatform.googleapis.com"
                             }
-                            ai_client = (
-                                aiplatform.gapic.PredictionServiceClient(
-                                    client_options=client_options
-                                )
+                            ai_client = aiplatform.gapic.PredictionServiceClient(
+                                client_options=client_options
                             )
 
                             async def generate_music(index: int) -> str | None:
@@ -266,9 +242,7 @@ def _process_audio_in_background(
                                         parameters_dict, parameters_value
                                     )
 
-                                    instance_dict = {
-                                        "prompt": request_dto.prompt
-                                    }
+                                    instance_dict = {"prompt": request_dto.prompt}
                                     if request_dto.negative_prompt:
                                         instance_dict["negative_prompt"] = (
                                             request_dto.negative_prompt
@@ -277,9 +251,7 @@ def _process_audio_in_background(
                                         instance_dict["seed"] = request_dto.seed
 
                                     instance_value = struct_pb2.Value()
-                                    json_format.ParseDict(
-                                        instance_dict, instance_value
-                                    )
+                                    json_format.ParseDict(instance_dict, instance_value)
 
                                     endpoint = f"projects/{cfg.PROJECT_ID}/locations/global/publishers/google/models/lyria-002"
                                     response = await asyncio.to_thread(
@@ -305,9 +277,7 @@ def _process_audio_in_background(
                                         decode=False,
                                     )
                                 except Exception as e:
-                                    worker_logger.error(
-                                        f"Lyria generation error: {e}"
-                                    )
+                                    worker_logger.error(f"Lyria generation error: {e}")
                                     return None
 
                             tasks = [
@@ -323,9 +293,7 @@ def _process_audio_in_background(
                             )
 
                         if not permanent_gcs_uris:
-                            raise ValueError(
-                                "Failed to generate any audio samples."
-                            )
+                            raise ValueError("Failed to generate any audio samples.")
 
                         generation_time = time.monotonic() - start_time
 
@@ -355,9 +323,7 @@ def _process_audio_in_background(
 
         loop.run_until_complete(_async_worker())
     except Exception as outer_e:
-        worker_logger.error(
-            f"Fatal error in worker thread: {outer_e}", exc_info=True
-        )
+        worker_logger.error(f"Fatal error in worker thread: {outer_e}", exc_info=True)
 
 
 class AudioService:
@@ -387,7 +353,6 @@ class AudioService:
         user: UserModel,
         executor: ThreadPoolExecutor,
     ) -> MediaItemResponse:
-
         media_post_to_save = MediaItemModel(
             user_email=user.email,
             user_id=user.id,

@@ -24,9 +24,7 @@ from src.videos.veo_service import VeoService
 from src.workspaces.workspace_auth_guard import WorkspaceAuth
 
 # Define role checkers for convenience
-user_only = Depends(
-    RoleChecker(allowed_roles=[UserRoleEnum.USER, UserRoleEnum.ADMIN])
-)
+user_only = Depends(RoleChecker(allowed_roles=[UserRoleEnum.USER, UserRoleEnum.ADMIN]))
 
 router = APIRouter(
     prefix="/api/videos",

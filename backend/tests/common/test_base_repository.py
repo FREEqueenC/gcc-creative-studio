@@ -83,6 +83,7 @@ async def test_get_by_id_not_found():
 @pytest.mark.anyio
 async def test_create_success():
     mock_db = AsyncMock()
+    mock_db.add = MagicMock()
     repo = MockBaseRepository(db=mock_db)
 
     input_model = SourceAssetModel(

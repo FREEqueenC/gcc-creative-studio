@@ -23,9 +23,7 @@ from src.workflows.schema.workflow_run_model import (
 )
 
 
-class WorkflowRunRepository(
-    BaseStringRepository[WorkflowRun, WorkflowRunModel]
-):
+class WorkflowRunRepository(BaseStringRepository[WorkflowRun, WorkflowRunModel]):
     """Repository for WorkflowRun."""
 
     def __init__(self, db: AsyncSession = Depends(get_db)):

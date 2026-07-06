@@ -72,9 +72,7 @@ class CreateAudioDto(BaseDto):
     )
 
     @field_validator("model")
-    def validate_audio_model(
-        cls, value: GenerationModelEnum
-    ) -> GenerationModelEnum:
+    def validate_audio_model(cls, value: GenerationModelEnum) -> GenerationModelEnum:
         allowed_audio_models = {
             GenerationModelEnum.LYRIA_002,
             GenerationModelEnum.CHIRP_3,
@@ -99,8 +97,6 @@ class CreateAudioDto(BaseDto):
         if not is_music_model:
             # TTS Check
             if not self.language_code:
-                raise ValueError(
-                    "language_code is required for Text-to-Speech models."
-                )
+                raise ValueError("language_code is required for Text-to-Speech models.")
 
         return self

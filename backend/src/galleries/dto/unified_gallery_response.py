@@ -42,9 +42,7 @@ class UnifiedGalleryItemResponse(BaseModel):
     user_picture: str | None = None
     user_email: str | None = None
     # Map from 'metadata_' in SQLAlchemy model to 'metadata' in Pydantic
-    metadata: dict[str, Any] = Field(
-        default_factory=dict, validation_alias="metadata_"
-    )
+    metadata: dict[str, Any] = Field(default_factory=dict, validation_alias="metadata_")
 
     @field_validator("metadata", mode="after")
     @classmethod
@@ -61,9 +59,7 @@ class UnifiedGalleryItemResponse(BaseModel):
             tags_val = self.metadata.pop("tags")
             if isinstance(tags_val, list):
                 self.tags = [
-                    TagModel.model_validate(t)
-                    for t in tags_val
-                    if isinstance(t, dict)
+                    TagModel.model_validate(t) for t in tags_val if isinstance(t, dict)
                 ]
         return self
 

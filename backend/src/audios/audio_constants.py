@@ -13,7 +13,6 @@
 # limitations under the License.
 """Constants for audio services."""
 
-
 from enum import Enum
 
 

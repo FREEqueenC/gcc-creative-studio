@@ -145,4 +145,3 @@ async def feedback_endpoint(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to record developer feedback: {e}",
         )
-

@@ -27,12 +27,8 @@ class TagCreateDto(BaseModel):
 
 
 class TagUpdateDto(BaseModel):
-    name: str | None = Field(
-        default=None, description="The new name of the tag."
-    )
-    color: str | None = Field(
-        default=None, description="The new color of the tag."
-    )
+    name: str | None = Field(default=None, description="The new name of the tag.")
+    color: str | None = Field(default=None, description="The new color of the tag.")
 
 
 class BulkAssignTagsDto(BaseModel):
@@ -41,9 +37,7 @@ class BulkAssignTagsDto(BaseModel):
     )
     item_ids: list[int] = Field(..., description="List of IDs of items to tag.")
     item_type: str = Field(..., description="'media_item' or 'source_asset'")
-    tag_names: list[str] = Field(
-        ..., description="List of tag names to assign."
-    )
+    tag_names: list[str] = Field(..., description="List of tag names to assign.")
 
 
 class TagSearchDto(BaseSearchDto):

@@ -93,9 +93,7 @@ async def get_single_gallery_item(
 ):
     """Get a single media item by its ID."""
     # The service now requires the user to perform authorization checks.
-    item = await service.get_media_by_id(
-        item_id=item_id, current_user=current_user
-    )
+    item = await service.get_media_by_id(item_id=item_id, current_user=current_user)
     if not item:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

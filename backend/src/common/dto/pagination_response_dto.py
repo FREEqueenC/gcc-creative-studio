@@ -31,9 +31,7 @@ class PaginationResponseDto(BaseDto, Generic[T]):
     data: list[T] | None = Field(
         description="The list of documents for the current page.",
     )
-    count: int = Field(
-        description="Total number of documents matching the query."
-    )
+    count: int = Field(description="Total number of documents matching the query.")
     page: int = Field(description="Current page number (1-indexed).")
     page_size: int = Field(description="Number of items per page.")
     total_pages: int = Field(description="Total number of pages.")

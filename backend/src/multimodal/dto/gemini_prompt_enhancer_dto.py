@@ -75,4 +75,3 @@ class FeedbackRequestDto(BaseDto):
 
 class FeedbackResponseDto(BaseDto):
     status: str
-

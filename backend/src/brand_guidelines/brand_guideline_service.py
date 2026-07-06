@@ -119,13 +119,11 @@ def _process_brand_guideline_in_background(
                         )
 
                         # 1. Split if necessary and upload file(s) to GCS
-                        gcs_uris = (
-                            await BrandGuidelineService._split_and_upload_pdf(
-                                gcs_service,
-                                file_contents or b"",
-                                workspace_id,
-                                original_filename,
-                            )
+                        gcs_uris = await BrandGuidelineService._split_and_upload_pdf(
+                            gcs_service,
+                            file_contents or b"",
+                            workspace_id,
+                            original_filename,
                         )
 
                         if not gcs_uris:
@@ -153,9 +151,7 @@ def _process_brand_guideline_in_background(
                             )
                             for uri in gcs_uris
                         ]
-                        results = await asyncio.gather(
-                            *tasks, return_exceptions=True
-                        )
+                        results = await asyncio.gather(*tasks, return_exceptions=True)
 
                         successful_partial_results = []
                         for i, result in enumerate(results):
@@ -219,9 +215,7 @@ def _process_brand_guideline_in_background(
     except Exception as e:
         worker_logger.error(
             "Brand guideline worker failed to initialize.",
-            extra={
-                "json_fields": {"guideline_id": guideline_id, "error": str(e)}
-            },
+            extra={"json_fields": {"guideline_id": guideline_id, "error": str(e)}},
             exc_info=True,
         )
 
@@ -274,9 +268,7 @@ class BrandGuidelineService:
             return [gcs_uri] if gcs_uri else []
 
         # Splitting is required
-        logger.info(
-            "PDF size (%s bytes) exceeds limit. Splitting file.", file_size
-        )
+        logger.info("PDF size (%s bytes) exceeds limit. Splitting file.", file_size)
         reader = PdfReader(io.BytesIO(file_contents))
         num_pages = len(reader.pages)
         num_chunks = math.ceil(file_size / GEMINI_PDF_LIMIT_BYTES)
@@ -294,9 +286,7 @@ class BrandGuidelineService:
                 writer.write(chunk_bytes_io)
                 chunk_bytes = chunk_bytes_io.getvalue()
 
-            chunk_filename = (
-                f"{timestamp}-{file_uuid}-part-{i + 1}-{original_filename}"
-            )
+            chunk_filename = f"{timestamp}-{file_uuid}-part-{i + 1}-{original_filename}"
             dest_blob_name = (
                 f"brand-guidelines/{workspace_id or 'global'}/{chunk_filename}"
             )
@@ -311,9 +301,7 @@ class BrandGuidelineService:
 
         return await asyncio.gather(*upload_tasks)
 
-    async def _delete_guideline_and_assets(
-        self, guideline: BrandGuidelineModel
-    ):
+    async def _delete_guideline_and_assets(self, guideline: BrandGuidelineModel):
         """Deletes a guideline document and all its associated GCS assets."""
         logger.info("Deleting old guideline '%s' and its assets.", guideline.id)
 
@@ -334,9 +322,7 @@ class BrandGuidelineService:
     ) -> BrandGuidelineResponseDto:
         """Enriches a BrandGuidelineModel with presigned URLs for its assets."""
         presigned_url_tasks = [
-            asyncio.to_thread(
-                self.iam_signer_credentials.generate_presigned_url, uri
-            )
+            asyncio.to_thread(self.iam_signer_credentials.generate_presigned_url, uri)
             for uri in guideline.source_pdf_gcs_uris
         ]
         presigned_urls = await asyncio.gather(*presigned_url_tasks)
@@ -354,9 +340,7 @@ class BrandGuidelineService:
         """Generates a GCS v4 signed URL for a client-side upload."""
         # Authorize the user for the workspace before generating a URL
         if request_dto.workspace_id:
-            workspace = await self.workspace_repo.get_by_id(
-                request_dto.workspace_id
-            )
+            workspace = await self.workspace_repo.get_by_id(request_dto.workspace_id)
             if not workspace:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
@@ -379,9 +363,7 @@ class BrandGuidelineService:
                 "Could not generate upload URL.",
             )
 
-        return GenerateUploadUrlResponseDto(
-            upload_url=signed_url, gcs_uri=gcs_uri
-        )
+        return GenerateUploadUrlResponseDto(upload_url=signed_url, gcs_uri=gcs_uri)
 
     async def start_brand_guideline_processing_job(
         self,
@@ -421,9 +403,7 @@ class BrandGuidelineService:
 
         # 2. Check for and delete an existing guideline for the workspace
         if workspace_id:
-            search_dto = BrandGuidelineSearchDto(
-                workspace_id=workspace_id, limit=1
-            )
+            search_dto = BrandGuidelineSearchDto(workspace_id=workspace_id, limit=1)
             existing_guidelines_response = await self.repo.query(
                 search_dto,
                 workspace_id=workspace_id,
@@ -457,9 +437,7 @@ class BrandGuidelineService:
         )
 
         # 6. Return the placeholder DTO to the client
-        return await self._create_brand_guideline_response(
-            placeholder_guideline
-        )
+        return await self._create_brand_guideline_response(placeholder_guideline)
 
     async def get_guideline_by_id(
         self,
@@ -538,9 +516,7 @@ class BrandGuidelineService:
 
         return await self._create_brand_guideline_response(response.data[0])
 
-    async def delete_guideline(
-        self, guideline_id: int, current_user: UserModel
-    ):
+    async def delete_guideline(self, guideline_id: int, current_user: UserModel):
         """Deletes a brand guideline and all its associated assets after an
         authorization check.
         """
@@ -564,9 +540,7 @@ class BrandGuidelineService:
                     detail="Only a system admin can delete global brand guidelines.",
                 )
         else:  # Workspace-specific guideline
-            workspace = await self.workspace_repo.get_by_id(
-                guideline.workspace_id
-            )
+            workspace = await self.workspace_repo.get_by_id(guideline.workspace_id)
             # If workspace doesn't exist, only admin can clean up the orphan guideline.
             if not workspace and not is_system_admin:
                 raise HTTPException(
@@ -574,9 +548,7 @@ class BrandGuidelineService:
                     detail="Parent workspace for this guideline not found.",
                 )
 
-            is_workspace_owner = (
-                workspace and current_user.id == workspace.owner_id
-            )
+            is_workspace_owner = workspace and current_user.id == workspace.owner_id
             if not (is_system_admin or is_workspace_owner):
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,

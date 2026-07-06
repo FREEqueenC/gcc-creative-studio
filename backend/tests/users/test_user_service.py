@@ -29,6 +29,8 @@ def fixture_mock_user_repo():
     """Provides a mocked UserRepository."""
     # We mock the UserRepository class itself to avoid DB dependency
     repo = AsyncMock()
+    repo.db = AsyncMock()
+    repo.db.add = MagicMock()
     return repo
 
 

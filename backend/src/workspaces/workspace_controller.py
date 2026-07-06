@@ -25,9 +25,7 @@ from src.workspaces.workspace_service import WorkspaceService
 router = APIRouter(
     prefix="/api/workspaces",
     tags=["Workspaces"],
-    dependencies=[
-        Depends(get_current_user)
-    ],  # All endpoints require authentication
+    dependencies=[Depends(get_current_user)],  # All endpoints require authentication
 )
 
 
@@ -95,6 +93,7 @@ async def invite_user(
 
 from pydantic import BaseModel, Field
 from src.workspaces.schema.workspace_model import WorkspaceScopeEnum
+
 
 class UpdateWorkspaceDto(BaseModel):
     name: str | None = Field(default=None)

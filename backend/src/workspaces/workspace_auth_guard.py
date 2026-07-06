@@ -53,9 +53,7 @@ class WorkspaceAuth:
         is_public = scope == WorkspaceScopeEnum.PUBLIC
 
         if not (is_admin or is_public):
-            is_member = await self.workspace_repo.is_member(
-                workspace_id, user.id
-            )
+            is_member = await self.workspace_repo.is_member(workspace_id, user.id)
             if not is_member:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,

@@ -24,6 +24,7 @@ from src.users.user_model import UserModel
 
 logger = logging.getLogger(__name__)
 
+
 class Web3Service:
     def __init__(
         self,
@@ -39,7 +40,9 @@ class Web3Service:
         Retrieves a media item by ID and packages its details into standard OpenSea ERC-721 metadata JSON.
         """
         # Retrieve using gallery service which also executes permissions checks
-        item = await self.gallery_service.get_media_by_id(item_id=item_id, current_user=current_user)
+        item = await self.gallery_service.get_media_by_id(
+            item_id=item_id, current_user=current_user
+        )
         if not item:
             return {}
 
@@ -55,7 +58,7 @@ class Web3Service:
             {"trait_type": "Aspect Ratio", "value": str(item.aspect_ratio)},
             {"trait_type": "Mime Type", "value": str(item.mime_type)},
         ]
-        
+
         if item.style:
             attributes.append({"trait_type": "Style", "value": str(item.style)})
         if item.seed is not None:
@@ -63,11 +66,14 @@ class Web3Service:
         if item.lighting:
             attributes.append({"trait_type": "Lighting", "value": str(item.lighting)})
         if item.color_and_tone:
-            attributes.append({"trait_type": "Color & Tone", "value": str(item.color_and_tone)})
+            attributes.append(
+                {"trait_type": "Color & Tone", "value": str(item.color_and_tone)}
+            )
 
         metadata = {
             "name": f"Creative Studio Asset #{item.id}",
-            "description": item.prompt or "Generative Art created in Google Cloud Creative Studio",
+            "description": item.prompt
+            or "Generative Art created in Google Cloud Creative Studio",
             "image": media_url,
             "external_url": f"https://aetherisx.studio/gallery/{item.id}",
             "attributes": attributes,
@@ -76,9 +82,9 @@ class Web3Service:
                 "rewritten_prompt": item.rewritten_prompt,
                 "creator": item.user_email,
                 "workspace_id": item.workspace_id,
-            }
+            },
         }
-        
+
         # If it's video, add animation_url according to ERC-1155/721 standard
         if "video" in str(item.mime_type).lower():
             metadata["animation_url"] = media_url
@@ -95,14 +101,18 @@ class Web3Service:
             logger.warning("PINATA_JWT not configured. Skipping IPFS upload.")
             return None
 
-        item = await self.gallery_service.get_media_by_id(item_id=item_id, current_user=current_user)
+        item = await self.gallery_service.get_media_by_id(
+            item_id=item_id, current_user=current_user
+        )
         if not item or not item.gcs_uris:
             logger.error(f"Media item {item_id} not found or lacks GCS URI.")
             return None
 
         # 1. Download the media file bytes from GCS
         try:
-            gcs_path = item.gcs_uris[0].replace(f"gs://{self.gcs_service.bucket_name}/", "")
+            gcs_path = item.gcs_uris[0].replace(
+                f"gs://{self.gcs_service.bucket_name}/", ""
+            )
             blob = self.gcs_service.bucket.blob(gcs_path)
             media_bytes = await asyncio.to_thread(blob.download_as_bytes)
         except Exception as e:
@@ -144,7 +154,7 @@ class Web3Service:
             {"trait_type": "Aspect Ratio", "value": str(item.aspect_ratio)},
             {"trait_type": "Mime Type", "value": str(item.mime_type)},
         ]
-        
+
         if item.style:
             attributes.append({"trait_type": "Style", "value": str(item.style)})
         if item.seed is not None:
@@ -152,11 +162,14 @@ class Web3Service:
         if item.lighting:
             attributes.append({"trait_type": "Lighting", "value": str(item.lighting)})
         if item.color_and_tone:
-            attributes.append({"trait_type": "Color & Tone", "value": str(item.color_and_tone)})
+            attributes.append(
+                {"trait_type": "Color & Tone", "value": str(item.color_and_tone)}
+            )
 
         metadata = {
             "name": f"Creative Studio Asset #{item.id}",
-            "description": item.prompt or "Generative Art created in Google Cloud Creative Studio",
+            "description": item.prompt
+            or "Generative Art created in Google Cloud Creative Studio",
             "image": media_ipfs_url,
             "external_url": f"https://aetherisx.studio/gallery/{item.id}",
             "attributes": attributes,
@@ -165,9 +178,9 @@ class Web3Service:
                 "rewritten_prompt": item.rewritten_prompt,
                 "creator": item.user_email,
                 "workspace_id": item.workspace_id,
-            }
+            },
         }
-        
+
         if "video" in str(item.mime_type).lower():
             metadata["animation_url"] = media_ipfs_url
 
@@ -193,11 +206,12 @@ class Web3Service:
                 res_data = response.json()
                 metadata_ipfs_hash = res_data.get("IpfsHash")
                 if not metadata_ipfs_hash:
-                    raise ValueError("Pinata response did not contain metadata IpfsHash.")
+                    raise ValueError(
+                        "Pinata response did not contain metadata IpfsHash."
+                    )
                 logger.info(f"Metadata pinned successfully. CID: {metadata_ipfs_hash}")
         except Exception as e:
             logger.error(f"Failed to pin metadata JSON to IPFS via Pinata: {e}")
             return None
 
         return f"ipfs://{metadata_ipfs_hash}"
-

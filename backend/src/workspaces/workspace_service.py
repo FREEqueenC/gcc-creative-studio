@@ -119,22 +119,16 @@ class WorkspaceService:
             )
         return updated_workspace
 
-    async def list_workspaces_for_user(
-        self, user: UserModel
-    ) -> list[WorkspaceModel]:
+    async def list_workspaces_for_user(self, user: UserModel) -> list[WorkspaceModel]:
         """Retrieves all workspaces a user has access to. This includes:
         1. All public workspaces.
         2. All private workspaces where the user is a member.
         """
         # 1. Fetch all workspaces where the user is explicitly a member.
-        private_workspaces = await self.workspace_repo.find_by_member_id(
-            user.id
-        )
+        private_workspaces = await self.workspace_repo.find_by_member_id(user.id)
 
         # 2. Fetch all public workspaces.
-        public_workspaces = (
-            await self.workspace_repo.get_all_public_workspaces()
-        )
+        public_workspaces = await self.workspace_repo.get_all_public_workspaces()
 
         # 3. Combine the lists and remove duplicates.
         # A dictionary is used to ensure uniqueness based on workspace ID.

@@ -53,7 +53,5 @@ class ConcatenateVideosDto(BaseDto):
     def validate_inputs(self) -> "ConcatenateVideosDto":
         """Ensures at least two total video inputs are provided."""
         if len(self.inputs) < 2:
-            raise ValueError(
-                "Concatenation requires at least two video inputs."
-            )
+            raise ValueError("Concatenation requires at least two video inputs.")
         return self

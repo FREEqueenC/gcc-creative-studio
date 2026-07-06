@@ -103,7 +103,6 @@ export class WorkflowService implements OnDestroy {
     return this.workflows$;
   }
 
-  // TODO: If we are selecting a workflow run we should query another endpoint
   getWorkflowById(
     workflowId: string,
   ): Observable<WorkflowModel | WorkflowRunModel> {

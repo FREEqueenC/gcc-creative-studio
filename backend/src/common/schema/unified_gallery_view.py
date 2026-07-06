@@ -44,9 +44,7 @@ class UnifiedGalleryView(Base):
         nullable=False,
     )
     user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"))
-    created_at: Mapped[datetime.datetime] = mapped_column(
-        DateTime(timezone=True)
-    )
+    created_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True))
     item_type: Mapped[str] = mapped_column(
         Text,
         primary_key=True,

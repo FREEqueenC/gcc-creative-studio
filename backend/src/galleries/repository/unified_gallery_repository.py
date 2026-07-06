@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import datetime
-from src.workspaces.schema.workspace_model import Workspace
-from src.users.user_model import User
 
 
 from fastapi import Depends
@@ -59,9 +57,7 @@ class UnifiedGalleryRepository(
 
         # Filter by workspace (conditional for admins)
         if search_dto.workspace_id is not None:
-            query = query.where(
-                self.model.workspace_id == search_dto.workspace_id
-            )
+            query = query.where(self.model.workspace_id == search_dto.workspace_id)
 
         # Filter by status
         if search_dto.status:
@@ -113,8 +109,7 @@ class UnifiedGalleryRepository(
         if hasattr(search_dto, "end_date") and search_dto.end_date:
             # Add one day to include the full end date
             query = query.where(
-                self.model.created_at
-                < search_dto.end_date + datetime.timedelta(days=1)
+                self.model.created_at < search_dto.end_date + datetime.timedelta(days=1)
             )
 
         # 4.5 Tags Filter
@@ -131,9 +126,9 @@ class UnifiedGalleryRepository(
                 func.coalesce(self.model.metadata_["prompt"].astext, "").ilike(
                     search_pattern
                 )
-                | func.coalesce(
-                    self.model.metadata_["file_name"].astext, ""
-                ).ilike(search_pattern)
+                | func.coalesce(self.model.metadata_["file_name"].astext, "").ilike(
+                    search_pattern
+                )
                 | func.coalesce(self.model.metadata_["model"].astext, "").ilike(
                     search_pattern
                 )
@@ -149,9 +144,7 @@ class UnifiedGalleryRepository(
 
         # 3. Add ordering and pagination
         # Default ordering by created_at DESC
-        query = query.order_by(
-            self.model.created_at.desc(), self.model.id.desc()
-        )
+        query = query.order_by(self.model.created_at.desc(), self.model.id.desc())
 
         # Offset-based pagination
         query = query.offset(search_dto.offset).limit(search_dto.limit)

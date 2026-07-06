@@ -94,9 +94,7 @@ class GenAIModelSetup:
                     },
                 )
             except Exception as e:
-                logger.error(
-                    "Failed to initialize Gemini Omni GenAI client: %s", e
-                )
+                logger.error("Failed to initialize Gemini Omni GenAI client: %s", e)
                 raise
         return cls._omni_client
 

@@ -55,9 +55,7 @@ class UserRepository(BaseRepository[User, UserModel]):
             query = query.where(self.model.email.ilike(f"%{search_dto.email}%"))
 
         if search_dto.role:
-            query = query.where(
-                self.model.roles.contains([search_dto.role.value])
-            )
+            query = query.where(self.model.roles.contains([search_dto.role.value]))
 
         # Count total documents matching filters
         count_query = query.with_only_columns(func.count(self.model.id))

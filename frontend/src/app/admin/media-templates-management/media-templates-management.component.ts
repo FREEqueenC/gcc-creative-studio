@@ -116,24 +116,27 @@ export class MediaTemplatesManagementComponent
             this.mediaTemplatesService.createMediaTemplate(result);
         }
 
-        // TODO: Replace with actual service call
-        // For now, just simulating a successful save.
-        // saveObservable = of(result);
-
         saveObservable.subscribe({
           next: () => {
             console.log(
               `Template ${result.id ? 'updated' : 'created'} successfully`,
             );
             this.fetchTemplates();
-            // TODO: Add snackbar for user feedback
+            handleSuccessSnackbar(
+              this.snackBar,
+              `Template ${result.id ? 'updated' : 'created'} successfully`,
+            );
           },
           error: (err: Error) => {
             console.error(
               `Error ${result.id ? 'updating' : 'creating'} template`,
               err,
             );
-            // TODO: Add snackbar for user feedback
+            handleErrorSnackbar(
+              this.snackBar,
+              err,
+              `Error ${result.id ? 'updating' : 'creating'} template`,
+            );
           },
         });
       }

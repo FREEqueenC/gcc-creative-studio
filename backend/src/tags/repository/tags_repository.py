@@ -42,9 +42,7 @@ class TagsRepository(BaseRepository[Tag, TagModel]):
         user_id: int | None = None,
     ) -> PaginationResponseDto[TagModel]:
         """Retrieves all tags for a specific workspace, optionally filtered by name."""
-        query = select(self.model).where(
-            self.model.workspace_id == workspace_id
-        )
+        query = select(self.model).where(self.model.workspace_id == workspace_id)
 
         if search:
             query = query.where(self.model.name.ilike(f"%{search}%"))
@@ -77,9 +75,7 @@ class TagsRepository(BaseRepository[Tag, TagModel]):
             data=data,
         )
 
-    async def find_by_name(
-        self, name: str, workspace_id: int
-    ) -> TagModel | None:
+    async def find_by_name(self, name: str, workspace_id: int) -> TagModel | None:
         """Finds a tag by name within a specific workspace."""
         result = await self.db.execute(
             select(self.model)
@@ -116,9 +112,7 @@ class TagsRepository(BaseRepository[Tag, TagModel]):
         )
         await self.db.commit()
 
-    async def assign_tag_to_source_asset(
-        self, source_asset_id: int, tag_id: int
-    ):
+    async def assign_tag_to_source_asset(self, source_asset_id: int, tag_id: int):
         """Links a tag to a source asset."""
         await self.db.execute(
             pg_insert(source_asset_tags)
@@ -142,9 +136,7 @@ class TagsRepository(BaseRepository[Tag, TagModel]):
         )
         await self.db.commit()
 
-    async def remove_tag_from_source_asset(
-        self, source_asset_id: int, tag_id: int
-    ):
+    async def remove_tag_from_source_asset(self, source_asset_id: int, tag_id: int):
         """Unlinks a tag from a source asset."""
         await self.db.execute(
             delete(source_asset_tags)
@@ -175,9 +167,7 @@ class TagsRepository(BaseRepository[Tag, TagModel]):
         self, item_ids: list[int], item_type: str, commit: bool = True
     ):
         """Removes all tags from multiple items."""
-        table = (
-            media_item_tags if item_type == "media_item" else source_asset_tags
-        )
+        table = media_item_tags if item_type == "media_item" else source_asset_tags
         id_col = (
             table.c.media_item_id
             if item_type == "media_item"
@@ -195,9 +185,7 @@ class TagsRepository(BaseRepository[Tag, TagModel]):
         commit: bool = True,
     ):
         """Links multiple tags to multiple items."""
-        table = (
-            media_item_tags if item_type == "media_item" else source_asset_tags
-        )
+        table = media_item_tags if item_type == "media_item" else source_asset_tags
         id_col_name = (
             "media_item_id" if item_type == "media_item" else "source_asset_id"
         )
@@ -240,9 +228,7 @@ class TagsRepository(BaseRepository[Tag, TagModel]):
         await self.db.commit()
         return await self.get_by_id(id)
 
-    async def get_tags_for_media_item(
-        self, media_item_id: int
-    ) -> list[TagModel]:
+    async def get_tags_for_media_item(self, media_item_id: int) -> list[TagModel]:
         """Gets all tags linked to a media item."""
         result = await self.db.execute(
             select(Tag)
@@ -252,9 +238,7 @@ class TagsRepository(BaseRepository[Tag, TagModel]):
         tags = result.scalars().all()
         return [self.schema.model_validate(tag) for tag in tags]
 
-    async def get_tags_for_source_asset(
-        self, source_asset_id: int
-    ) -> list[TagModel]:
+    async def get_tags_for_source_asset(self, source_asset_id: int) -> list[TagModel]:
         """Gets all tags linked to a source asset."""
         result = await self.db.execute(
             select(Tag)

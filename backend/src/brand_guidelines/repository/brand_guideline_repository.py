@@ -29,16 +29,12 @@ from src.common.dto.pagination_response_dto import PaginationResponseDto
 from src.database import get_db
 
 
-class BrandGuidelineRepository(
-    BaseRepository[BrandGuideline, BrandGuidelineModel]
-):
+class BrandGuidelineRepository(BaseRepository[BrandGuideline, BrandGuidelineModel]):
     """Repository for all database operations related to the 'brand_guidelines' table."""
 
     def __init__(self, db: AsyncSession = Depends(get_db)):
         """Initializes the repository."""
-        super().__init__(
-            model=BrandGuideline, schema=BrandGuidelineModel, db=db
-        )
+        super().__init__(model=BrandGuideline, schema=BrandGuidelineModel, db=db)
 
     async def query(
         self,

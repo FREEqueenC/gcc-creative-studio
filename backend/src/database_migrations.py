@@ -13,7 +13,6 @@
 # limitations under the License.
 """Database migrations runner and locking mechanism."""
 
-
 import asyncio
 import logging
 import os
@@ -90,9 +89,7 @@ async def run_pending_migrations():
                 logger.info("Migrations applied successfully.")
                 logger.info("Alembic Output:\n%s", full_output.strip())
             else:
-                logger.info(
-                    "Database is already up to date. No pending migrations."
-                )
+                logger.info("Database is already up to date. No pending migrations.")
                 # We can still log the output at debug level if needed, or just
                 # skip it to reduce noise
                 logger.debug("Alembic Output:\n%s", full_output.strip())
@@ -114,12 +111,8 @@ async def run_pending_migrations():
             try:
                 # Release advisory lock
                 logger.info("Releasing advisory lock...")
-                await conn.execute(
-                    "SELECT pg_advisory_unlock($1)", MIGRATION_LOCK_ID
-                )
+                await conn.execute("SELECT pg_advisory_unlock($1)", MIGRATION_LOCK_ID)
                 logger.info("Advisory lock released.")
                 await conn.close()
             except asyncpg.PostgresError as e:
-                logger.error(
-                    "Error releasing lock or closing connection: %s", e
-                )
+                logger.error("Error releasing lock or closing connection: %s", e)

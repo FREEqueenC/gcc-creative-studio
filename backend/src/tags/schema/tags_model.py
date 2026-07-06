@@ -17,7 +17,6 @@ from pydantic import Field
 from sqlalchemy import (
     Column,
     ForeignKey,
-    Integer,
     String,
     Table,
     DateTime,
@@ -37,9 +36,7 @@ media_item_tags = Table(
         ForeignKey("media_items.id", ondelete="CASCADE"),
         primary_key=True,
     ),
-    Column(
-        "tag_id", ForeignKey("tags.id", ondelete="CASCADE"), primary_key=True
-    ),
+    Column("tag_id", ForeignKey("tags.id", ondelete="CASCADE"), primary_key=True),
 )
 
 # Association table for SourceAsset and Tag
@@ -51,9 +48,7 @@ source_asset_tags = Table(
         ForeignKey("source_assets.id", ondelete="CASCADE"),
         primary_key=True,
     ),
-    Column(
-        "tag_id", ForeignKey("tags.id", ondelete="CASCADE"), primary_key=True
-    ),
+    Column("tag_id", ForeignKey("tags.id", ondelete="CASCADE"), primary_key=True),
 )
 
 
@@ -64,9 +59,7 @@ class Tag(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String, nullable=False)
-    color: Mapped[str] = mapped_column(
-        String, nullable=False, server_default="#E8EAED"
-    )
+    color: Mapped[str] = mapped_column(String, nullable=False, server_default="#E8EAED")
     workspace_id: Mapped[int] = mapped_column(
         ForeignKey("workspaces.id", ondelete="CASCADE"),
         nullable=False,

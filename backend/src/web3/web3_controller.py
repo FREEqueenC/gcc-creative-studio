@@ -27,9 +27,11 @@ router = APIRouter(
     responses={404: {"description": "Not found"}},
 )
 
+
 class PrepareMintRequest(BaseModel):
     item_id: int
     chain: str  # "base" or "flow"
+
 
 class PrepareMintResponse(BaseModel):
     contract_address: str
@@ -39,10 +41,14 @@ class PrepareMintResponse(BaseModel):
     chain_type: str
     cadence_script: Optional[str] = None
 
+
 # Standard User role check for the prepare-mint endpoint
 user_only = Depends(RoleChecker(allowed_roles=[UserRoleEnum.USER, UserRoleEnum.ADMIN]))
 
-@router.post("/prepare-mint", response_model=PrepareMintResponse, dependencies=[user_only])
+
+@router.post(
+    "/prepare-mint", response_model=PrepareMintResponse, dependencies=[user_only]
+)
 async def prepare_mint(
     request: PrepareMintRequest,
     current_user: UserModel = Depends(get_current_user),
@@ -52,11 +58,13 @@ async def prepare_mint(
     Prepares the metadata and parameters for minting a generated creative asset as an NFT.
     Returns the contract address and the metadata URL.
     """
-    metadata = await service.get_nft_metadata(item_id=request.item_id, current_user=current_user)
+    metadata = await service.get_nft_metadata(
+        item_id=request.item_id, current_user=current_user
+    )
     if not metadata:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Media item not found or user lacks permission to access it."
+            detail="Media item not found or user lacks permission to access it.",
         )
 
     # Instantiate the correct blockchain provider
@@ -65,31 +73,32 @@ async def prepare_mint(
             # Target contract on Base Mainnet
             provider = EvmWeb3Provider(
                 contract_address="0x81631e082767e0F545386420cCB1128b98C70F60",
-                mint_fee="10 LEV"
+                mint_fee="10 LEV",
             )
         elif request.chain.lower() == "flow":
             # Target contract on Flow Mainnet/Testnet
             provider = FlowWeb3Provider(
                 contract_address="A.0x81631e082767e0F545386420cCB1128b98C70F60.CreativeStudioNFT",
-                mint_fee="0 FLOW"
+                mint_fee="0 FLOW",
             )
         else:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid chain. Supported values are 'base' or 'flow'."
+                detail="Invalid chain. Supported values are 'base' or 'flow'.",
             )
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
     # Attempt to pin media and metadata to IPFS/Pinata if configured, else fall back to local dynamic hosting.
-    ipfs_url = await service.upload_to_ipfs(item_id=request.item_id, current_user=current_user)
+    ipfs_url = await service.upload_to_ipfs(
+        item_id=request.item_id, current_user=current_user
+    )
     metadata_url = ipfs_url if ipfs_url else f"/api/web3/metadata/{request.item_id}"
 
     # Generate provider mint parameters
-    mint_params = await provider.prepare_mint(item_id=request.item_id, metadata_url=metadata_url)
+    mint_params = await provider.prepare_mint(
+        item_id=request.item_id, metadata_url=metadata_url
+    )
 
     return PrepareMintResponse(
         contract_address=mint_params["contract_address"],
@@ -99,6 +108,7 @@ async def prepare_mint(
         chain_type=mint_params["chain_type"],
         cadence_script=mint_params.get("cadence_script"),
     )
+
 
 # GET metadata endpoint is PUBLIC (no auth required) so NFT standard indexing works.
 @router.get("/metadata/{item_id}")
@@ -112,13 +122,13 @@ async def get_nft_metadata_public(
     # For public indexers, we bypass current user credentials but use a read-only admin context
     # to retrieve the requested record details securely.
     indexer_mock_user = UserModel(
-        email="indexer@creative-studio.internal",
-        roles=[UserRoleEnum.ADMIN]
+        email="indexer@creative-studio.internal", roles=[UserRoleEnum.ADMIN]
     )
-    metadata = await service.get_nft_metadata(item_id=item_id, current_user=indexer_mock_user)
+    metadata = await service.get_nft_metadata(
+        item_id=item_id, current_user=indexer_mock_user
+    )
     if not metadata:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Metadata not found."
+            status_code=status.HTTP_404_NOT_FOUND, detail="Metadata not found."
         )
     return metadata

@@ -13,7 +13,6 @@
 # limitations under the License.
 """Google Cloud Storage interface service."""
 
-
 import base64
 import logging
 import os
@@ -36,9 +35,7 @@ class GcsService:
         self.client = storage.Client(project=self.cfg.PROJECT_ID)
         self.bucket_name = bucket_name or self.cfg.GENMEDIA_BUCKET
         self.bucket = self.client.bucket(self.bucket_name)
-        logger.info(
-            "GcsService initialized for bucket: gs://%s", self.bucket_name
-        )
+        logger.info("GcsService initialized for bucket: gs://%s", self.bucket_name)
 
     def download_from_gcs(
         self,
@@ -71,9 +68,7 @@ class GcsService:
             )
             return None
         except exceptions.GoogleAPICallError as e:
-            logger.error(
-                "Failed to download '%s' from GCS: %s", gcs_uri_path, e
-            )
+            logger.error("Failed to download '%s' from GCS: %s", gcs_uri_path, e)
             return None
 
     def download_bytes_from_gcs(self, gcs_uri: str) -> bytes | None:
@@ -143,9 +138,7 @@ class GcsService:
         """
         try:
             if not self.bucket_name:
-                logger.error(
-                    "GCS bucket name is not configured. Aborting upload."
-                )
+                logger.error("GCS bucket name is not configured. Aborting upload.")
                 return None
 
             if not pathlib.Path(local_path).is_file():

@@ -24,7 +24,7 @@ from concurrent.futures import ThreadPoolExecutor
 from fastapi import Depends, HTTPException
 from google.cloud.logging import Client as LoggerClient
 from google.cloud.logging.handlers import CloudLoggingHandler
-from google.genai import Client, types
+from google.genai import types
 import base64
 
 from src.auth.iam_signer_credentials_service import IamSignerCredentials
@@ -167,9 +167,7 @@ def _process_video_in_background(
                                         mime_type=parent_item.mime_type,
                                     )
                             else:
-                                video_asset = await source_asset_repo.get_by_id(
-                                    ref.id
-                                )
+                                video_asset = await source_asset_repo.get_by_id(ref.id)
                                 if video_asset:
                                     source_video_for_api = types.Video(
                                         uri=video_asset.gcs_uri,
@@ -189,9 +187,7 @@ def _process_video_in_background(
                                         mime_type=parent_item.mime_type,
                                     )
                             else:
-                                start_asset = await source_asset_repo.get_by_id(
-                                    ref.id
-                                )
+                                start_asset = await source_asset_repo.get_by_id(ref.id)
                                 if start_asset:
                                     start_image_for_api = types.Image(
                                         gcs_uri=start_asset.gcs_uri,
@@ -208,9 +204,7 @@ def _process_video_in_background(
                                         mime_type=parent_item.mime_type,
                                     )
                             else:
-                                end_asset = await source_asset_repo.get_by_id(
-                                    ref.id
-                                )
+                                end_asset = await source_asset_repo.get_by_id(ref.id)
                                 if end_asset:
                                     end_image_for_api = types.Image(
                                         gcs_uri=end_asset.gcs_uri,
@@ -277,15 +271,9 @@ def _process_video_in_background(
                                         mime_type=parent_item.mime_type,
                                     )
 
-                                    if (
-                                        gen_input.role
-                                        == AssetRoleEnum.START_FRAME
-                                    ):
+                                    if gen_input.role == AssetRoleEnum.START_FRAME:
                                         start_image_for_api = image_for_api
-                                    elif (
-                                        gen_input.role
-                                        == AssetRoleEnum.END_FRAME
-                                    ):
+                                    elif gen_input.role == AssetRoleEnum.END_FRAME:
                                         end_image_for_api = image_for_api
                                     elif (
                                         gen_input.role
@@ -378,28 +366,16 @@ def _process_video_in_background(
                             if request_dto.reference_video:
                                 ref = request_dto.reference_video
                                 if ref.type == "media_item":
-                                    parent_item = await media_repo.get_by_id(
-                                        ref.id
-                                    )
+                                    parent_item = await media_repo.get_by_id(ref.id)
                                     if parent_item and parent_item.gcs_uris:
                                         index = ref.index or 0
-                                        if (
-                                            0
-                                            <= index
-                                            < len(parent_item.gcs_uris)
-                                        ):
-                                            ref_video_uri = (
-                                                parent_item.gcs_uris[index]
-                                            )
+                                        if 0 <= index < len(parent_item.gcs_uris):
+                                            ref_video_uri = parent_item.gcs_uris[index]
                                         else:
-                                            ref_video_uri = (
-                                                parent_item.gcs_uris[0]
-                                            )
+                                            ref_video_uri = parent_item.gcs_uris[0]
                                 else:
-                                    video_asset = (
-                                        await source_asset_repo.get_by_id(
-                                            ref.id
-                                        )
+                                    video_asset = await source_asset_repo.get_by_id(
+                                        ref.id
                                     )
                                     if video_asset:
                                         ref_video_uri = video_asset.gcs_uri
@@ -408,28 +384,16 @@ def _process_video_in_background(
                             if request_dto.reference_audio:
                                 ref = request_dto.reference_audio
                                 if ref.type == "media_item":
-                                    parent_item = await media_repo.get_by_id(
-                                        ref.id
-                                    )
+                                    parent_item = await media_repo.get_by_id(ref.id)
                                     if parent_item and parent_item.gcs_uris:
                                         index = ref.index or 0
-                                        if (
-                                            0
-                                            <= index
-                                            < len(parent_item.gcs_uris)
-                                        ):
-                                            ref_audio_uri = (
-                                                parent_item.gcs_uris[index]
-                                            )
+                                        if 0 <= index < len(parent_item.gcs_uris):
+                                            ref_audio_uri = parent_item.gcs_uris[index]
                                         else:
-                                            ref_audio_uri = (
-                                                parent_item.gcs_uris[0]
-                                            )
+                                            ref_audio_uri = parent_item.gcs_uris[0]
                                 else:
-                                    audio_asset = (
-                                        await source_asset_repo.get_by_id(
-                                            ref.id
-                                        )
+                                    audio_asset = await source_asset_repo.get_by_id(
+                                        ref.id
                                     )
                                     if audio_asset:
                                         ref_audio_uri = audio_asset.gcs_uri
@@ -440,14 +404,9 @@ def _process_video_in_background(
                                 parent_media_item = await media_repo.get_by_id(
                                     request_dto.parent_media_item_id
                                 )
-                                if (
-                                    parent_media_item
-                                    and parent_media_item.raw_data
-                                ):
-                                    interaction1_id = (
-                                        parent_media_item.raw_data.get(
-                                            "interaction_id"
-                                        )
+                                if parent_media_item and parent_media_item.raw_data:
+                                    interaction1_id = parent_media_item.raw_data.get(
+                                        "interaction_id"
                                     )
                                     signature1 = parent_media_item.raw_data.get(
                                         "signature"
@@ -477,9 +436,7 @@ def _process_video_in_background(
                                 parent_blob_name = parent_media_item.gcs_uris[
                                     0
                                 ].replace(f"gs://{cfg.GENMEDIA_BUCKET}/", "")
-                                local_parent_path = (
-                                    f"thumbnails/{parent_blob_name}"
-                                )
+                                local_parent_path = f"thumbnails/{parent_blob_name}"
                                 os.makedirs(
                                     os.path.dirname(local_parent_path),
                                     exist_ok=True,
@@ -496,9 +453,7 @@ def _process_video_in_background(
                                 turn2_input = [
                                     {
                                         "type": "user_input",
-                                        "content": [
-                                            {"type": "text", "text": prompt1}
-                                        ],
+                                        "content": [{"type": "text", "text": prompt1}],
                                     },
                                     {
                                         "type": "model_output",
@@ -648,12 +603,10 @@ def _process_video_in_background(
                                                 hasattr(step, "signature")
                                                 and step.signature
                                             ):
-                                                thought_signature = (
-                                                    step.signature
-                                                )
-                                            elif isinstance(
-                                                step, dict
-                                            ) and step.get("signature"):
+                                                thought_signature = step.signature
+                                            elif isinstance(step, dict) and step.get(
+                                                "signature"
+                                            ):
                                                 thought_signature = step.get(
                                                     "signature"
                                                 )
@@ -663,17 +616,11 @@ def _process_video_in_background(
                                         f"Interactions call {i + 1} succeeded but returned no model output data."
                                     )
 
-                                raw_video_bytes = base64.b64decode(
-                                    contents[0].data
-                                )
+                                raw_video_bytes = base64.b64decode(contents[0].data)
 
                                 # Write raw video bytes directly to local output path using index
-                                output_filename = (
-                                    f"videos/{media_item_id}_{i}.mp4"
-                                )
-                                local_output_path = (
-                                    f"thumbnails/{output_filename}"
-                                )
+                                output_filename = f"videos/{media_item_id}_{i}.mp4"
+                                local_output_path = f"thumbnails/{output_filename}"
                                 os.makedirs(
                                     os.path.dirname(local_output_path),
                                     exist_ok=True,
@@ -745,9 +692,7 @@ def _process_video_in_background(
                                 thought_signature,
                             ) in parallel_results:
                                 final_gcs_uris.append(final_gcs_uri)
-                                permanent_thumbnail_gcs_uris.append(
-                                    thumbnail_gcs_uri
-                                )
+                                permanent_thumbnail_gcs_uris.append(thumbnail_gcs_uri)
                                 interaction_details.append(
                                     {
                                         "interaction_id": interaction_id,
@@ -755,39 +700,35 @@ def _process_video_in_background(
                                     }
                                 )
 
-                            raw_data_dict = {
-                                "interactions": interaction_details
-                            }
+                            raw_data_dict = {"interactions": interaction_details}
 
                         else:
                             # Run sync API call in thread
-                            operation: types.GenerateVideosOperation = (
-                                await asyncio.to_thread(
-                                    client.models.generate_videos,
-                                    model=request_dto.generation_model,
-                                    prompt=request_dto.prompt,
-                                    image=start_image_for_api,
-                                    video=source_video_for_api,
-                                    config=types.GenerateVideosConfig(
-                                        number_of_videos=request_dto.number_of_media,
-                                        output_gcs_uri=gcs_output_directory,
-                                        aspect_ratio=request_dto.aspect_ratio,
-                                        negative_prompt=request_dto.negative_prompt,
-                                        generate_audio=request_dto.generate_audio,
-                                        # TODO: Pass from dto the secs if extending video (4, 5, 6, 7)
-                                        duration_seconds=(
-                                            request_dto.duration_seconds
-                                            if not source_video_for_api
-                                            else 7
-                                        ),
-                                        last_frame=end_image_for_api,
-                                        reference_images=(
-                                            reference_images_for_api
-                                            if reference_images_for_api
-                                            else None
-                                        ),
+                            operation: types.GenerateVideosOperation = await asyncio.to_thread(
+                                client.models.generate_videos,
+                                model=request_dto.generation_model,
+                                prompt=request_dto.prompt,
+                                image=start_image_for_api,
+                                video=source_video_for_api,
+                                config=types.GenerateVideosConfig(
+                                    number_of_videos=request_dto.number_of_media,
+                                    output_gcs_uri=gcs_output_directory,
+                                    aspect_ratio=request_dto.aspect_ratio,
+                                    negative_prompt=request_dto.negative_prompt,
+                                    generate_audio=request_dto.generate_audio,
+                                    # TODO: Pass from dto the secs if extending video (4, 5, 6, 7)
+                                    duration_seconds=(
+                                        request_dto.duration_seconds
+                                        if not source_video_for_api
+                                        else 7
                                     ),
-                                )
+                                    last_frame=end_image_for_api,
+                                    reference_images=(
+                                        reference_images_for_api
+                                        if reference_images_for_api
+                                        else None
+                                    ),
+                                ),
                             )
 
                             # Poll the operation status until the video is ready
@@ -820,19 +761,12 @@ def _process_video_in_background(
                             # Download the generated video and create thumbnail
                             thumbnail_path = ""
 
-                            for (
-                                generated_video
-                            ) in operation.response.generated_videos:
-                                if (
-                                    generated_video.video
-                                    and generated_video.video.uri
-                                ):
+                            for generated_video in operation.response.generated_videos:
+                                if generated_video.video and generated_video.video.uri:
                                     output_path = f"{generated_video.video.uri.replace(f'gs://{cfg.GENMEDIA_BUCKET}/', '')}"
 
                                     # Step 1: Download the Video from GCS
-                                    local_output_path = (
-                                        f"thumbnails/{output_path}"
-                                    )
+                                    local_output_path = f"thumbnails/{output_path}"
                                     downloaded_video_path = await asyncio.to_thread(
                                         gcs_service.download_from_gcs,
                                         gcs_uri_path=output_path,
@@ -848,9 +782,7 @@ def _process_video_in_background(
                                     # Step 3: Save the Thumbnail in GCS
                                     if thumbnail_path:
                                         # Get the parent directory of the thumbnail to clean it up later.
-                                        temp_dir = os.path.dirname(
-                                            thumbnail_path
-                                        )
+                                        temp_dir = os.path.dirname(thumbnail_path)
                                         try:
                                             thumbnail_gcs_uri = (
                                                 await asyncio.to_thread(
@@ -934,9 +866,7 @@ def _process_video_in_background(
                             "status": JobStatusEnum.FAILED,
                             "error_message": str(e),
                         }
-                        await media_repo.update(
-                            media_item_id, error_update_data
-                        )
+                        await media_repo.update(media_item_id, error_update_data)
 
         loop.run_until_complete(_async_worker())
         loop.close()
@@ -999,9 +929,7 @@ def _process_video_concatenation_in_background(
                         for video_input in request_dto.inputs:
                             gcs_uri: str | None = None
                             if video_input.type == "media_item":
-                                item = await media_repo.get_by_id(
-                                    video_input.id
-                                )
+                                item = await media_repo.get_by_id(video_input.id)
                                 if not item or not item.gcs_uris:
                                     raise ValueError(
                                         f"MediaItem '{video_input.id}' not found or has no video.",
@@ -1035,9 +963,7 @@ def _process_video_concatenation_in_background(
                                 destination_file_path=f"{temp_dir}/{video_input.id}.mp4",
                             )
                             if not local_path:
-                                raise Exception(
-                                    f"Failed to download video: {gcs_uri}"
-                                )
+                                raise Exception(f"Failed to download video: {gcs_uri}")
                             local_video_paths.append(local_path)
 
                         # 2. Concatenate them
@@ -1102,9 +1028,7 @@ def _process_video_concatenation_in_background(
                             "status": JobStatusEnum.FAILED,
                             "error_message": str(e),
                         }
-                        await media_repo.update(
-                            media_item_id, error_update_data
-                        )
+                        await media_repo.update(media_item_id, error_update_data)
                     finally:
                         if os.path.exists(temp_dir):
                             shutil.rmtree(temp_dir)
@@ -1367,9 +1291,7 @@ class VeoService:
             aspect_ratio=request_dto.aspect_ratio,
             # We could store the input IDs in source_assets or raw_data for traceability
             raw_data={
-                "concatenation_inputs": [
-                    i.model_dump() for i in request_dto.inputs
-                ],
+                "concatenation_inputs": [i.model_dump() for i in request_dto.inputs],
             },
         )
 

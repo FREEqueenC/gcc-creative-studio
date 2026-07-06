@@ -55,9 +55,7 @@ class CreateImagenDto(BaseDto):
         le=4,
         description="Number of images to generate (between 1 and 4).",
     )
-    style: StyleEnum | None = Field(
-        default=None, description="Style of the image."
-    )
+    style: StyleEnum | None = Field(default=None, description="Style of the image.")
     negative_prompt: str = Field(
         default="",
         description="Negative prompt for the image.",
@@ -141,9 +139,7 @@ class CreateImagenDto(BaseDto):
         - For non-Gemini models, only one input is allowed, and the model must support editing.
         - Aspect ratio validation based on model.
         """
-        source_assets_count = (
-            len(self.source_asset_ids) if self.source_asset_ids else 0
-        )
+        source_assets_count = len(self.source_asset_ids) if self.source_asset_ids else 0
         generated_inputs_count = (
             len(self.source_media_items) if self.source_media_items else 0
         )
@@ -168,8 +164,6 @@ class CreateImagenDto(BaseDto):
 
         # Editing validation
         if not model.is_gemini_image_model:
-            raise ValueError(
-                f"Model '{model.value}' does not support image editing."
-            )
+            raise ValueError(f"Model '{model.value}' does not support image editing.")
 
         return self

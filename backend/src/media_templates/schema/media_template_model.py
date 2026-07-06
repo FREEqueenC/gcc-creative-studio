@@ -98,9 +98,7 @@ class MediaTemplate(Base):
 
     generation_parameters: Mapped[dict] = mapped_column(JSONB, nullable=False)
 
-    source_assets: Mapped[list[dict] | None] = mapped_column(
-        JSONB, nullable=True
-    )
+    source_assets: Mapped[list[dict] | None] = mapped_column(JSONB, nullable=True)
 
     created_at: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True),

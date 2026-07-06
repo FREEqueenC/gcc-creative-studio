@@ -35,9 +35,7 @@ router = APIRouter(
     prefix="/api/workflows",
     tags=["Workflows"],
     responses={404: {"description": "Not found"}},
-    dependencies=[
-        Depends(RoleChecker([UserRoleEnum.WORKFLOWS, UserRoleEnum.ADMIN]))
-    ],
+    dependencies=[Depends(RoleChecker([UserRoleEnum.WORKFLOWS, UserRoleEnum.ADMIN]))],
 )
 
 
@@ -115,9 +113,7 @@ async def get_workflow(
     workflow_service: WorkflowService = Depends(),
 ):
     try:
-        workflow = await workflow_service.get_workflow(
-            current_user.id, workflow_id
-        )
+        workflow = await workflow_service.get_workflow(current_user.id, workflow_id)
         if workflow:
             return workflow
         return Response(status_code=status.HTTP_404_NOT_FOUND)
@@ -173,9 +169,7 @@ async def execute_workflow(
     return {"execution_id": response}
 
 
-@router.post(
-    "/{workflow_id}/batch-execute", response_model=BatchExecutionResponseDto
-)
+@router.post("/{workflow_id}/batch-execute", response_model=BatchExecutionResponseDto)
 async def batch_execute_workflow(
     workflow_id: str,
     batch_dto: BatchExecutionRequestDto,
@@ -210,9 +204,7 @@ async def get_execution(
     if not workflow:
         raise HTTPException(status_code=404, detail="Workflow not found")
 
-    execution = await workflow_service.get_execution_details(
-        workflow_id, execution_id
-    )
+    execution = await workflow_service.get_execution_details(workflow_id, execution_id)
     if not execution:
         raise HTTPException(status_code=404, detail="Execution not found")
 
@@ -265,19 +257,20 @@ async def agent_execute_workflow(
     expected_key = getenv("AETHERIS_AGENT_API_KEY")
     if not expected_key:
         expected_key = "aetheris-dev-secret-key-11911"
-        
+
     if not x_agent_key or x_agent_key != expected_key:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or missing X-Agent-Key header."
+            detail="Invalid or missing X-Agent-Key header.",
         )
 
     # Resolve an administrative user context for the execution to bypass regular route AuthGuards
     from src.users.user_model import UserModel
+
     agent_user = UserModel(
         id=1,  # Associate with default admin or system user
         email="agent-system@freequeenc.github.io",
-        roles=[UserRoleEnum.WORKFLOWS, UserRoleEnum.ADMIN]
+        roles=[UserRoleEnum.WORKFLOWS, UserRoleEnum.ADMIN],
     )
 
     # Ingest workspace ID into args so generator tasks know where to save
@@ -285,15 +278,12 @@ async def agent_execute_workflow(
 
     # Execute workflow via service
     execution_id = await workflow_service.execute_workflow(
-        workflow_id=request.workflow_id,
-        args=request.args,
-        user=agent_user
+        workflow_id=request.workflow_id, args=request.args, user=agent_user
     )
 
     return {
         "status": "triggered",
         "execution_id": execution_id,
         "callback_expected": True,
-        "message": "Workflow execution triggered successfully by Aetheris agent."
+        "message": "Workflow execution triggered successfully by Aetheris agent.",
     }
-

@@ -71,9 +71,7 @@ class GeminiService:
     Handles client initialization, prompt rewriting, and error handling.
     """
 
-    def __init__(
-        self, brand_guideline_repo: BrandGuidelineRepository = Depends()
-    ):
+    def __init__(self, brand_guideline_repo: BrandGuidelineRepository = Depends()):
         """Initializes the Gemini client and configuration."""
         self.client: Client = GeminiModelSetup.init()
         self.cfg = config_service
@@ -114,9 +112,7 @@ class GeminiService:
 
         """
         full_prompt = f"{prompt_template} {original_prompt}"
-        response_schema = response_schema or self._get_response_schema(
-            target_type
-        )
+        response_schema = response_schema or self._get_response_schema(target_type)
 
         try:
             response = None
@@ -271,9 +267,7 @@ class GeminiService:
 
         # --- Prepend Brand Guidelines if available ---
         if dto.use_brand_guidelines and dto.workspace_id and not is_gemini_i2i:
-            search_dto = BrandGuidelineSearchDto(
-                workspace_id=dto.workspace_id, limit=1
-            )
+            search_dto = BrandGuidelineSearchDto(workspace_id=dto.workspace_id, limit=1)
             guideline_response = await self.brand_guideline_repo.query(
                 search_dto,
                 workspace_id=dto.workspace_id,
@@ -340,17 +334,13 @@ class GeminiService:
         # Use the provided model_id or fall back to the service's default rewriter model
         target_model = model_id or self.rewriter_model
 
-        logger.info(
-            "Sending text generation request to model: %s", target_model
-        )
+        logger.info("Sending text generation request to model: %s", target_model)
         try:
             response = self.client.models.generate_content(
                 model=target_model,
                 contents=prompt,
                 # Configure for a simple text response without a schema
-                config=types.GenerateContentConfig(
-                    response_mime_type="text/plain"
-                ),
+                config=types.GenerateContentConfig(response_mime_type="text/plain"),
             )
             logger.info("Successfully received text response from Gemini.")
             # Strip any leading/trailing whitespace from the response
@@ -405,9 +395,7 @@ class GeminiService:
             extracted_data = json.loads(response.text or "{}")
             return extracted_data
         except Exception as e:
-            logger.error(
-                f"Failed to extract brand info from PDF {pdf_gcs_uri}: {e}"
-            )
+            logger.error(f"Failed to extract brand info from PDF {pdf_gcs_uri}: {e}")
             return {}
 
     def aggregate_brand_info(
@@ -430,9 +418,7 @@ class GeminiService:
         if len(partial_results) == 1:
             return BrandGuidelineModel(**partial_results[0])
 
-        logger.info(
-            "Aggregating %s partial brand info results.", len(partial_results)
-        )
+        logger.info("Aggregating %s partial brand info results.", len(partial_results))
 
         # --- Step 1: Deterministic Aggregation in Python ---
         # Combine color palettes and get unique hex codes, case-insensitively.
@@ -441,9 +427,7 @@ class GeminiService:
             if result.get("colorPalette"):
                 # Filter out potential non-string or empty values
                 valid_colors = [
-                    c
-                    for c in result["colorPalette"]
-                    if isinstance(c, str) and c
+                    c for c in result["colorPalette"] if isinstance(c, str) and c
                 ]
                 all_colors.update(c.upper() for c in valid_colors)
 
@@ -496,9 +480,7 @@ class GeminiService:
             aggregated_data = json.loads(response.text or "{}")
             return BrandGuidelineModel(**aggregated_data)
         except Exception as e:
-            logger.error(
-                "Failed to aggregate brand info summaries with Gemini: %s", e
-            )
+            logger.error("Failed to aggregate brand info summaries with Gemini: %s", e)
             return None
 
     def docs_agent_chat(self, message: str, history: list[Any]) -> str:
@@ -511,9 +493,7 @@ class GeminiService:
         # Load PROJECT_DOCS.md dynamically
         docs_path = os.path.join(
             os.path.dirname(
-                os.path.dirname(
-                    os.path.dirname(os.path.abspath(__file__))
-                )
+                os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
             ),
             "PROJECT_DOCS.md",
         )
@@ -568,11 +548,7 @@ class GeminiService:
                     temperature=0.2,
                 ),
             )
-            return (
-                response.text.strip()
-                if response.text
-                else "No response generated."
-            )
+            return response.text.strip() if response.text else "No response generated."
         except Exception as e:
             logger.error(f"Gemini docs agent chat generation failed: {e}")
             raise e
@@ -600,9 +576,7 @@ class GeminiService:
 
         # Try to append to ERROR_LOG.md in the project root folder
         root_path = os.path.dirname(
-            os.path.dirname(
-                os.path.dirname(os.path.abspath(__file__))
-            )
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         )
         error_log_file = os.path.join(root_path, "ERROR_LOG.md")
         try:
@@ -612,11 +586,6 @@ class GeminiService:
 
             with open(error_log_file, "a", encoding="utf-8") as f:
                 f.write(log_entry)
-            logger.info(
-                f"Successfully recorded developer feedback in {error_log_file}"
-            )
+            logger.info(f"Successfully recorded developer feedback in {error_log_file}")
         except Exception as e:
-            logger.error(
-                f"Failed to write developer feedback to ERROR_LOG.md: {e}"
-            )
-
+            logger.error(f"Failed to write developer feedback to ERROR_LOG.md: {e}")

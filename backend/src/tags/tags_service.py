@@ -68,9 +68,7 @@ class TagsService:
         tags = await self.repo.find_all(limit=limit, offset=offset)
 
         # Get total count for find_all
-        result = await self.repo.db.execute(
-            select(func.count(self.repo.model.id))
-        )
+        result = await self.repo.db.execute(select(func.count(self.repo.model.id)))
         total_count = result.scalar_one()
 
         page = (offset // limit) + 1
@@ -162,14 +160,10 @@ class TagsService:
 
         if dto.item_type == "media_item":
             await self.repo.clear_tags_for_items(dto.item_ids, "media_item")
-            await self.repo.assign_tags_to_items(
-                dto.item_ids, tag_ids, "media_item"
-            )
+            await self.repo.assign_tags_to_items(dto.item_ids, tag_ids, "media_item")
         elif dto.item_type == "source_asset":
             await self.repo.clear_tags_for_items(dto.item_ids, "source_asset")
-            await self.repo.assign_tags_to_items(
-                dto.item_ids, tag_ids, "source_asset"
-            )
+            await self.repo.assign_tags_to_items(dto.item_ids, tag_ids, "source_asset")
         else:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,

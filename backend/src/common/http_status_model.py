@@ -13,7 +13,6 @@
 # limitations under the License.
 """HTTP status models and responses."""
 
-
 from fastapi import HTTPException
 
 

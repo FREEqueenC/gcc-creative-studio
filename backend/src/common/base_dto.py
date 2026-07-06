@@ -13,7 +13,6 @@
 # limitations under the License.
 """Base Data Transfer Object classes."""
 
-
 from enum import Enum
 
 from pydantic import BaseModel, ConfigDict

@@ -63,7 +63,9 @@ class UserService:
 
         # 4. Provision a default private workspace for the new user JIT
         try:
-            from src.workspaces.repository.workspace_repository import WorkspaceRepository
+            from src.workspaces.repository.workspace_repository import (
+                WorkspaceRepository,
+            )
             from src.workspaces.schema.workspace_model import (
                 WorkspaceModel,
                 WorkspaceMember,
@@ -72,7 +74,7 @@ class UserService:
             )
 
             workspace_repo = WorkspaceRepository(db=self.user_repo.db)
-            
+
             # Format workspace name: e.g. "Ashleigh's Workspace"
             first_name = (name or email.split("@")[0]).strip()
             workspace_name = f"{first_name}'s Workspace"
@@ -95,6 +97,7 @@ class UserService:
             )
         except Exception as e:
             import logging
+
             logger = logging.getLogger(__name__)
             logger.error(
                 f"Failed to create default private workspace for user {email}: {e}",
@@ -114,9 +117,7 @@ class UserService:
         """Retrieves a paginated list of all users."""
         return await self.user_repo.query(search_dto)
 
-    async def delete_user(
-        self, user_id: int, deleted_by: int | None = None
-    ) -> bool:
+    async def delete_user(self, user_id: int, deleted_by: int | None = None) -> bool:
         """Soft deletes a user."""
         return await self.user_repo.soft_delete(user_id, deleted_by=deleted_by)
 

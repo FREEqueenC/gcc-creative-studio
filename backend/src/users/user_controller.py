@@ -122,9 +122,7 @@ async def delete_user(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="You cannot delete yourself.",
         )
-    success = await user_service.delete_user(
-        user_id, deleted_by=current_user.id
-    )
+    success = await user_service.delete_user(user_id, deleted_by=current_user.id)
     if not success:
         raise HTTPException(status_code=404, detail="User not found")
 

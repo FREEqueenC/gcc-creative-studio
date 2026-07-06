@@ -755,7 +755,6 @@ export class VideoComponent implements OnInit, AfterViewInit {
       parentMediaItemId: this.parentMediaItemId ?? undefined,
     };
 
-    // TODO: Add notification when video is completed after the pooling
     this.service
       .startVeoGeneration(payload)
       .pipe(finalize(() => (this.isLoading = false)))
@@ -769,7 +768,7 @@ export class VideoComponent implements OnInit, AfterViewInit {
         error: error => {
           // This block will now execute correctly if the POST request fails.
           console.error('Search error:', error);
-          handleErrorSnackbar(this._snackBar, error, 'Search');
+          handleErrorSnackbar(this._snackBar, error, 'VEO Video Generation');
         },
       });
   }

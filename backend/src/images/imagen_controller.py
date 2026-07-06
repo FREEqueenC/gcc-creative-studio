@@ -13,7 +13,6 @@
 # limitations under the License.
 """API endpoints for image generation."""
 
-
 from fastapi import (
     APIRouter,
     Depends,
@@ -41,9 +40,7 @@ from src.users.user_model import UserModel, UserRoleEnum
 from src.workspaces.workspace_auth_guard import WorkspaceAuth
 
 # Define role checkers for convenience
-user_only = Depends(
-    RoleChecker(allowed_roles=[UserRoleEnum.USER, UserRoleEnum.ADMIN])
-)
+user_only = Depends(RoleChecker(allowed_roles=[UserRoleEnum.USER, UserRoleEnum.ADMIN]))
 
 router = APIRouter(
     prefix="/api/images",
@@ -153,7 +150,6 @@ async def upload_upscale(
     service: ImagenService = Depends(),
     workspace_auth: WorkspaceAuth = Depends(),
 ) -> MediaItemResponse:
-
     file_bytes = None
     filename = None
     if file:

@@ -1,4 +1,6 @@
-access(all) contract CreativeStudioNFT {
+import NonFungibleToken from 0x631e73ae8701395d
+
+access(all) contract CreativeStudioNFT: NonFungibleToken {
 
     access(all) event ContractInitialized()
     access(all) event Withdraw(id: UInt64, from: Address?)

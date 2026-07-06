@@ -57,7 +57,9 @@ class WorkflowsExecutorService:
         raw_list = (
             inputs
             if isinstance(inputs, list)
-            else [inputs] if inputs is not None else []
+            else [inputs]
+            if inputs is not None
+            else []
         )
 
         # Helper to flatten nested lists
@@ -83,17 +85,14 @@ class WorkflowsExecutorService:
                         {
                             "media_item_id": item.sourceMediaItem.mediaItemId,
                             "media_index": item.sourceMediaItem.mediaIndex,
-                            "role": item.sourceMediaItem.role
-                            or default_role.value,
+                            "role": item.sourceMediaItem.role or default_role.value,
                         },
                     )
                 elif item.sourceAssetId:
                     asset_ids.append(item.sourceAssetId)
         return media_items, asset_ids
 
-    async def _poll_job_status(
-        self, media_id: int, authorization: str | None = None
-    ):
+    async def _poll_job_status(self, media_id: int, authorization: str | None = None):
         """Polls the gallery endpoint until the job is completed or failed."""
         url = f"{self.backend_url}/api/gallery/item/{media_id}"
         headers = {"Authorization": authorization} if authorization else {}
@@ -171,9 +170,7 @@ class WorkflowsExecutorService:
                     data = response.json()
                     gcs_uris = data.get("gcsUris") or data.get("gcs_uris") or []
                     mime_type = (
-                        data.get("mimeType")
-                        or data.get("mime_type")
-                        or "image/png"
+                        data.get("mimeType") or data.get("mime_type") or "image/png"
                     )
                     if 0 <= index < len(gcs_uris):
                         uri = gcs_uris[index]
@@ -181,9 +178,7 @@ class WorkflowsExecutorService:
                             f"Adding part from URI: {uri}, mime_type: {mime_type}",
                         )
                         parts.append(
-                            types.Part.from_uri(
-                                file_uri=uri, mime_type=mime_type
-                            ),
+                            types.Part.from_uri(file_uri=uri, mime_type=mime_type),
                         )
                     else:
                         logger.warning(
@@ -207,16 +202,12 @@ class WorkflowsExecutorService:
                     data = response.json()
                     gcs_uri = data.get("gcsUri") or data.get("gcs_uri")
                     mime_type = (
-                        data.get("mimeType")
-                        or data.get("mime_type")
-                        or "image/jpeg"
+                        data.get("mimeType") or data.get("mime_type") or "image/jpeg"
                     )
                     if gcs_uri:
                         logger.info("Adding part from URI: %s", gcs_uri)
                         parts.append(
-                            types.Part.from_uri(
-                                file_uri=gcs_uri, mime_type=mime_type
-                            ),
+                            types.Part.from_uri(file_uri=gcs_uri, mime_type=mime_type),
                         )
             except Exception as e:
                 logger.error(f"Error resolving source asset {asset_id}: {e}")
@@ -310,9 +301,7 @@ class WorkflowsExecutorService:
 
         headers = {"Authorization": authorization} if authorization else {}
 
-        logger.info(
-            f"Call backend with url: {url}, body: {body}, headers: {headers}"
-        )
+        logger.info(f"Call backend with url: {url}, body: {body}, headers: {headers}")
 
         response = await self.rest_client.post(url, json=body, headers=headers)
 
@@ -359,9 +348,7 @@ class WorkflowsExecutorService:
 
         headers = {"Authorization": authorization} if authorization else {}
 
-        logger.info(
-            f"Call backend with url: {url}, body: {body}, headers: {headers}"
-        )
+        logger.info(f"Call backend with url: {url}, body: {body}, headers: {headers}")
 
         response = await self.rest_client.post(url, json=body, headers=headers)
 
@@ -399,9 +386,7 @@ class WorkflowsExecutorService:
 
         reference_images = []
         for aid in asset_ids:
-            reference_images.append(
-                {"asset_id": aid, "reference_type": "ASSET"}
-            )
+            reference_images.append({"asset_id": aid, "reference_type": "ASSET"})
 
         # 2. Process Start Frame
         start_media, start_assets = self._normalize_asset_inputs(
@@ -433,9 +418,7 @@ class WorkflowsExecutorService:
 
         headers = {"Authorization": authorization} if authorization else {}
 
-        logger.info(
-            f"Call backend with url: {url}, body: {body}, headers: {headers}"
-        )
+        logger.info(f"Call backend with url: {url}, body: {body}, headers: {headers}")
 
         response = await self.rest_client.post(url, json=body, headers=headers)
 
@@ -526,9 +509,7 @@ class WorkflowsExecutorService:
 
         headers = {"Authorization": authorization} if authorization else {}
 
-        logger.info(
-            f"Call backend with url: {url}, body: {body}, headers: {headers}"
-        )
+        logger.info(f"Call backend with url: {url}, body: {body}, headers: {headers}")
 
         response = await self.rest_client.post(url, json=body, headers=headers)
 
@@ -542,9 +523,7 @@ class WorkflowsExecutorService:
         dict_response = response.json()
         image_id = dict_response.get("id", None)
         if not image_id:
-            raise HTTPException(
-                status_code=500, detail="Couldn't create VTO image"
-            )
+            raise HTTPException(status_code=500, detail="Couldn't create VTO image")
 
         # Poll for completion
         await self._poll_job_status(image_id, authorization)
@@ -575,9 +554,7 @@ class WorkflowsExecutorService:
 
         headers = {"Authorization": authorization} if authorization else {}
 
-        logger.info(
-            f"Call backend with url: {url}, body: {body}, headers: {headers}"
-        )
+        logger.info(f"Call backend with url: {url}, body: {body}, headers: {headers}")
 
         # Note: Audio generation is synchronous in the current controller/service implementation
         response = await self.rest_client.post(url, json=body, headers=headers)

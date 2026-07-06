@@ -22,9 +22,7 @@ from src.system_settings.schema.system_setting_model import (
 )
 
 
-class SystemSettingsRepository(
-    BaseStringRepository[SystemSetting, SystemSettingModel]
-):
+class SystemSettingsRepository(BaseStringRepository[SystemSetting, SystemSettingModel]):
     """Handles database operations for SystemSetting objects using string keys as IDs."""
 
     def __init__(self, db: AsyncSession = Depends(get_db)):

@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, Any
 from web3 import Web3
 
+
 class BaseWeb3Provider(ABC):
     @abstractmethod
     async def prepare_mint(self, item_id: int, metadata_url: str) -> Dict[str, Any]:
@@ -12,6 +13,7 @@ class BaseWeb3Provider(ABC):
         Prepares the parameters required for minting an NFT on this chain.
         """
         pass
+
 
 class EvmWeb3Provider(BaseWeb3Provider):
     def __init__(self, contract_address: str, mint_fee: str):
@@ -30,6 +32,7 @@ class EvmWeb3Provider(BaseWeb3Provider):
             "mint_fee": self.mint_fee,
             "chain_type": "evm",
         }
+
 
 class FlowWeb3Provider(BaseWeb3Provider):
     def __init__(self, contract_address: str, mint_fee: str):

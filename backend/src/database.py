@@ -13,7 +13,6 @@
 # limitations under the License.
 """Database configuration and session management."""
 
-
 from collections.abc import AsyncGenerator
 import asyncio
 import asyncpg

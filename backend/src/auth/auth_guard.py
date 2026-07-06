@@ -13,7 +13,6 @@
 # limitations under the License.
 """Authentication guards and user retrieval."""
 
-
 import asyncio
 import logging
 
@@ -83,18 +82,12 @@ async def get_current_user(
         if not email:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=(
-                    "Forbidden: User identity could not be confirmed from "
-                    "token."
-                ),
+                detail=("Forbidden: User identity could not be confirmed from token."),
             )
 
         # If ALLOWED_ORGS is configured, check the user's organization.
         if config_service.ALLOWED_ORGS:
-            if (
-                not token_info_hd
-                or token_info_hd not in config_service.ALLOWED_ORGS
-            ):
+            if not token_info_hd or token_info_hd not in config_service.ALLOWED_ORGS:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail=(
@@ -121,16 +114,12 @@ async def get_current_user(
             logger.info("Updating picture for user: %s", email)
             user_doc.picture = picture
             if user_doc.id:
-                await user_service.user_repo.update(
-                    user_doc.id, {"picture": picture}
-                )
+                await user_service.user_repo.update(user_doc.id, {"picture": picture})
 
         return user_doc
 
     except auth.ExpiredIdTokenError as exc:
-        logger.error(
-            "[get_current_user - auth.ExpiredIdTokenError] for %s", email
-        )
+        logger.error("[get_current_user - auth.ExpiredIdTokenError] for %s", email)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication token has expired.",
@@ -176,7 +165,6 @@ class RoleChecker:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=(
-                    "You do not have sufficient permissions to perform this "
-                    "action."
+                    "You do not have sufficient permissions to perform this action."
                 ),
             )

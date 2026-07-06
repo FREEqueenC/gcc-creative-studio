@@ -13,7 +13,6 @@
 # limitations under the License.
 """API endpoints for audio generation."""
 
-
 import logging
 
 from fastapi import APIRouter, Depends, File, Request, UploadFile

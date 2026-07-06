@@ -1,0 +1,7 @@
+{
+  "event": {
+    "token": "YOUR_GOOGLE_OAUTH_ACCESS_TOKEN",
+    "expectedAction": "LOGIN",
+    "siteKey": "6LeRPkAtAAAAAKnaiVVAsifsZcq2mSi6Zi_yKlLe"
+  }
+}

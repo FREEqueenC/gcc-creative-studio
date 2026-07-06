@@ -13,7 +13,6 @@
 # limitations under the License.
 """Base repository class for database operations."""
 
-
 import datetime
 from typing import Any, Generic, TypeVar
 
@@ -212,9 +211,7 @@ class BaseRepositoryMixin(Generic[ModelT, SchemaT, IdT]):
         include_deleted: bool = False,
     ) -> list[SchemaT]:
         """Finds all documents with pagination, excluding soft-deleted ones."""
-        query = select(self.model).execution_options(
-            include_deleted=include_deleted
-        )
+        query = select(self.model).execution_options(include_deleted=include_deleted)
         result = await self.db.execute(query.limit(limit).offset(offset))
         items = result.scalars().all()
         return [self.schema.model_validate(item) for item in items]

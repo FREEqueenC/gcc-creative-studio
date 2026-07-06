@@ -13,7 +13,6 @@
 # limitations under the License.
 """Pydantic schemas for workbench."""
 
-
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict

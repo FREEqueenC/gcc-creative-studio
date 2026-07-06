@@ -13,7 +13,6 @@
 # limitations under the License.
 """Firebase Auth client initialization."""
 
-
 import logging
 import os
 
@@ -40,8 +39,7 @@ class FirebaseClient:
 
                 if cred_path:
                     logger.info(
-                        "Initializing Firebase Admin SDK with "
-                        "credentials from: %s",
+                        "Initializing Firebase Admin SDK with credentials from: %s",
                         cred_path,
                     )
                     if not os.path.exists(cred_path):
@@ -64,9 +62,7 @@ class FirebaseClient:
                     # will raise an error.
                     # e.g., google.auth.exceptions.DefaultCredentialsError
 
-                logger.info(
-                    "Firebase App Name: %s", firebase_admin.get_app().name
-                )
+                logger.info("Firebase App Name: %s", firebase_admin.get_app().name)
 
                 # Check if reauthentication is needed
                 self.check_adc_authentication()
@@ -110,9 +106,7 @@ class FirebaseClient:
 
             # 2. Make a lightweight, authenticated API call to
             # test the credentials
-            client = resourcemanager_v3.ProjectsClient(
-                credentials=creds
-            )  # type: ignore
+            client = resourcemanager_v3.ProjectsClient(credentials=creds)  # type: ignore
             project_name = f"projects/{project_id}"
             client.get_project(
                 name=project_name,

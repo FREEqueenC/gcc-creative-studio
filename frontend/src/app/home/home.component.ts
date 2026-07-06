@@ -801,7 +801,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
         },
         error: error => {
           this.isImageGenerating = false;
-          handleErrorSnackbar(this._snackBar, error, 'Search');
+          handleErrorSnackbar(this._snackBar, error, 'Imagen Generation');
         },
       });
   }

@@ -97,7 +97,9 @@ def fixture_mock_creator():
 @pytest.fixture(name="db_session_mock")
 def fixture_db_session_mock():
     """Provides a mock AsyncSession."""
-    return AsyncMock()
+    mock = AsyncMock()
+    mock.add = MagicMock()
+    return mock
 
 
 # --- API Client Fixtures ---

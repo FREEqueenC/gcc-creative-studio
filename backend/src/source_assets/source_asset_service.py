@@ -112,9 +112,7 @@ class SourceAssetService:
             width, height = pil_image.size
 
         if height == 0:
-            raise HTTPException(
-                status.HTTP_400_BAD_REQUEST, "Media has zero height."
-            )
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "Media has zero height.")
 
         actual_ratio = width / height
 
@@ -147,9 +145,7 @@ class SourceAssetService:
     ) -> SourceAssetResponseDto:
         """Generates presigned URLs for the asset and its thumbnail."""
         tasks = [
-            asyncio.to_thread(
-                self.iam_signer.generate_presigned_url, asset.gcs_uri
-            ),
+            asyncio.to_thread(self.iam_signer.generate_presigned_url, asset.gcs_uri),
         ]
 
         if asset.original_gcs_uri:
@@ -270,9 +266,7 @@ class SourceAssetService:
 
                 # Determine audio mime type
                 audio_mime = mime_type or "audio/mpeg"
-                file_extension = (
-                    os.path.splitext(filename or "audio.mp3")[1] or ".mp3"
-                )
+                file_extension = os.path.splitext(filename or "audio.mp3")[1] or ".mp3"
 
                 # Upload the audio file directly
                 final_gcs_uri = self.gcs_service.store_to_gcs(
@@ -308,9 +302,7 @@ class SourceAssetService:
 
                 # If the image is already high-resolution, we skip upscaling.
                 # Validate resolution for upscaling
-                MAX_OUTPUT_PIXELS = (
-                    17 * 1024 * 1024
-                )  # ~17MP limit for Imagen 4 Upscale
+                MAX_OUTPUT_PIXELS = 17 * 1024 * 1024  # ~17MP limit for Imagen 4 Upscale
 
                 current_pixels = pil_image.width * pil_image.height
 
@@ -322,9 +314,7 @@ class SourceAssetService:
                     elif upscale_factor == "x3":
                         factor_int = 3
 
-                    projected_pixels = current_pixels * (
-                        factor_int * factor_int
-                    )
+                    projected_pixels = current_pixels * (factor_int * factor_int)
 
                     if projected_pixels > MAX_OUTPUT_PIXELS:
                         raise HTTPException(
@@ -357,19 +347,12 @@ class SourceAssetService:
                             enhance_input_image=enhance_input_image or False,
                             image_preservation_factor=image_preservation_factor,
                         )
-                        upscaled_result = (
-                            await self.imagen_service.upscale_image(
-                                upscale_dto,
-                            )
+                        upscaled_result = await self.imagen_service.upscale_image(
+                            upscale_dto,
                         )
 
-                        if (
-                            not upscaled_result
-                            or not upscaled_result.image.gcs_uri
-                        ):
-                            logger.warning(
-                                "Upscaling failed, using original image."
-                            )
+                        if not upscaled_result or not upscaled_result.image.gcs_uri:
+                            logger.warning("Upscaling failed, using original image.")
                             final_gcs_uri = original_gcs_uri
                         else:
                             final_gcs_uri = upscaled_result.image.gcs_uri
@@ -437,19 +420,6 @@ class SourceAssetService:
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Only administrators can set a non-private scope.",
             )
-        original_asset = SourceAssetModel(
-            workspace_id=workspace_id,
-            user_id=user.id,
-            aspect_ratio=final_aspect_ratio,
-            gcs_uri=original_gcs_uri or final_gcs_uri,
-            thumbnail_gcs_uri=thumbnail_gcs_uri,
-            original_filename=filename or "untitled",
-            mime_type=mime_type,
-            file_hash=file_hash,
-            scope=final_scope,
-            asset_type=final_asset_type,
-        )
-
         new_asset = SourceAssetModel(
             workspace_id=workspace_id,
             user_id=user.id,
@@ -537,9 +507,7 @@ class SourceAssetService:
         assets_query_result = await self.repo.query(search_dto, target_user_id)
         assets = assets_query_result.data or []
 
-        response_tasks = [
-            self._create_asset_response(asset) for asset in assets
-        ]
+        response_tasks = [self._create_asset_response(asset) for asset in assets]
         enriched_assets = await asyncio.gather(*response_tasks)
 
         return PaginationResponseDto[SourceAssetResponseDto](
@@ -571,9 +539,7 @@ class SourceAssetService:
         )
 
         # Create presigned URLs for all assets in parallel
-        response_tasks = [
-            self._create_asset_response(asset) for asset in all_assets
-        ]
+        response_tasks = [self._create_asset_response(asset) for asset in all_assets]
         enriched_assets = await asyncio.gather(*response_tasks)
 
         # Categorize the assets into the response DTO
@@ -619,9 +585,7 @@ class SourceAssetService:
         if owner:
             owner_email = owner.email
 
-        response = await self._create_asset_response(
-            asset, user_email=owner_email
-        )
+        response = await self._create_asset_response(asset, user_email=owner_email)
         response.tags = await self.tags_repo.get_tags_for_source_asset(asset_id)
         return response
 
@@ -753,9 +717,7 @@ class SourceAssetService:
             gcs_uri=final_gcs_uri,
             thumbnail_gcs_uri=thumbnail_gcs_uri,
             original_filename=filename,
-            mime_type=(
-                MimeTypeEnum.VIDEO_MP4 if is_video else MimeTypeEnum.IMAGE_PNG
-            ),
+            mime_type=(MimeTypeEnum.VIDEO_MP4 if is_video else MimeTypeEnum.IMAGE_PNG),
             file_hash=file_hash,
             scope=AssetScopeEnum.PRIVATE,
             asset_type=AssetTypeEnum.GENERIC_IMAGE,

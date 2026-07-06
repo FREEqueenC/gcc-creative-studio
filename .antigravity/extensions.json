@@ -1,0 +1,23 @@
+{
+  "installed": [
+    "cloud-run",
+    "cloud-sql-postgresql",
+    "cobol-legacy-bridge",
+    "conductor",
+    "firebase",
+    "gemini-cli-jules",
+    "gke-mcp",
+    "vertex"
+  ],
+  "enabled": [
+    "cloud-run",
+    "cloud-sql-postgresql",
+    "cobol-legacy-bridge",
+    "conductor",
+    "firebase",
+    "gemini-cli-jules",
+    "gke-mcp",
+    "vertex"
+  ],
+  "updatedAt": "2026-07-06T20:14:07.847Z"
+}

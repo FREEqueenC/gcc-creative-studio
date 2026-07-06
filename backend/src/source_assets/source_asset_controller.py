@@ -47,9 +47,7 @@ router = APIRouter(
     tags=["User Assets"],
     responses={404: {"description": "Not found"}},
     dependencies=[
-        Depends(
-            RoleChecker(allowed_roles=[UserRoleEnum.USER, UserRoleEnum.ADMIN])
-        ),
+        Depends(RoleChecker(allowed_roles=[UserRoleEnum.USER, UserRoleEnum.ADMIN])),
     ],
 )
 
@@ -108,9 +106,7 @@ async def convert_image_to_png(
     return Response(content=png_contents, media_type="image/png")
 
 
-@router.post(
-    "/search", response_model=PaginationResponseDto[SourceAssetResponseDto]
-)
+@router.post("/search", response_model=PaginationResponseDto[SourceAssetResponseDto])
 async def list_source_assets(
     search_dto: SourceAssetSearchDto,
     current_user: UserModel = Depends(get_current_user),
@@ -143,9 +139,7 @@ async def list_source_assets(
                 search_dto.user_email,
             )
             if not target_user:
-                raise HTTPException(
-                    status.HTTP_404_NOT_FOUND, "User email not found."
-                )
+                raise HTTPException(status.HTTP_404_NOT_FOUND, "User email not found.")
             target_user_id = target_user.id
 
     return await service.list_assets_for_user(

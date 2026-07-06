@@ -34,6 +34,4 @@ class GenerateUploadUrlResponseDto(BaseDto):
     upload_url: str = Field(
         description="The GCS v4 signed URL for the PUT/POST request.",
     )
-    gcs_uri: str = Field(
-        description="The gs:// path where the file will be stored."
-    )
+    gcs_uri: str = Field(description="The gs:// path where the file will be stored.")

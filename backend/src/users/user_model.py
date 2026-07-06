@@ -41,9 +41,7 @@ class User(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    email: Mapped[str] = mapped_column(
-        String, unique=True, index=True, nullable=False
-    )
+    email: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
     roles: Mapped[list[str]] = mapped_column(ARRAY(String), default=[])
     name: Mapped[str] = mapped_column(String, default="")
     picture: Mapped[str] = mapped_column(String, default="")
@@ -80,9 +78,7 @@ class UserModel(BaseDocument):
 
     @field_validator("roles", mode="after")
     @classmethod
-    def default_to_user_role(
-        cls, roles: list[UserRoleEnum]
-    ) -> list[UserRoleEnum]:
+    def default_to_user_role(cls, roles: list[UserRoleEnum]) -> list[UserRoleEnum]:
         """Ensures that if the 'roles' list is empty after initialization,
         it defaults to containing the 'USER' role.
         """

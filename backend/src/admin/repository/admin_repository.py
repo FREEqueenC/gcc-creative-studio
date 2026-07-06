@@ -70,9 +70,7 @@ class AdminRepository:
         )
 
         scalar_users = (await self.db.execute(users_query)).scalar_one()
-        scalar_workspaces = (
-            await self.db.execute(workspaces_query)
-        ).scalar_one()
+        scalar_workspaces = (await self.db.execute(workspaces_query)).scalar_one()
         scalar_uploaded = (await self.db.execute(uploaded_query)).scalar_one()
 
         query_media = select(
@@ -121,8 +119,7 @@ class AdminRepository:
             audios_generated=audios,
             total_media=images + videos + audios,
             user_uploaded_media=scalar_uploaded or 0,
-            overall_total_media=(images + videos + audios)
-            + (scalar_uploaded or 0),
+            overall_total_media=(images + videos + audios) + (scalar_uploaded or 0),
         )
 
     async def get_media_over_time(
@@ -253,10 +250,7 @@ class AdminRepository:
 
         roles_stats = (await self.db.execute(query)).all()
 
-        return [
-            AdminActiveRole(role=row.role, count=row.count)
-            for row in roles_stats
-        ]
+        return [AdminActiveRole(role=row.role, count=row.count) for row in roles_stats]
 
     async def get_generation_health(
         self, start_date: str | None = None, end_date: str | None = None

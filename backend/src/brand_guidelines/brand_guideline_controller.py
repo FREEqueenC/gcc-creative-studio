@@ -37,9 +37,7 @@ from src.workspaces.workspace_auth_guard import WorkspaceAuth
 MAX_UPLOAD_SIZE_BYTES = 500 * 1024 * 1024  # 500 MB
 
 # Define role checkers for convenience
-user_only = Depends(
-    RoleChecker(allowed_roles=[UserRoleEnum.USER, UserRoleEnum.ADMIN])
-)
+user_only = Depends(RoleChecker(allowed_roles=[UserRoleEnum.USER, UserRoleEnum.ADMIN]))
 
 router = APIRouter(
     prefix="/api/brand-guidelines",
@@ -130,9 +128,7 @@ async def get_workspace_brand_guideline(
 
     Returns a 404 error if no guideline has been created for the workspace yet.
     """
-    guideline = await service.get_guideline_by_workspace_id(
-        workspace_id, current_user
-    )
+    guideline = await service.get_guideline_by_workspace_id(workspace_id, current_user)
     if not guideline:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -180,6 +176,4 @@ async def delete_single_brand_guideline(
     - Only the workspace owner or a system admin can delete a workspace-specific guideline.
     - Only a system admin can delete a global guideline.
     """
-    await service.delete_guideline(
-        guideline_id=guideline_id, current_user=current_user
-    )
+    await service.delete_guideline(guideline_id=guideline_id, current_user=current_user)

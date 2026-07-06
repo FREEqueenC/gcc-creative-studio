@@ -29,6 +29,4 @@ class TemplateSearchDto(BaseSearchDto):
     brand: str | None = None
     mime_type: MimeTypeEnum | None = None
     # For tags, we'll likely search one at a time
-    tag: str | None = Field(
-        default=None, description="A single tag to filter by."
-    )
+    tag: str | None = Field(default=None, description="A single tag to filter by.")

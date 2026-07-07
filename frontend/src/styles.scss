@@ -49,20 +49,20 @@ $creative-studio-theme: mat.define-theme(
 :root {
   @include mat.all-component-themes($creative-studio-theme);
 
-  --color-bg1: #0a0b0d;
-  --color-bg2: #0e1014;
+  --color-bg1: #050510;
+  --color-bg2: #0a0518;
   --color-primary-value: #{mat.get-theme-color($creative-studio-theme, primary)};
-  --color1: 0, 242, 254;      // Cyan
-  --color2: 79, 172, 254;     // Soft Blue
-  --color3: 156, 39, 176;     // Luminous Purple
-  --color4: 103, 58, 183;     // Violet
-  --color5: 233, 30, 99;      // Pink/Magenta
-  --color-interactive: 140, 100, 255;
+  --color1: 100, 70, 255;    // Deep Violet/Indigo
+  --color2: 50, 120, 255;    // Electric Blue
+  --color3: 138, 43, 226;    // Blue-Violet Purple
+  --color4: 0, 180, 255;     // Neon Cyan
+  --color5: 80, 0, 180;      // Deep Purple
+  --color-interactive: 120, 80, 255;
   --circle-size: 80%;
   --blending: screen;
-  --gem-sys-color--brand-blue: #00f2fe;
-  --gem-sys-color--brand-transition-blue-1: #4facfe;
-  --gem-sys-color--brand-transition-blue-2: #9c27b0;
+  --gem-sys-color--brand-blue: #6446ff;
+  --gem-sys-color--brand-transition-blue-1: #3278ff;
+  --gem-sys-color--brand-transition-blue-2: #8a2be2;
   --Greeting-gradient: linear-gradient(77deg, var(--gem-sys-color--brand-blue) 6.99%, var(--gem-sys-color--brand-transition-blue-1) 45.46%, var(--gem-sys-color--brand-transition-blue-2) 88.2%);
   --z-index-notification: 99999;
 }
@@ -449,7 +449,7 @@ app-workspace-switcher .workspace-name {
   html {
     min-height: 100vh;
     height: auto;
-    background: radial-gradient(ellipse 100% 100% at 50% 0%, #100b26 0%, #06070a 100%) !important;
+    background: radial-gradient(ellipse 100% 100% at 50% 0%, #0d0820 0%, #04040f 100%) !important;
     background-attachment: fixed;
     background-repeat: no-repeat;
     background-size: cover;

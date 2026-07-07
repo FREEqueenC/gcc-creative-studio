@@ -65,6 +65,17 @@
             <p class="text-center text-white text-lg mt-4 !z-[50] max-w-2xl px-4">
               Aetheris X Creative Studio is an AI-powered digital media platform for creating, enhancing, and organizing dynamic visual and audio assets effortlessly.
             </p>
+            <a
+              *ngIf="!isAuthenticated"
+              routerLink="/login"
+              class="mt-6 !z-[50] inline-flex items-center gap-2 px-8 py-3 rounded-full font-semibold text-white text-base cursor-pointer no-underline"
+              style="background: linear-gradient(135deg, #6446ff 0%, #3278ff 50%, #8a2be2 100%); box-shadow: 0 0 24px rgba(100,70,255,0.5), 0 0 48px rgba(50,120,255,0.2); transition: all 0.3s ease;"
+              onmouseenter="this.style.boxShadow='0 0 36px rgba(100,70,255,0.8), 0 0 72px rgba(50,120,255,0.4)'; this.style.transform='translateY(-2px)'"
+              onmouseleave="this.style.boxShadow='0 0 24px rgba(100,70,255,0.5), 0 0 48px rgba(50,120,255,0.2)'; this.style.transform='translateY(0)'"
+            >
+              <mat-icon class="!text-white" style="font-size:18px;width:18px;height:18px;">account_circle</mat-icon>
+              Sign Up / Sign In
+            </a>
           </div>
           <div
             class="gradient-bg hidden md:block !relative !w-full !h-full !z-[10]"
@@ -114,6 +125,15 @@
             <p class="text-center text-white text-sm mt-4">
               Aetheris X Creative Studio is an AI-powered digital media platform for creating, enhancing, and organizing dynamic visual and audio assets effortlessly.
             </p>
+            <a
+              *ngIf="!isAuthenticated"
+              routerLink="/login"
+              class="mt-5 inline-flex items-center gap-2 px-6 py-2.5 rounded-full font-semibold text-white text-sm cursor-pointer no-underline"
+              style="background: linear-gradient(135deg, #6446ff 0%, #3278ff 50%, #8a2be2 100%); box-shadow: 0 0 18px rgba(100,70,255,0.5);"
+            >
+              <mat-icon class="!text-white" style="font-size:16px;width:16px;height:16px;">account_circle</mat-icon>
+              Sign Up / Sign In
+            </a>
           </div>
         </div>
       </ng-container>

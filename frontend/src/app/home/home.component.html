@@ -20,10 +20,7 @@
     <ng-container *ngIf="isLoading && !isImageGenerating; else videoOrGallery">
       <div class="video-container">
         <div class="w-full h-full flex justify-center items-center">
-          <mat-progress-spinner
-            color="primary"
-            mode="indeterminate"
-          ></mat-progress-spinner>
+          <mat-progress-spinner color="primary" mode="indeterminate"></mat-progress-spinner>
         </div>
       </div>
     </ng-container>
@@ -40,60 +37,39 @@
         </p>
       </div>
 
-      <ng-container
-        *ngIf="
+      <ng-container *ngIf="
           (imagenDocuments?.presignedUrls?.length || 0) === 0;
           else imageGallery
-        "
-      >
+        ">
         <div class="video-container">
           <!-- Text for Tablet and beyond -->
-          <div
-            class="hidden md:flex flex-col justify-center items-center w-full h-full absolute"
-          >
+          <div class="hidden md:flex flex-col justify-center items-center w-full h-full absolute">
             <div class="flex justify-center items-center">
-              <mat-icon
-                svgIcon="white-gemini-spark-icon"
-                class="!w-12 !h-12 mr-2 md:mr-[1rem] !z-[50]"
-              ></mat-icon>
-              <h1
-                class="text-center justify-center text-white text-2xl font-bold !m-0 !z-[50]"
-              >
+              <mat-icon svgIcon="white-gemini-spark-icon" class="!w-12 !h-12 mr-2 md:mr-[1rem] !z-[50]"></mat-icon>
+              <h1 class="text-center justify-center text-white text-2xl font-bold !m-0 !z-[50]">
                 Welcome to Aetheris X Creative Studio
               </h1>
             </div>
             <p class="text-center text-white text-lg mt-4 !z-[50] max-w-2xl px-4">
-              Aetheris X Creative Studio is an AI-powered digital media platform for creating, enhancing, and organizing dynamic visual and audio assets effortlessly.
+              Aetheris X Creative Studio is an AI-powered digital media platform for creating, enhancing, and organizing
+              dynamic visual and audio assets, effortlessly.
             </p>
-            <a
-              *ngIf="!isAuthenticated"
-              routerLink="/login"
+            <a *ngIf="!isAuthenticated" routerLink="/login"
               class="mt-6 !z-[50] inline-flex items-center gap-2 px-8 py-3 rounded-full font-semibold text-white text-base cursor-pointer no-underline"
               style="background: linear-gradient(135deg, #6446ff 0%, #3278ff 50%, #8a2be2 100%); box-shadow: 0 0 24px rgba(100,70,255,0.5), 0 0 48px rgba(50,120,255,0.2); transition: all 0.3s ease;"
               onmouseenter="this.style.boxShadow='0 0 36px rgba(100,70,255,0.8), 0 0 72px rgba(50,120,255,0.4)'; this.style.transform='translateY(-2px)'"
-              onmouseleave="this.style.boxShadow='0 0 24px rgba(100,70,255,0.5), 0 0 48px rgba(50,120,255,0.2)'; this.style.transform='translateY(0)'"
-            >
+              onmouseleave="this.style.boxShadow='0 0 24px rgba(100,70,255,0.5), 0 0 48px rgba(50,120,255,0.2)'; this.style.transform='translateY(0)'">
               <mat-icon class="!text-white" style="font-size:18px;width:18px;height:18px;">account_circle</mat-icon>
               Sign Up / Sign In
             </a>
           </div>
-          <div
-            class="gradient-bg hidden md:block !relative !w-full !h-full !z-[10]"
-          >
+          <div class="gradient-bg hidden md:block !relative !w-full !h-full !z-[10]">
             <svg xmlns="http://www.w3.org/2000/svg">
               <defs>
                 <filter id="goo">
-                  <feGaussianBlur
-                    in="SourceGraphic"
-                    stdDeviation="10"
-                    result="blur"
-                  />
-                  <feColorMatrix
-                    in="blur"
-                    mode="matrix"
-                    values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -8"
-                    result="goo"
-                  />
+                  <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur" />
+                  <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -8"
+                    result="goo" />
                   <feBlend in="SourceGraphic" in2="goo" />
                 </filter>
               </defs>
@@ -112,25 +88,18 @@
           <div class="flex flex-col justify-center items-center w-full h-full md:hidden px-4 z-[50]">
             <!-- As this svg uses a gradient, it needs to have a different fill id, therefore we have one for mobile and other for larger devices -->
             <div class="flex justify-center items-center">
-              <mat-icon
-                svgIcon="mobile-white-gemini-spark-icon"
-                class="!w-6 !h-6 mr-2 md:mr-[1rem]"
-              ></mat-icon>
-              <div
-                class="text-center justify-center text-white title-font font-bold"
-              >
+              <mat-icon svgIcon="mobile-white-gemini-spark-icon" class="!w-6 !h-6 mr-2 md:mr-[1rem]"></mat-icon>
+              <div class="text-center justify-center text-white title-font font-bold">
                 Welcome to Aetheris X Creative Studio
               </div>
             </div>
             <p class="text-center text-white text-sm mt-4">
-              Aetheris X Creative Studio is an AI-powered digital media platform for creating, enhancing, and organizing dynamic visual and audio assets effortlessly.
+              Aetheris X Creative Studio is an AI-powered digital media platform for creating, enhancing, and organizing
+              dynamic visual and audio assets, effortlessly.
             </p>
-            <a
-              *ngIf="!isAuthenticated"
-              routerLink="/login"
+            <a *ngIf="!isAuthenticated" routerLink="/login"
               class="mt-5 inline-flex items-center gap-2 px-6 py-2.5 rounded-full font-semibold text-white text-sm cursor-pointer no-underline"
-              style="background: linear-gradient(135deg, #6446ff 0%, #3278ff 50%, #8a2be2 100%); box-shadow: 0 0 18px rgba(100,70,255,0.5);"
-            >
+              style="background: linear-gradient(135deg, #6446ff 0%, #3278ff 50%, #8a2be2 100%); box-shadow: 0 0 18px rgba(100,70,255,0.5);">
               <mat-icon class="!text-white" style="font-size:16px;width:16px;height:16px;">account_circle</mat-icon>
               Sign Up / Sign In
             </a>
@@ -140,18 +109,10 @@
       <!-- Image Gallery -->
       <ng-template #imageGallery>
         <div class="grid grid-cols-1 gap-4">
-          <app-media-lightbox
-            *ngIf="imagenDocuments"
-            [mediaItem]="imagenDocuments"
-            [initialIndex]="0"
-            [showSeeMoreInfoButton]="true"
-            [showDeleteButton]="true"
-            (editClicked)="editResultImage($event)"
-            (generateVideoClicked)="generateVideoWithImage($event)"
-            (sendToVtoClicked)="sendToVto($event)"
-            (deleteClicked)="deleteGeneratedMedia()"
-            style="max-height: 60vh"
-          ></app-media-lightbox>
+          <app-media-lightbox *ngIf="imagenDocuments" [mediaItem]="imagenDocuments" [initialIndex]="0"
+            [showSeeMoreInfoButton]="true" [showDeleteButton]="true" (editClicked)="editResultImage($event)"
+            (generateVideoClicked)="generateVideoWithImage($event)" (sendToVtoClicked)="sendToVto($event)"
+            (deleteClicked)="deleteGeneratedMedia()" style="max-height: 60vh"></app-media-lightbox>
           <div #promptBoxTarget></div>
         </div>
       </ng-template>
@@ -159,137 +120,89 @@
 
     <!-- Control Options -->
     <div
-      class="control-options inline-flex justify-center items-start grid grid-cols-2 md:grid-cols-3 lg:flex gap-4 mt-8 place-items-center"
-    >
+      class="control-options inline-flex justify-center items-start grid grid-cols-2 md:grid-cols-3 lg:flex gap-4 mt-8 place-items-center">
 
 
-      <div
-        matTooltip="Select Style"
-        class="cursor-pointer w-32 inline-flex flex-col justify-start items-center"
-      >
-        <button
-          mat-fab
-          [matMenuTriggerFor]="imageStylingMenu"
-          class="!w-16 !h-16 !shadow-none text-center justify-center text-stone-300"
-        >
+      <div matTooltip="Select Style" class="cursor-pointer w-32 inline-flex flex-col justify-start items-center">
+        <button mat-fab [matMenuTriggerFor]="imageStylingMenu"
+          class="!w-16 !h-16 !shadow-none text-center justify-center text-stone-300">
           <mat-icon>style</mat-icon>
         </button>
         <div class="text-center justify-center text-neutral-200 text-base mt-2">
           {{ searchRequest.style ? searchRequest.style : 'Style' }}
         </div>
         <mat-menu #imageStylingMenu="matMenu">
-          <button
-            *ngFor="let style of imageStyles"
-            mat-menu-item
-            [ngClass]="{'menu-item-selected': searchRequest.style === style}"
-            (click)="selectImageStyle(style)"
-          >
+          <button *ngFor="let style of imageStyles" mat-menu-item
+            [ngClass]="{'menu-item-selected': searchRequest.style === style}" (click)="selectImageStyle(style)">
             <span>{{ style }}</span>
           </button>
         </mat-menu>
       </div>
 
-      <div
-        matTooltip="Select Color & Tone"
-        class="cursor-pointer w-32 inline-flex flex-col justify-start items-center"
-      >
-        <button
-          mat-fab
-          [matMenuTriggerFor]="colorMenu"
-          class="!w-16 !h-16 !shadow-none text-center justify-center text-stone-300"
-        >
+      <div matTooltip="Select Color & Tone" class="cursor-pointer w-32 inline-flex flex-col justify-start items-center">
+        <button mat-fab [matMenuTriggerFor]="colorMenu"
+          class="!w-16 !h-16 !shadow-none text-center justify-center text-stone-300">
           <mat-icon>palette</mat-icon>
         </button>
         <div class="text-center justify-center text-neutral-200 text-base mt-2">
           {{
-            searchRequest.colorAndTone
-              ? searchRequest.colorAndTone
-              : 'Color & Tone'
+          searchRequest.colorAndTone
+          ? searchRequest.colorAndTone
+          : 'Color & Tone'
           }}
         </div>
         <mat-menu #colorMenu="matMenu">
-          <button
-            *ngFor="let color of colorsAndTones"
-            mat-menu-item
-            [ngClass]="{
+          <button *ngFor="let color of colorsAndTones" mat-menu-item [ngClass]="{
               'menu-item-selected': searchRequest.colorAndTone === color,
-            }"
-            (click)="selectColor(color)"
-          >
+            }" (click)="selectColor(color)">
             <span>{{ color }}</span>
           </button>
         </mat-menu>
       </div>
 
-      <div
-        matTooltip="Select Lighting"
-        class="cursor-pointer w-32 inline-flex flex-col justify-start items-center"
-      >
-        <button
-          mat-fab
-          [matMenuTriggerFor]="lightingMenu"
-          class="!w-16 !h-16 !shadow-none text-center justify-center text-stone-300"
-          title="Select Lighting"
-        >
+      <div matTooltip="Select Lighting" class="cursor-pointer w-32 inline-flex flex-col justify-start items-center">
+        <button mat-fab [matMenuTriggerFor]="lightingMenu"
+          class="!w-16 !h-16 !shadow-none text-center justify-center text-stone-300" title="Select Lighting">
           <mat-icon svgIcon="lighting-icon"></mat-icon>
         </button>
         <div class="text-center justify-center text-neutral-200 text-base mt-2">
           {{ searchRequest.lighting ? searchRequest.lighting : 'Lighting' }}
         </div>
         <mat-menu #lightingMenu="matMenu">
-          <button
-            *ngFor="let light of lightings"
-            mat-menu-item
-            [ngClass]="{'menu-item-selected': searchRequest.lighting === light}"
-            (click)="selectLighting(light)"
-          >
+          <button *ngFor="let light of lightings" mat-menu-item
+            [ngClass]="{'menu-item-selected': searchRequest.lighting === light}" (click)="selectLighting(light)">
             <span>{{ light }}</span>
           </button>
         </mat-menu>
       </div>
 
 
-      <div
-        matTooltip="Select Composition"
-        class="cursor-pointer w-32 rounded-lg inline-flex flex-col justify-start items-center"
-      >
-        <button
-          mat-fab
-          [matMenuTriggerFor]="compositionMenu"
-          class="!w-16 !h-16 !shadow-none text-center justify-center text-stone-300"
-        >
+      <div matTooltip="Select Composition"
+        class="cursor-pointer w-32 rounded-lg inline-flex flex-col justify-start items-center">
+        <button mat-fab [matMenuTriggerFor]="compositionMenu"
+          class="!w-16 !h-16 !shadow-none text-center justify-center text-stone-300">
           <mat-icon>movie_edit</mat-icon>
         </button>
         <div class="text-center justify-center text-neutral-200 text-base mt-2">
           {{
-            searchRequest.composition
-              ? searchRequest.composition
-              : 'Composition'
+          searchRequest.composition
+          ? searchRequest.composition
+          : 'Composition'
           }}
         </div>
         <mat-menu #compositionMenu="matMenu">
-          <button
-            *ngFor="let comp of compositions"
-            mat-menu-item
-            [ngClass]="{
+          <button *ngFor="let comp of compositions" mat-menu-item [ngClass]="{
               'menu-item-selected': searchRequest.composition === comp,
-            }"
-            (click)="selectComposition(comp)"
-          >
+            }" (click)="selectComposition(comp)">
             <span>{{ comp }}</span>
           </button>
         </mat-menu>
       </div>
 
-      <div
-        matTooltip="Select Negative Phrases"
-        class="cursor-pointer w-32 inline-flex flex-col justify-start items-center"
-      >
-        <button
-          mat-fab
-          [matMenuTriggerFor]="negativePhrasesMenu"
-          class="!w-16 !h-16 !shadow-none text-center justify-center text-stone-300"
-        >
+      <div matTooltip="Select Negative Phrases"
+        class="cursor-pointer w-32 inline-flex flex-col justify-start items-center">
+        <button mat-fab [matMenuTriggerFor]="negativePhrasesMenu"
+          class="!w-16 !h-16 !shadow-none text-center justify-center text-stone-300">
           <mat-icon>block</mat-icon>
         </button>
         <div class="text-center justify-center text-neutral-200 text-base mt-2">
@@ -300,58 +213,41 @@
             <mat-form-field class="w-full">
               <mat-label>Things to avoid...</mat-label>
               <mat-chip-grid #chipGrid aria-label="Enter negative phrases">
-                <mat-chip-row
-                  *ngFor="let phrase of negativePhrases"
-                  (removed)="removeNegativePhrase(phrase)"
-                  matTooltipPosition="below"
-                  class="negative-prompt-chips"
-                >
+                <mat-chip-row *ngFor="let phrase of negativePhrases" (removed)="removeNegativePhrase(phrase)"
+                  matTooltipPosition="below" class="negative-prompt-chips">
                   {{ phrase }}
                   <button matChipRemove [matTooltip]="'Remove ' + phrase">
                     <mat-icon>cancel</mat-icon>
                   </button>
                 </mat-chip-row>
               </mat-chip-grid>
-              <input
-                placeholder="New phrase..."
-                [matChipInputFor]="chipGrid"
-                (matChipInputTokenEnd)="addNegativePhrase($event)"
-              />
+              <input placeholder="New phrase..." [matChipInputFor]="chipGrid"
+                (matChipInputTokenEnd)="addNegativePhrase($event)" />
             </mat-form-field>
           </div>
         </mat-menu>
       </div>
 
-      <div
-        matTooltip="Select Watermark"
-        class="cursor-pointer w-32 inline-flex flex-col justify-start items-center"
-      >
-        <button
-          mat-fab
-          [matMenuTriggerFor]="watermarkMenu"
-          class="!w-16 !h-16 !shadow-none text-center justify-center text-stone-300"
-        >
+      <div matTooltip="Select Watermark" class="cursor-pointer w-32 inline-flex flex-col justify-start items-center">
+        <button mat-fab [matMenuTriggerFor]="watermarkMenu"
+          class="!w-16 !h-16 !shadow-none text-center justify-center text-stone-300">
           <mat-icon>branding_watermark</mat-icon>
         </button>
         <div class="text-center justify-center text-neutral-200 text-base mt-2">
           {{ selectedWatermark }}
         </div>
         <mat-menu #watermarkMenu="matMenu">
-          <button
-            *ngFor="let option of watermarkOptions"
-            mat-menu-item
-            [ngClass]="{
+          <button *ngFor="let option of watermarkOptions" mat-menu-item [ngClass]="{
               'menu-item-selected': searchRequest.addWatermark === option.value,
-            }"
-            (click)="selectWatermark(option)"
-          >
+            }" (click)="selectWatermark(option)">
             <span>{{ option.viewValue }}</span>
           </button>
         </mat-menu>
       </div>
 
-      <div *ngIf="searchRequest.generationModel === 'gemini-3-pro-image' || searchRequest.generationModel === 'gemini-3.1-flash-image'" matTooltip="Enable Google Search"
-        class="cursor-pointer w-32 inline-flex flex-col justify-start items-center">
+      <div
+        *ngIf="searchRequest.generationModel === 'gemini-3-pro-image' || searchRequest.generationModel === 'gemini-3.1-flash-image'"
+        matTooltip="Enable Google Search" class="cursor-pointer w-32 inline-flex flex-col justify-start items-center">
         <mat-slide-toggle [(ngModel)]="searchRequest.googleSearch" (ngModelChange)="saveState()"
           class="!w-16 !h-16 !shadow-none text-center !flex justify-center items-center text-stone-300">
         </mat-slide-toggle>
@@ -360,30 +256,20 @@
         </div>
       </div>
 
-      <div
-        matTooltip="Enable Brand Guidelines"
-        class="cursor-pointer w-32 inline-flex flex-col justify-start items-center"
-      >
-        <mat-slide-toggle
-          [(ngModel)]="searchRequest.useBrandGuidelines"
-          (ngModelChange)="saveState()"
-          class="!w-16 !h-16 !shadow-none text-center !flex justify-center items-center text-stone-300"
-        >
+      <div matTooltip="Enable Brand Guidelines"
+        class="cursor-pointer w-32 inline-flex flex-col justify-start items-center">
+        <mat-slide-toggle [(ngModel)]="searchRequest.useBrandGuidelines" (ngModelChange)="saveState()"
+          class="!w-16 !h-16 !shadow-none text-center !flex justify-center items-center text-stone-300">
         </mat-slide-toggle>
         <div class="text-center justify-center text-neutral-200 text-base mt-2">
           Brand Guidelines
         </div>
       </div>
 
-      <div
-        matTooltip="Enhance Prompt with AI"
-        class="cursor-pointer w-32 inline-flex flex-col justify-start items-center"
-      >
-        <mat-slide-toggle
-          [(ngModel)]="searchRequest.enhancePrompt"
-          (ngModelChange)="saveState()"
-          class="!w-16 !h-16 !shadow-none text-center !flex justify-center items-center text-stone-300"
-        >
+      <div matTooltip="Enhance Prompt with AI"
+        class="cursor-pointer w-32 inline-flex flex-col justify-start items-center">
+        <mat-slide-toggle [(ngModel)]="searchRequest.enhancePrompt" (ngModelChange)="saveState()"
+          class="!w-16 !h-16 !shadow-none text-center !flex justify-center items-center text-stone-300">
         </mat-slide-toggle>
         <div class="text-center justify-center text-neutral-200 text-base mt-2">
           Enhance Prompt

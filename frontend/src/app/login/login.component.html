@@ -39,14 +39,7 @@
       <span class="linear-text">Create</span> at the speed <br />
       of <span class="linear-text">thought</span> 🚀
     </p>
-    <button
-      mat-raised-button
-      color="primary"
-      (click)="loginWithGoogle()"
-      class="w-full max-w-xs h-12 text-lg"
-    >
-      Login with Google
-    </button>
+    <div id="google-signin-button"></div>
     <mat-spinner class="mt-5" [diameter]="50" *ngIf="this.loader"></mat-spinner>
   </div>
 
@@ -73,14 +66,7 @@
         <p class="register-text mb-4">
           Single Sign on with your Google Account
         </p>
-        <button
-          mat-raised-button
-          color="primary"
-          (click)="loginWithGoogle()"
-          class="w-full h-12 text-lg login-btn"
-        >
-          Login with Google
-        </button>
+        <div id="google-signin-button-desktop"></div>
         <mat-spinner
           class="mt-5 m-auto"
           [diameter]="50"

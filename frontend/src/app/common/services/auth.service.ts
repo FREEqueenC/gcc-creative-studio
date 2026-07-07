@@ -192,89 +192,25 @@ export class AuthService {
    *
    * @returns An Observable that emits the Identity Platform-compatible ID token.
    */
-  signInForGoogleIdentityPlatform(): Observable<string> {
-    return this.promptForIdentityPlatformToken$().pipe(
-      switchMap(idToken => {
-        const payload = JSON.parse(atob(idToken.split('.')[1]));
-        const userEmail = payload.email?.toLowerCase();
+  handleGoogleCredentialResponse(idToken: string): Observable<string> {
+    const payload = JSON.parse(atob(idToken.split('.')[1]));
+    const userEmail = payload.email?.toLowerCase();
 
-        // If allowed, proceed to save session and return token
-        this.firebaseIdToken = idToken;
-        this.firebaseTokenExpiry = payload.exp * 1000;
+    // If allowed, proceed to save session and return token
+    this.firebaseIdToken = idToken;
+    this.firebaseTokenExpiry = payload.exp * 1000;
 
-        const session: FirebaseSession = {
-          token: idToken,
-          expiry: this.firebaseTokenExpiry,
-        };
-        localStorage.setItem(FIREBASE_SESSION_KEY, JSON.stringify(session));
+    const session: FirebaseSession = {
+      token: idToken,
+      expiry: this.firebaseTokenExpiry,
+    };
+    localStorage.setItem(FIREBASE_SESSION_KEY, JSON.stringify(session));
 
-        // Call the backend to get or create the user profile.
-        return this.syncUserWithBackend$(idToken).pipe(
-          switchMap(() => from(this.settingsService.loadSettings())),
-          map(() => idToken), // Pass the token along for the final result.
-        );
-      }),
-      catchError((error: any) => {
-        console.error('An error occurred during the identity platform sign-in process:', error);
-        this.clearSessionData();
-        return throwError(
-          () => new Error(`Sign-in failed. Please try again. ${error}`),
-        );
-      }),
+    // Call the backend to get or create the user profile.
+    return this.syncUserWithBackend$(idToken).pipe(
+      switchMap(() => from(this.settingsService.loadSettings())),
+      map(() => idToken), // Pass the token along for the final result.
     );
-  }
-
-  private promptForIdentityPlatformToken$(): Observable<string> {
-    const GOOGLE_CLIENT_ID = environment.GOOGLE_CLIENT_ID;
-
-    return new Observable<string>(observer => {
-      if (typeof google === 'undefined') {
-        return observer.error(
-          new Error(
-            'Google Identity Services script not loaded. Add it to index.html',
-          ),
-        );
-      }
-
-      const loginTimeout = setTimeout(() => {
-        observer.error(
-          new Error(
-            'Login timed out or third party sign-in may be disabled. Please try again and enable third party sign-in by clicking on the information button at the top left side of the browser.',
-          ),
-        );
-      }, 15000);
-
-      try {
-        google.accounts.id.initialize({
-          client_id: GOOGLE_CLIENT_ID,
-          callback: (response: any) => {
-            clearTimeout(loginTimeout);
-            const idToken = response.credential;
-            if (idToken) {
-              observer.next(idToken);
-              observer.complete();
-            } else {
-              observer.error(
-                new Error(
-                  'Google Sign-In response did not contain a credential.',
-                ),
-              );
-            }
-          },
-        });
-
-        // Trigger the One Tap prompt.
-        // Per new docs, we don't use the notification object for flow control.
-        google.accounts.id.prompt();
-      } catch (error) {
-        clearTimeout(loginTimeout);
-        console.error(
-          'Error during Google Identity Platform sign-in initialization:',
-          error,
-        );
-        observer.error(error);
-      }
-    });
   }
 
   /**

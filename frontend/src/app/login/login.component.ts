@@ -26,6 +26,7 @@ import {isPlatformBrowser} from '@angular/common';
 
 const HOME_ROUTE = '/';
 
+declare var google: any;
 declare var grecaptcha: any;
 
 interface LooseObject {
@@ -58,93 +59,38 @@ export class LoginComponent {
     });
   }
 
-  ngOnInit(): void {}
-
-  loginWithGoogle() {
-    this.loader = true;
-    this.invalidLogin = false;
-    this.errorMessage = '';
-
-    const executeLoginFlow = () => {
-      if (environment?.isLocal) {
-        // This will use the Google Identity Services library to get an FIREBASE-compatible token.
-        this.authService.signInWithGoogleFirebase().subscribe({
-          next: (firebaseToken: string) => {
-            // The signInForGoogleIdentityPlatform method already stored the token and minimal user details
-            // in localStorage. We just need to redirect to trigger the AuthGuard.
-            this.ngZone.run(() => {
-              this.loader = false;
-              void this.router.navigate([HOME_ROUTE]);
-            });
-          },
-          error: error => {
-            this.loader = false;
-            console.log(error);
-            // Handle specific errors from the auth service
-            if (
-              error.message?.includes('timed out') ||
-              error.message?.includes('Access Denied')
-            ) {
-              this.handleLoginError(error);
-            } else {
-              this.handleLoginError(
-                error || {
-                  message:
-                    'An unexpected error occurred during sign-in. Please try again.',
-                },
-              );
-            }
-            console.error('FIREBASE Login Process Error:', error);
-          },
-        });
-      } else {
-        // This will use the Google Identity Services library to get an FIREBASE-compatible token.
-        this.authService.signInForGoogleIdentityPlatform().subscribe({
-          next: (firebaseToken: string) => {
-            // The signInForGoogleIdentityPlatform method already stored the token and minimal user details
-            // in localStorage. We just need to redirect to trigger the AuthGuard.
-            this.ngZone.run(() => {
-              this.loader = false;
-              void this.router.navigate([HOME_ROUTE]);
-            });
-          },
-          error: error => {
-            this.loader = false;
-            console.log(error);
-            // Handle specific errors from the auth service
-            if (
-              error.message?.includes('timed out') ||
-              error.message?.includes('Access Denied')
-            ) {
-              this.handleLoginError(error);
-            } else {
-              this.handleLoginError(
-                error || {
-                  message:
-                    'An unexpected error occurred during sign-in. Please try again.',
-                },
-              );
-            }
-            console.error('FIREBASE Login Process Error:', error);
-          },
-        });
-      }
-    };
-
-    if (typeof grecaptcha !== 'undefined' && grecaptcha.enterprise) {
-      grecaptcha.enterprise.ready(async () => {
-        try {
-          const token = await grecaptcha.enterprise.execute('6LeRPkAtAAAAAKnaiVVAsifsZcq2mSi6Zi_yKlLe', {action: 'LOGIN'});
-          console.log('reCAPTCHA Enterprise execution successful. Token obtained:', token);
-          executeLoginFlow();
-        } catch (err) {
-          console.error('reCAPTCHA Enterprise execution failed, proceeding with login:', err);
-          executeLoginFlow();
-        }
+  ngOnInit(): void {
+    if (this.isBrowser) {
+      google.accounts.id.initialize({
+        client_id: environment.GOOGLE_CLIENT_ID,
+        callback: this.handleCredentialResponse.bind(this),
+        auto_select: false,
+        cancel_on_tap_outside: true,
       });
-    } else {
-      executeLoginFlow();
+      google.accounts.id.renderButton(
+        document.getElementById('google-signin-button'),
+        { theme: 'outline', size: 'large', width: '300' }
+      );
+      google.accounts.id.renderButton(
+        document.getElementById('google-signin-button-desktop'),
+        { theme: 'outline', size: 'large', width: '300' }
+      );
     }
+  }
+
+  handleCredentialResponse(response: any) {
+    this.loader = true;
+    this.authService.handleGoogleCredentialResponse(response.credential).subscribe({
+      next: () => {
+        this.ngZone.run(() => {
+          this.loader = false;
+          this.router.navigate([HOME_ROUTE]);
+        });
+      },
+      error: (error: any) => {
+        this.handleLoginError(error);
+      }
+    });
   }
 
   private handleLoginError(error: any, postErrorAction?: () => void) {

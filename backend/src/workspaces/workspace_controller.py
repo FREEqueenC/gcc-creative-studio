@@ -14,12 +14,16 @@
 
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel, Field
 
 from src.auth.auth_guard import get_current_user
 from src.users.user_model import UserModel
 from src.workspaces.dto.create_workspace_dto import CreateWorkspaceDto
 from src.workspaces.dto.invite_user_dto import InviteUserDto
-from src.workspaces.schema.workspace_model import WorkspaceModel
+from src.workspaces.schema.workspace_model import (
+    WorkspaceModel,
+    WorkspaceScopeEnum,
+)
 from src.workspaces.workspace_service import WorkspaceService
 
 router = APIRouter(
@@ -89,10 +93,6 @@ async def invite_user(
             detail="Workspace or user to invite not found.",
         )
     return updated_workspace
-
-
-from pydantic import BaseModel, Field
-from src.workspaces.schema.workspace_model import WorkspaceScopeEnum
 
 
 class UpdateWorkspaceDto(BaseModel):

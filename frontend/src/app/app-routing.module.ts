@@ -37,7 +37,7 @@ import {DocsComponent} from './docs/docs.component';
 const routes: Routes = [
   {path: 'login', component: LoginComponent},
   {path: 'docs', component: DocsComponent, canActivate: [AuthGuardService]},
-  {path: '', component: HomeComponent, canActivate: [AuthGuardService]},
+  {path: '', component: HomeComponent},
   {
     path: 'fun-templates',
     component: FunTemplatesComponent,
@@ -67,12 +67,6 @@ const routes: Routes = [
     path: 'asset-detail/:id',
     component: MediaDetailComponent,
     canActivate: [AuthGuardService],
-  },
-  // Optional: Redirect the base URL to the gallery
-  {
-    path: '',
-    redirectTo: '/gallery',
-    pathMatch: 'full',
   },
   {
     path: 'admin',

@@ -49,17 +49,22 @@
         <div class="video-container">
           <!-- Text for Tablet and beyond -->
           <div
-            class="hidden md:flex justify-center items-center w-full h-full absolute"
+            class="hidden md:flex flex-col justify-center items-center w-full h-full absolute"
           >
-            <mat-icon
-              svgIcon="white-gemini-spark-icon"
-              class="!w-12 !h-12 mr-2 md:mr-[1rem] !z-[50]"
-            ></mat-icon>
-            <h1
-              class="text-center justify-center text-white text-2xl font-bold !m-0 !z-[50]"
-            >
-              Welcome to Creative Studio
-            </h1>
+            <div class="flex justify-center items-center">
+              <mat-icon
+                svgIcon="white-gemini-spark-icon"
+                class="!w-12 !h-12 mr-2 md:mr-[1rem] !z-[50]"
+              ></mat-icon>
+              <h1
+                class="text-center justify-center text-white text-2xl font-bold !m-0 !z-[50]"
+              >
+                Welcome to Aetheris X Creative Studio
+              </h1>
+            </div>
+            <p class="text-center text-white text-lg mt-4 !z-[50] max-w-2xl px-4">
+              Aetheris X Creative Studio is an AI-powered digital media platform for creating, enhancing, and organizing dynamic visual and audio assets effortlessly.
+            </p>
           </div>
           <div
             class="gradient-bg hidden md:block !relative !w-full !h-full !z-[10]"
@@ -93,17 +98,22 @@
           </div>
 
           <!-- Text for mobile -->
-          <div class="flex justify-center items-center w-full h-full md:hidden">
+          <div class="flex flex-col justify-center items-center w-full h-full md:hidden px-4 z-[50]">
             <!-- As this svg uses a gradient, it needs to have a different fill id, therefore we have one for mobile and other for larger devices -->
-            <mat-icon
-              svgIcon="mobile-white-gemini-spark-icon"
-              class="!w-6 !h-6 mr-2 md:mr-[1rem]"
-            ></mat-icon>
-            <div
-              class="text-center justify-center text-white title-font font-bold"
-            >
-              Welcome to Creative Studio
+            <div class="flex justify-center items-center">
+              <mat-icon
+                svgIcon="mobile-white-gemini-spark-icon"
+                class="!w-6 !h-6 mr-2 md:mr-[1rem]"
+              ></mat-icon>
+              <div
+                class="text-center justify-center text-white title-font font-bold"
+              >
+                Welcome to Aetheris X Creative Studio
+              </div>
             </div>
+            <p class="text-center text-white text-sm mt-4">
+              Aetheris X Creative Studio is an AI-powered digital media platform for creating, enhancing, and organizing dynamic visual and audio assets effortlessly.
+            </p>
           </div>
         </div>
       </ng-container>

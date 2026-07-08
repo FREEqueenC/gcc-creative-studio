@@ -62,6 +62,7 @@ import {ImageStateService} from '../services/image-state.service';
 import {SearchService} from '../services/search/search.service';
 import {WorkspaceStateService} from '../services/workspace/workspace-state.service';
 import {GalleryService} from '../gallery/gallery.service';
+import {AuthService} from '../common/services/auth.service';
 import {
   handleErrorSnackbar,
   handleInfoSnackbar,
@@ -303,6 +304,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     private galleryService: GalleryService,
     private sourceAssetService: SourceAssetService,
     @Inject(PLATFORM_ID) private platformId: Object,
+    private authService: AuthService,
   ) {
     this.matIconRegistry
       .addSvgIcon(
@@ -361,6 +363,10 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
         }
       }
     });
+  }
+
+  get isAuthenticated(): boolean {
+    return this.authService.isUserLoggedIn();
   }
 
   private path = '../../assets/images';

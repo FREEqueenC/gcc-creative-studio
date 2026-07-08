@@ -27,6 +27,20 @@
   color: transparent;
 }
 
+video {
+  filter: brightness(0.35) contrast(1.1) saturate(0.9);
+}
+
+.login-logo {
+  filter: drop-shadow(0 0 15px rgba(100, 70, 255, 0.35)) drop-shadow(0 0 30px rgba(0, 242, 254, 0.15));
+  transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+
+  &:hover {
+    transform: scale(1.05) rotate(0.5deg);
+    filter: drop-shadow(0 0 25px rgba(100, 70, 255, 0.65)) drop-shadow(0 0 45px rgba(0, 242, 254, 0.35));
+  }
+}
+
 .login-app-text {
   font-size: 1.5rem;
 }
@@ -60,9 +74,17 @@
   width: 100%;
   align-items: center;
 
-  background: rgba(255, 255, 255, 0.1) !important;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px); /* For Safari */
+  background: rgba(255, 255, 255, 0.04) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px); /* For Safari */
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(100, 70, 255, 0.15) !important;
+  transition: border-color 0.4s ease, box-shadow 0.4s ease;
+
+  &:hover {
+    border-color: rgba(100, 70, 255, 0.3) !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6), 0 0 40px rgba(100, 70, 255, 0.25) !important;
+  }
 
   .register-text {
     margin: 1rem 0;

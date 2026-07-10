@@ -363,11 +363,13 @@ export class WorkspaceSwitcherComponent implements OnInit {
     event.stopPropagation();
     if (!this.activeWorkspace) return;
 
-    const newScope = this.activeWorkspace.scope === WorkspaceScope.PUBLIC 
-      ? WorkspaceScope.PRIVATE 
-      : WorkspaceScope.PUBLIC;
+    const newScope =
+      this.activeWorkspace.scope === WorkspaceScope.PUBLIC
+        ? WorkspaceScope.PRIVATE
+        : WorkspaceScope.PUBLIC;
 
-    const targetAction = newScope === WorkspaceScope.PUBLIC ? 'Public' : 'Private';
+    const targetAction =
+      newScope === WorkspaceScope.PUBLIC ? 'Public' : 'Private';
 
     const confirmationDialogRef = this.dialog.open(
       ConfirmationDialogComponent,
@@ -375,8 +377,8 @@ export class WorkspaceSwitcherComponent implements OnInit {
         data: {
           title: `Make Workspace ${targetAction}?`,
           message: `Are you sure you want to make this workspace ${targetAction.toLowerCase()}? ${
-            newScope === WorkspaceScope.PUBLIC 
-              ? 'Any registered user will be able to see and access this workspace and its media items.' 
+            newScope === WorkspaceScope.PUBLIC
+              ? 'Any registered user will be able to see and access this workspace and its media items.'
               : 'Only invited members will be able to see and access this workspace.'
           }`,
         },
@@ -386,7 +388,7 @@ export class WorkspaceSwitcherComponent implements OnInit {
     confirmationDialogRef.afterClosed().subscribe(confirmed => {
       if (confirmed && this.activeWorkspaceId) {
         this.workspaceService
-          .updateWorkspace(this.activeWorkspaceId, { scope: newScope })
+          .updateWorkspace(this.activeWorkspaceId, {scope: newScope})
           .subscribe({
             next: () => {
               handleSuccessSnackbar(
@@ -394,16 +396,18 @@ export class WorkspaceSwitcherComponent implements OnInit {
                 `Workspace is now ${targetAction.toLowerCase()}!`,
               );
               this.activeWorkspace!.scope = newScope;
-              const found = this.workspaces.find(w => w.id === this.activeWorkspaceId);
+              const found = this.workspaces.find(
+                w => w.id === this.activeWorkspaceId,
+              );
               if (found) found.scope = newScope;
             },
             error: error => {
               handleErrorSnackbar(
                 this.snackBar,
                 error,
-                `Failed to change workspace scope`,
+                'Failed to change workspace scope',
               );
-            }
+            },
           });
       }
     });

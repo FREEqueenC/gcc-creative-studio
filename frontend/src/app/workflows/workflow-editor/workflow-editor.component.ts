@@ -166,7 +166,10 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
           this.workflowId = params.get('workflowId');
           if (this.runId && this.workflowId) {
             this.mode = EditorMode.Run;
-            return this.workflowService.getExecutionDetails(this.workflowId, this.runId);
+            return this.workflowService.getExecutionDetails(
+              this.workflowId,
+              this.runId,
+            );
           } else if (this.workflowId) {
             this.mode = EditorMode.Edit;
             return this.workflowService.getWorkflowById(this.workflowId);
@@ -177,7 +180,9 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
         }),
       )
       .subscribe({
-        next: (data: WorkflowModel | WorkflowRunModel | ExecutionDetails | null) => {
+        next: (
+          data: WorkflowModel | WorkflowRunModel | ExecutionDetails | null,
+        ) => {
           if (this.mode === EditorMode.Run) {
             const execution = data as ExecutionDetails | null;
             this.displayedWorkflow = execution?.workflow_definition ?? null;

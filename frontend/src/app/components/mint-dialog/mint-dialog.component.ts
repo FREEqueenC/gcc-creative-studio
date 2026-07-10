@@ -14,7 +14,10 @@
 
 import {Component, Inject, OnInit} from '@angular/core';
 import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
-import {Web3Service, PrepareMintResponse} from '../../services/web3/web3.service';
+import {
+  Web3Service,
+  PrepareMintResponse,
+} from '../../services/web3/web3.service';
 import {GalleryItem} from '../../common/models/gallery-item.model';
 
 export interface MintDialogData {
@@ -24,10 +27,15 @@ export interface MintDialogData {
 @Component({
   selector: 'app-mint-dialog',
   templateUrl: './mint-dialog.component.html',
-  styleUrls: ['./mint-dialog.component.scss']
+  styleUrls: ['./mint-dialog.component.scss'],
 })
 export class MintDialogComponent implements OnInit {
-  public step: 'select-chain' | 'connect-wallet' | 'confirm-mint' | 'minting' | 'success' = 'select-chain';
+  public step:
+    | 'select-chain'
+    | 'connect-wallet'
+    | 'confirm-mint'
+    | 'minting'
+    | 'success' = 'select-chain';
   public selectedChain: 'base' | 'flow' | null = null;
   public walletAddress: string | null = null;
   public prepData: PrepareMintResponse | null = null;
@@ -37,7 +45,7 @@ export class MintDialogComponent implements OnInit {
   constructor(
     public dialogRef: MatDialogRef<MintDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: MintDialogData,
-    private web3Service: Web3Service
+    private web3Service: Web3Service,
   ) {}
 
   ngOnInit() {
@@ -74,8 +82,8 @@ export class MintDialogComponent implements OnInit {
       this.step = 'minting'; // loading state
       this.errorMessage = null;
       this.prepData = await this.web3Service.prepareMint(
-        this.data.mediaItem.id, 
-        this.selectedChain
+        this.data.mediaItem.id,
+        this.selectedChain,
       );
       this.step = 'confirm-mint';
     } catch (err: any) {
@@ -85,14 +93,15 @@ export class MintDialogComponent implements OnInit {
   }
 
   async confirmMint() {
-    if (!this.selectedChain || !this.prepData || !this.data.mediaItem.id) return;
+    if (!this.selectedChain || !this.prepData || !this.data.mediaItem.id)
+      return;
     try {
       this.step = 'minting';
       this.errorMessage = null;
       this.txHash = await this.web3Service.executeMint(
         this.data.mediaItem.id,
         this.selectedChain,
-        this.prepData
+        this.prepData,
       );
       this.step = 'success';
     } catch (err: any) {

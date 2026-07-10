@@ -14,7 +14,13 @@
  * limitations under the License.
  */
 
-import {Component, OnInit, ViewChild, ElementRef, AfterViewChecked} from '@angular/core';
+import {
+  Component,
+  OnInit,
+  ViewChild,
+  ElementRef,
+  AfterViewChecked,
+} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
 import {environment} from '../../environments/environment';
 import {MatSnackBar} from '@angular/material/snack-bar';
@@ -28,7 +34,7 @@ interface ChatMessage {
 @Component({
   selector: 'app-docs',
   templateUrl: './docs.component.html',
-  styleUrls: ['./docs.component.scss']
+  styleUrls: ['./docs.component.scss'],
 })
 export class DocsComponent implements OnInit, AfterViewChecked {
   @ViewChild('chatScrollContainer') private chatScrollContainer!: ElementRef;
@@ -37,7 +43,7 @@ export class DocsComponent implements OnInit, AfterViewChecked {
     {id: 'overview', title: 'Studio Overview', icon: 'explore'},
     {id: 'setup', title: 'Local Setup', icon: 'settings'},
     {id: 'web3', title: 'Web3 & NFTs', icon: 'account_balance_wallet'},
-    {id: 'agents', title: 'Edge Agent APIs', icon: 'smart_toy'}
+    {id: 'agents', title: 'Edge Agent APIs', icon: 'smart_toy'},
   ];
 
   selectedCategoryId = 'overview';
@@ -45,13 +51,17 @@ export class DocsComponent implements OnInit, AfterViewChecked {
   userInput = '';
   isChatLoading = false;
 
-  constructor(private http: HttpClient, private snackBar: MatSnackBar) {}
+  constructor(
+    private http: HttpClient,
+    private snackBar: MatSnackBar,
+  ) {}
 
   ngOnInit(): void {
     // Initial welcome message from the agent
     this.chatMessages.push({
       role: 'model',
-      content: 'Hello! I am the Aetheris X AI Developer Support Agent. Ask me anything about the local setup, API routes, or Web3 integration!'
+      content:
+        'Hello! I am the Aetheris X AI Developer Support Agent. Ask me anything about the local setup, API routes, or Web3 integration!',
     });
   }
 
@@ -75,28 +85,34 @@ export class DocsComponent implements OnInit, AfterViewChecked {
 
     const payload = {
       message: userMsg,
-      history: this.chatMessages.slice(0, -1) // Exclude the message we just added
+      history: this.chatMessages.slice(0, -1), // Exclude the message we just added
     };
 
-    this.http.post<{response: string}>(`${environment.backendURL}/gemini/docs-chat`, payload).subscribe({
-      next: (res) => {
-        this.isChatLoading = false;
-        this.chatMessages.push({role: 'model', content: res.response});
-      },
-      error: (err) => {
-        this.isChatLoading = false;
-        handleErrorSnackbar(this.snackBar, err, 'AI Docs Agent');
-        this.chatMessages.push({
-          role: 'model',
-          content: 'Sorry, I encountered an error communicating with the agent server. Please try again.'
-        });
-      }
-    });
+    this.http
+      .post<{
+        response: string;
+      }>(`${environment.backendURL}/gemini/docs-chat`, payload)
+      .subscribe({
+        next: res => {
+          this.isChatLoading = false;
+          this.chatMessages.push({role: 'model', content: res.response});
+        },
+        error: err => {
+          this.isChatLoading = false;
+          handleErrorSnackbar(this.snackBar, err, 'AI Docs Agent');
+          this.chatMessages.push({
+            role: 'model',
+            content:
+              'Sorry, I encountered an error communicating with the agent server. Please try again.',
+          });
+        },
+      });
   }
 
   private scrollToBottom(): void {
     try {
-      this.chatScrollContainer.nativeElement.scrollTop = this.chatScrollContainer.nativeElement.scrollHeight;
+      this.chatScrollContainer.nativeElement.scrollTop =
+        this.chatScrollContainer.nativeElement.scrollHeight;
     } catch (err) {}
   }
 }

@@ -183,8 +183,8 @@ export class MediaDetailComponent implements OnDestroy {
   openMintDialog(): void {
     if (!this.mediaItem) return;
     this.dialog.open(MintDialogComponent, {
-      data: { mediaItem: this.mediaItem },
-      panelClass: 'glass-dialog-panel'
+      data: {mediaItem: this.mediaItem},
+      panelClass: 'glass-dialog-panel',
     });
   }
 

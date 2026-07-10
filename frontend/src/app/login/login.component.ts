@@ -26,8 +26,8 @@ import {isPlatformBrowser} from '@angular/common';
 
 const HOME_ROUTE = '/';
 
-declare var google: any;
-declare var grecaptcha: any;
+declare let google: any;
+declare let grecaptcha: any;
 
 interface LooseObject {
   [key: string]: any;
@@ -69,28 +69,30 @@ export class LoginComponent {
       });
       google.accounts.id.renderButton(
         document.getElementById('google-signin-button'),
-        { theme: 'outline', size: 'large', width: '300' }
+        {theme: 'outline', size: 'large', width: '300'},
       );
       google.accounts.id.renderButton(
         document.getElementById('google-signin-button-desktop'),
-        { theme: 'outline', size: 'large', width: '300' }
+        {theme: 'outline', size: 'large', width: '300'},
       );
     }
   }
 
   handleCredentialResponse(response: any) {
     this.loader = true;
-    this.authService.handleGoogleCredentialResponse(response.credential).subscribe({
-      next: () => {
-        this.ngZone.run(() => {
-          this.loader = false;
-          this.router.navigate([HOME_ROUTE]);
-        });
-      },
-      error: (error: any) => {
-        this.handleLoginError(error);
-      }
-    });
+    this.authService
+      .handleGoogleCredentialResponse(response.credential)
+      .subscribe({
+        next: () => {
+          this.ngZone.run(() => {
+            this.loader = false;
+            this.router.navigate([HOME_ROUTE]);
+          });
+        },
+        error: (error: any) => {
+          this.handleLoginError(error);
+        },
+      });
   }
 
   private handleLoginError(error: any, postErrorAction?: () => void) {

@@ -86,10 +86,13 @@ export class AuthService {
               next: () => {
                 void this.settingsService.loadSettings();
               },
-              error: (err) => {
-                console.error('Failed to sync user with backend on token change:', err);
+              error: err => {
+                console.error(
+                  'Failed to sync user with backend on token change:',
+                  err,
+                );
                 this.clearSessionData();
-              }
+              },
             });
           } catch (error) {
             console.error('Error handling Firebase ID token change:', error);

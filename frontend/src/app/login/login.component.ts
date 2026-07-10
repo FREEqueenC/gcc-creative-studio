@@ -86,7 +86,7 @@ export class LoginComponent {
         next: () => {
           this.ngZone.run(() => {
             this.loader = false;
-            this.router.navigate([HOME_ROUTE]);
+            void this.router.navigate([HOME_ROUTE]);
           });
         },
         error: (error: any) => {

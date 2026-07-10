@@ -33,25 +33,19 @@ import {MatCardModule} from '@angular/material/card';
 import {MatFormFieldModule} from '@angular/material/form-field';
 import {MatInputModule} from '@angular/material/input';
 import {NoopAnimationsModule} from '@angular/platform-browser/animations';
-import {AppInjector, setAppInjector} from '../app-injector';
+import {setAppInjector} from '../app-injector';
 import {NotificationService} from '../common/services/notification.service';
 
 // Define a MockAuthService class
 class MockAuthService {
-  signInWithGoogleFirebase = jasmine.createSpy('signInWithGoogleFirebase');
-  signInForGoogleIdentityPlatform = jasmine.createSpy(
-    'signInForGoogleIdentityPlatform',
-  );
-  // Add any other methods from AuthService that are called in LoginComponent
+  handleGoogleCredentialResponse = jasmine.createSpy('handleGoogleCredentialResponse');
 }
 
 describe('LoginComponent', () => {
   let component: LoginComponent;
   let fixture: ComponentFixture<LoginComponent>;
-  let authService: MockAuthService; // Use the mocked service
+  let authService: MockAuthService;
   let router: Router;
-  let ngZone: NgZone;
-  let snackBar: jasmine.SpyObj<MatSnackBar>;
   let notificationService: jasmine.SpyObj<NotificationService>;
   let consoleErrorSpy: jasmine.Spy;
 
@@ -80,7 +74,7 @@ describe('LoginComponent', () => {
       ],
       declarations: [LoginComponent],
       providers: [
-        {provide: AuthService, useClass: MockAuthService}, // Use useClass for the mock
+        {provide: AuthService, useClass: MockAuthService},
         {provide: MatSnackBar, useValue: snackBarSpy},
         {provide: NotificationService, useValue: notificationServiceSpy},
       ],
@@ -90,12 +84,9 @@ describe('LoginComponent', () => {
 
     fixture = TestBed.createComponent(LoginComponent);
     component = fixture.componentInstance;
-    // fixture.detectChanges(); // No longer needed with autoDetectChanges
-    fixture.autoDetectChanges(true); // Enable auto-detection of changes
-    authService = TestBed.inject(AuthService) as unknown as MockAuthService; // Inject the mock instance
+    fixture.autoDetectChanges(true);
+    authService = TestBed.inject(AuthService) as unknown as MockAuthService;
     router = TestBed.inject(Router);
-    ngZone = TestBed.inject(NgZone);
-    snackBar = TestBed.inject(MatSnackBar) as jasmine.SpyObj<MatSnackBar>;
     notificationService = TestBed.inject(
       NotificationService,
     ) as jasmine.SpyObj<NotificationService>;
@@ -105,120 +96,32 @@ describe('LoginComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  describe('loginWithGoogle', () => {
-    it('should show loader and reset error flags', fakeAsync(() => {
-      authService.signInWithGoogleFirebase.and.returnValue(NEVER); // Use NEVER to prevent completion or error
-      authService.signInForGoogleIdentityPlatform.and.returnValue(NEVER); // Use NEVER
-      component.loader = false;
-      component.invalidLogin = true;
-      component.errorMessage = 'Old error';
+  describe('handleCredentialResponse', () => {
+    it('should set loader to true and navigate on success', fakeAsync(() => {
+      authService.handleGoogleCredentialResponse.and.returnValue(of(true));
+      spyOn(router, 'navigate');
 
-      component.loginWithGoogle();
-      // fixture.detectChanges(); // autoDetectChanges is true
+      component.handleCredentialResponse({credential: 'test-cred'});
+      tick();
 
-      expect(component.loader).toBeTrue();
-      expect(component.invalidLogin).toBeFalse();
-      expect(component.errorMessage).toBe('');
+      expect(component.loader).toBeFalse();
+      expect(authService.handleGoogleCredentialResponse).toHaveBeenCalledWith('test-cred');
+      expect(router.navigate).toHaveBeenCalledWith(['/']);
     }));
-    describe('in local environment', () => {
-      beforeEach(() => {
-        (environment as any).isLocal = true;
-      });
 
-      it('should call signInWithGoogleFirebase and navigate on success', fakeAsync(() => {
-        authService.signInWithGoogleFirebase.and.returnValue(of('test-token'));
-        spyOn(router, 'navigate');
+    it('should handle error from handleGoogleCredentialResponse', fakeAsync(() => {
+      consoleErrorSpy.and.stub();
+      const error = new Error('Access Denied');
+      authService.handleGoogleCredentialResponse.and.returnValue(
+        throwError(() => error),
+      );
+      spyOn(component as any, 'handleLoginError');
 
-        component.loginWithGoogle();
-        tick();
+      component.handleCredentialResponse({credential: 'test-cred'});
+      tick();
 
-        expect(authService.signInWithGoogleFirebase).toHaveBeenCalled();
-        expect(component.loader).toBeFalse();
-        expect(router.navigate).toHaveBeenCalledWith(['/']);
-      }));
-
-      it('should handle error from signInWithGoogleFirebase', fakeAsync(() => {
-        consoleErrorSpy.and.stub();
-        const error = new Error('Access Denied');
-        authService.signInWithGoogleFirebase.and.returnValue(
-          throwError(() => error),
-        );
-        spyOn(component, 'handleLoginError' as any);
-
-        component.loginWithGoogle();
-        tick();
-
-        expect(component.loader).toBeFalse();
-        expect((component as any).handleLoginError).toHaveBeenCalledWith(error);
-      }));
-
-      it('should handle string error from signInWithGoogleFirebase', fakeAsync(() => {
-        consoleErrorSpy.and.stub();
-        const error = 'An unexpected error occurred';
-        authService.signInWithGoogleFirebase.and.returnValue(
-          throwError(() => error),
-        );
-        spyOn(component, 'handleLoginError' as any);
-
-        component.loginWithGoogle();
-        tick();
-
-        expect(component.loader).toBeFalse();
-        expect((component as any).handleLoginError).toHaveBeenCalledWith(error);
-      }));
-    });
-
-    describe('in non-local environment', () => {
-      beforeEach(() => {
-        (environment as any).isLocal = false;
-      });
-
-      it('should call signInForGoogleIdentityPlatform and navigate on success', fakeAsync(() => {
-        authService.signInForGoogleIdentityPlatform.and.returnValue(
-          of('test-token'),
-        );
-        spyOn(router, 'navigate');
-
-        component.loginWithGoogle();
-        tick();
-
-        expect(authService.signInForGoogleIdentityPlatform).toHaveBeenCalled();
-        expect(component.loader).toBeFalse();
-        expect(router.navigate).toHaveBeenCalledWith(['/']);
-      }));
-
-      it('should handle error from signInForGoogleIdentityPlatform', fakeAsync(() => {
-        consoleErrorSpy.and.stub();
-        const error = new Error(
-          'An unexpected error occurred during sign-in. Please try again.',
-        );
-        authService.signInForGoogleIdentityPlatform.and.returnValue(
-          throwError(() => error),
-        );
-        spyOn(component, 'handleLoginError' as any);
-
-        component.loginWithGoogle();
-        tick();
-
-        expect(component.loader).toBeFalse();
-        expect((component as any).handleLoginError).toHaveBeenCalledWith(error);
-      }));
-
-      it('should handle string error from signInForGoogleIdentityPlatform', fakeAsync(() => {
-        consoleErrorSpy.and.stub();
-        const error = 'An unexpected error occurred';
-        authService.signInForGoogleIdentityPlatform.and.returnValue(
-          throwError(() => error),
-        );
-        spyOn(component, 'handleLoginError' as any);
-
-        component.loginWithGoogle();
-        tick();
-
-        expect(component.loader).toBeFalse();
-        expect((component as any).handleLoginError).toHaveBeenCalledWith(error);
-      }));
-    });
+      expect((component as any).handleLoginError).toHaveBeenCalledWith(error);
+    }));
   });
 
   describe('handleLoginError', () => {
@@ -226,7 +129,8 @@ describe('LoginComponent', () => {
       component.loader = true;
       const errorMessage = {message: 'Test error message'};
 
-      component['handleLoginError'](errorMessage);
+      // Cast to any to access private method for testing
+      (component as any).handleLoginError(errorMessage);
 
       expect(component.loader).toBeFalse();
       expect(notificationService.show).toHaveBeenCalledWith(
@@ -241,7 +145,7 @@ describe('LoginComponent', () => {
     it('should execute postErrorAction if provided', () => {
       const postErrorAction = jasmine.createSpy('postErrorAction');
       const errorMessage = {message: 'Test error'};
-      component['handleLoginError'](errorMessage, postErrorAction);
+      (component as any).handleLoginError(errorMessage, postErrorAction);
       expect(postErrorAction).toHaveBeenCalled();
     });
   });

@@ -16,12 +16,12 @@
 
 export const environment = {
   firebase: {
-    apiKey: 'FIREBASE_API_KEY_PLACEHOLDER',
-    authDomain: 'FIREBASE_AUTH_DOMAIN_PLACEHOLDER',
-    projectId: 'FIREBASE_PROJECT_ID_PLACEHOLDER',
-    storageBucket: 'FIREBASE_STORAGE_BUCKET_PLACEHOLDER',
-    messagingSenderId: 'FIREBASE_SENDER_ID_PLACEHOLDER',
-    appId: 'FIREBASE_APP_ID_PLACEHOLDER',
+    apiKey: 'AIzaSyAFXyJn3gzt99HDACrBJavMnQ2hzxzOYSc',
+    authDomain: 'gentle-scene-485705-n4.firebaseapp.com',
+    projectId: 'gentle-scene-485705-n4',
+    storageBucket: 'gentle-scene-485705-n4.firebasestorage.app',
+    messagingSenderId: '766520697417',
+    appId: '1:766520697417:web:b2ca7bf0bf195efff91598',
   },
   production: true,
   isLocal: false,
@@ -29,5 +29,5 @@ export const environment = {
   EMAIL_REGEX:
     /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
   ADMIN: 'admin',
-  GOOGLE_CLIENT_ID: 'GOOGLE_CLIENT_ID_PLACEHOLDER',
+  GOOGLE_CLIENT_ID: '766520697417-1nj27fsrs98f9rtjpmq20gn856jpmq0v.apps.googleusercontent.com',
 };

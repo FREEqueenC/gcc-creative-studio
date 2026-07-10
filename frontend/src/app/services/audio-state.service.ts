@@ -43,6 +43,9 @@ export class AudioStateService {
   };
 
   getState(): AudioState {
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+      return this.defaultState;
+    }
     const saved = localStorage.getItem(this.STORAGE_KEY);
     if (saved) {
       try {
@@ -59,10 +62,14 @@ export class AudioStateService {
   updateState(partialState: Partial<AudioState>) {
     const currentState = this.getState();
     const newState = {...currentState, ...partialState};
-    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(newState));
+    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(newState));
+    }
   }
 
   clearState() {
-    localStorage.removeItem(this.STORAGE_KEY);
+    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+      localStorage.removeItem(this.STORAGE_KEY);
+    }
   }
 }

@@ -16,11 +16,14 @@
 
 <div class="dialog-container p-6 bg-neutral-900 text-white rounded-lg max-w-md">
   <h2 mat-dialog-title class="text-xl font-bold mb-4">Assign Tags</h2>
-  
+
   <div mat-dialog-content class="space-y-4">
     <!-- My Tags Filter -->
     <div class="flex items-center mb-2 text-white">
-      <mat-checkbox [checked]="onlyMyTags" (change)="toggleOnlyMyTags($event.checked)">
+      <mat-checkbox
+        [checked]="onlyMyTags"
+        (change)="toggleOnlyMyTags($event.checked)"
+      >
         Show only My tags
       </mat-checkbox>
     </div>
@@ -28,7 +31,10 @@
     <!-- Existing and Available Tags -->
     <div class="tags-list max-h-48 overflow-y-auto space-y-2">
       <div *ngFor="let tag of displayedTags" class="flex items-center gap-2">
-        <mat-checkbox [checked]="isSelected(tag.name)" (change)="toggleTag(tag.name)">
+        <mat-checkbox
+          [checked]="isSelected(tag.name)"
+          (change)="toggleTag(tag.name)"
+        >
           {{ tag.name }}
         </mat-checkbox>
       </div>
@@ -43,7 +49,10 @@
     </div>
 
     <!-- Load More Button -->
-    <div *ngIf="availableTags.length < totalTags" class="flex justify-center mt-2">
+    <div
+      *ngIf="availableTags.length < totalTags"
+      class="flex justify-center mt-2"
+    >
       <studio-button variant="primary" size="small" (click)="loadMore()">
         Load More
       </studio-button>
@@ -53,9 +62,19 @@
     <div class="flex gap-2 items-center mt-4">
       <mat-form-field class="flex-grow">
         <mat-label>New Tag</mat-label>
-        <input matInput [(ngModel)]="newTagName" placeholder="Enter tag name" (keyup.enter)="addTag()" />
+        <input
+          matInput
+          [(ngModel)]="newTagName"
+          placeholder="Enter tag name"
+          (keyup.enter)="addTag()"
+        />
       </mat-form-field>
-      <studio-button variant="primary" size="small" (click)="addTag()" [disabled]="!newTagName.trim()">
+      <studio-button
+        variant="primary"
+        size="small"
+        (click)="addTag()"
+        [disabled]="!newTagName.trim()"
+      >
         Add
       </studio-button>
     </div>

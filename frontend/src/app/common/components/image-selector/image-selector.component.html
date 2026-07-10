@@ -17,11 +17,7 @@
 <div class="image-selector-container">
   <div class="selector-header">
     <h2 class="selector-title">Select Media</h2>
-    <mat-slide-toggle
-      [(ngModel)]="shouldCrop"
-      class="mr-4"
-      color="primary"
-    >
+    <mat-slide-toggle [(ngModel)]="shouldCrop" class="mr-4" color="primary">
       <span class="text-sm text-neutral-300">Crop before upload</span>
     </mat-slide-toggle>
     <studio-button
@@ -49,12 +45,13 @@
     />
   </div>
 
-  <div class="gallery-wrapper" 
-       (dragover)="onDragOver($event)"
-       (dragleave)="onDragLeave($event)"
-       (drop)="!isUploading && onDrop($event)"
-       [class.dragging]="isDragging">
-    
+  <div
+    class="gallery-wrapper"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave($event)"
+    (drop)="!isUploading && onDrop($event)"
+    [class.dragging]="isDragging"
+  >
     <div *ngIf="isDragging" class="drop-overlay">
       <div class="drop-message">
         <mat-icon>cloud_upload</mat-icon>
@@ -96,17 +93,19 @@
   <div class="selector-footer" *ngIf="data.multiSelect || data.showFooter">
     <div class="selection-info">
       <ng-container *ngIf="selectedMediaItems.size > 0 || data.maxSelection">
-        {{ selectedMediaItems.size }} 
+        {{ selectedMediaItems.size }}
         <span *ngIf="data.maxSelection">/ {{ data.maxSelection }}</span>
-        item{{ (data.maxSelection === 1 || (!data.maxSelection && selectedMediaItems.size === 1)) ? '' : 's' }} selected
+        item{{
+          data.maxSelection === 1 ||
+          (!data.maxSelection && selectedMediaItems.size === 1)
+            ? ''
+            : 's'
+        }}
+        selected
       </ng-container>
     </div>
     <div class="flex-grow"></div>
-    <studio-button
-      variant="primary"
-      size="medium"
-      (click)="dialogRef.close()"
-    >
+    <studio-button variant="primary" size="medium" (click)="dialogRef.close()">
       Cancel
     </studio-button>
     <studio-button
@@ -115,7 +114,10 @@
       (click)="closeWithSelection()"
       [disabled]="selectedMediaItems.size === 0"
     >
-      Select {{ selectedMediaItems.size > 0 ? '(' + selectedMediaItems.size + ')' : '' }}
+      Select
+      {{
+        selectedMediaItems.size > 0 ? '(' + selectedMediaItems.size + ')' : ''
+      }}
     </studio-button>
   </div>
 </div>

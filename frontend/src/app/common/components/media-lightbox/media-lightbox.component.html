@@ -15,25 +15,24 @@
 -->
 
 <div *ngIf="mediaItem" class="media-lightbox-container">
-
   <div
     class="main-media-container"
     [ngClass]="[
       aspectRatioClass,
-      (!isVideo && !isAudio) ? 'zoomable' : '',
-      isAudio ? '!bg-transparent !shadow-none !h-full flex-col' : ''
+      !isVideo && !isAudio ? 'zoomable' : '',
+      isAudio ? '!bg-transparent !shadow-none !h-full flex-col' : '',
     ]"
-    (click)="(!isVideo && !isAudio) && openPhotoSwipe(selectedIndex)"
+    (click)="!isVideo && !isAudio && openPhotoSwipe(selectedIndex)"
   >
     <!-- Audio Stage Visuals -->
     <div *ngIf="isAudio" class="audio-stage-layout">
-        <div class="audio-icon-container">
-            <mat-icon class="stage-icon">music_note</mat-icon>
-        </div>
-        <div class="audio-metadata">
-            <h2 class="audio-prompt">{{ mediaItem.prompt || 'Untitled Audio' }}</h2>
-            <p class="audio-type">{{ mediaItem.mimeType }}</p>
-        </div>
+      <div class="audio-icon-container">
+        <mat-icon class="stage-icon">music_note</mat-icon>
+      </div>
+      <div class="audio-metadata">
+        <h2 class="audio-prompt">{{ mediaItem.prompt || 'Untitled Audio' }}</h2>
+        <p class="audio-type">{{ mediaItem.mimeType }}</p>
+      </div>
     </div>
     <ng-container *ngIf="!isVideo && !isAudio && selectedUrl">
       <img
@@ -47,7 +46,11 @@
     </ng-container>
 
     <ng-container *ngIf="isVideo && selectedUrl">
-      <div class="video-wrapper" (click)="toggleVideoPlay()" style="width: 100%; height: 100%;">
+      <div
+        class="video-wrapper"
+        (click)="toggleVideoPlay()"
+        style="width: 100%; height: 100%"
+      >
         <video
           #videoPlayer
           [src]="selectedUrl"
@@ -60,29 +63,34 @@
     </ng-container>
 
     <ng-container *ngIf="isAudio && selectedUrl">
-        <div class="custom-audio-player glass-effect">
-            <audio #audioPlayer
-                   [src]="selectedUrl"
-                   (timeupdate)="onTimeUpdate()"
-                   (loadedmetadata)="onAudioLoaded()"
-                   (ended)="onAudioEnded()"
-                   hidden>
-            </audio>
+      <div class="custom-audio-player glass-effect">
+        <audio
+          #audioPlayer
+          [src]="selectedUrl"
+          (timeupdate)="onTimeUpdate()"
+          (loadedmetadata)="onAudioLoaded()"
+          (ended)="onAudioEnded()"
+          hidden
+        ></audio>
 
-            <button mat-icon-button class="play-btn" (click)="togglePlay()">
-                <mat-icon class="!w-10 !h-10 !text-[40px] leading-[40px]">
-                    {{ isPlaying ? 'pause_circle' : 'play_circle' }}
-                </mat-icon>
-            </button>
+        <button mat-icon-button class="play-btn" (click)="togglePlay()">
+          <mat-icon class="!w-10 !h-10 !text-[40px] leading-[40px]">
+            {{ isPlaying ? 'pause_circle' : 'play_circle' }}
+          </mat-icon>
+        </button>
 
-            <span class="time-text">{{ currentTime }}</span>
+        <span class="time-text">{{ currentTime }}</span>
 
-            <mat-slider class="custom-slider" min="0" max="100" step="0.1">
-                <input matSliderThumb [value]="progressValue" (valueChange)="seek($event)">
-            </mat-slider>
+        <mat-slider class="custom-slider" min="0" max="100" step="0.1">
+          <input
+            matSliderThumb
+            [value]="progressValue"
+            (valueChange)="seek($event)"
+          />
+        </mat-slider>
 
-            <span class="time-text">{{ duration }}</span>
-        </div>
+        <span class="time-text">{{ duration }}</span>
+      </div>
     </ng-container>
   </div>
 
@@ -109,15 +117,14 @@
         <img *ngIf="!isAudio" [src]="url" [alt]="'Thumbnail ' + (i + 1)" />
 
         <div *ngIf="isAudio" class="audio-icon-wrapper">
-            <mat-icon>graphic_eq</mat-icon>
-            <span class="track-num">{{ i + 1 }}</span>
+          <mat-icon>graphic_eq</mat-icon>
+          <span class="track-num">{{ i + 1 }}</span>
         </div>
       </div>
     </div>
 
     <!-- Actions Toolbar on the right -->
     <div class="media-actions-toolbar" *ngIf="mediaItem">
-
       <studio-button
         *ngIf="showEditButton"
         variant="primary"
@@ -214,7 +221,7 @@
       >
         <mat-icon>delete</mat-icon>
       </studio-button>
-      
+
       <studio-button
         *ngIf="isVideo && showOmni"
         variant="primary"
@@ -236,7 +243,7 @@
         <mat-icon>auto_awesome</mat-icon>
         Extend
       </studio-button>
-      
+
       <studio-button
         *ngIf="isVideo"
         variant="primary"
@@ -248,7 +255,6 @@
         Concatenate
       </studio-button>
     </div>
-
   </div>
 </div>
 
@@ -266,7 +272,7 @@
       </button>
     </div>
     <ul class="share-menu-list">
-       <li>
+      <li>
         <button (click)="copyLink()">
           <mat-icon>link</mat-icon>
           <span>Copy Link</span>
@@ -292,7 +298,7 @@
       </li>
       <li>
         <button (click)="shareTo('facebook')" class="share-facebook">
-           <svg
+          <svg
             xmlns="http://www.w3.org/2000/svg"
             width="16"
             height="16"

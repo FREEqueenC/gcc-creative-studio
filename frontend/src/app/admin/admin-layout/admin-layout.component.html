@@ -24,7 +24,12 @@
     class="admin-sidenav"
   >
     <mat-nav-list>
-      <a mat-list-item routerLink="dashboard" routerLinkActive="active-link" [routerLinkActiveOptions]="{exact: true}">
+      <a
+        mat-list-item
+        routerLink="dashboard"
+        routerLinkActive="active-link"
+        [routerLinkActiveOptions]="{exact: true}"
+      >
         <mat-icon matListItemIcon>dashboard</mat-icon>
         <span matListItemTitle>Dashboard</span>
       </a>
@@ -56,11 +61,7 @@
         <mat-icon matListItemIcon>photo_library</mat-icon>
         <span matListItemTitle>Media Gallery</span>
       </a>
-      <a
-        mat-list-item
-        routerLink="tags"
-        routerLinkActive="active-link"
-      >
+      <a mat-list-item routerLink="tags" routerLinkActive="active-link">
         <mat-icon matListItemIcon>label</mat-icon>
         <span matListItemTitle>Tags</span>
       </a>

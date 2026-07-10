@@ -15,11 +15,12 @@
 -->
 <!-- Container to manage relative positioning of menus -->
 <div class="relative w-full max-w-2xl">
-
   <!-- ============================================= -->
   <!-- 1. Main Prompt Card                         -->
   <!-- ============================================= -->
-  <div class="relative z-10 w-full rounded-3xl bg-neutral-900 p-5 text-neutral-300 shadow-2xl">
+  <div
+    class="relative z-10 w-full rounded-3xl bg-neutral-900 p-5 text-neutral-300 shadow-2xl"
+  >
     <div class="flex items-center justify-between">
       <!-- Top Left: Mode Selector -->
       <button
@@ -45,11 +46,22 @@
         >
           <!-- Model Icon -->
           <ng-container *ngIf="getSelectedModelObject() as model">
-            <img *ngIf="model.isImage && model.imageSrc" [src]="model.imageSrc" class="w-4 h-4 object-contain" alt="model icon">
-            <mat-icon *ngIf="!model.isImage && !model.isSvg" class="!text-sm !h-4 !w-4 !flex !items-center !justify-center">{{
-              model.icon || 'auto_awesome' }}</mat-icon>
-            <mat-icon *ngIf="!model.isImage && model.isSvg && model.icon" [svgIcon]="model.icon || ''"
-              class="!text-sm !h-4 !w-4 !flex !items-center !justify-center"></mat-icon>
+            <img
+              *ngIf="model.isImage && model.imageSrc"
+              [src]="model.imageSrc"
+              class="w-4 h-4 object-contain"
+              alt="model icon"
+            />
+            <mat-icon
+              *ngIf="!model.isImage && !model.isSvg"
+              class="!text-sm !h-4 !w-4 !flex !items-center !justify-center"
+              >{{ model.icon || 'auto_awesome' }}</mat-icon
+            >
+            <mat-icon
+              *ngIf="!model.isImage && model.isSvg && model.icon"
+              [svgIcon]="model.icon || ''"
+              class="!text-sm !h-4 !w-4 !flex !items-center !justify-center"
+            ></mat-icon>
           </ng-container>
           <span>{{ selectedGenerationModel }}</span>
         </div>
@@ -57,8 +69,12 @@
           (click)="toggleSettingsMenu(); $event.stopPropagation()"
           class="flex items-center gap-1.5 rounded-md bg-neutral-800 px-2 py-1 cursor-pointer hover:bg-neutral-700"
         >
-          <mat-icon class="!text-sm !h-4 !w-4 !flex !items-center !justify-center">
-            {{ aspectRatio.includes('16:9') ? 'crop_landscape' : 'crop_portrait' }}
+          <mat-icon
+            class="!text-sm !h-4 !w-4 !flex !items-center !justify-center"
+          >
+            {{
+              aspectRatio.includes('16:9') ? 'crop_landscape' : 'crop_portrait'
+            }}
           </mat-icon>
           x{{ outputs }}
         </div>
@@ -79,7 +95,13 @@
         [ngModel]="prompt"
         [disabled]="mode === 'Concatenate Video'"
         class="w-full h-24 bg-transparent text-xl text-neutral-400 placeholder:text-neutral-600 focus:outline-none resize-none disabled:opacity-50 disabled:cursor-not-allowed"
-        [placeholder]="mode === 'Concatenate Video' ? 'Prompt not needed for concatenation' : (mode.includes('Image') ? 'Generate an image with text...' : 'Generate a video with text...')"
+        [placeholder]="
+          mode === 'Concatenate Video'
+            ? 'Prompt not needed for concatenation'
+            : mode.includes('Image')
+              ? 'Generate an image with text...'
+              : 'Generate a video with text...'
+        "
       ></textarea>
     </div>
 
@@ -88,7 +110,13 @@
       <!-- Left: Drag-and-drop areas -->
       <div class="flex flex-wrap items-center gap-3">
         <!-- Frames to Video / Concatenate / Extend Inputs -->
-        <ng-container *ngIf="mode === 'Frames to Video' || mode === 'Concatenate Video' || mode === 'Extend Video'">
+        <ng-container
+          *ngIf="
+            mode === 'Frames to Video' ||
+            mode === 'Concatenate Video' ||
+            mode === 'Extend Video'
+          "
+        >
           <!-- Slot 1: Always shown for these modes -->
           <div
             class="relative h-20 w-20 cursor-pointer rounded-xl border-2 border-dashed border-neutral-700 bg-neutral-800 transition-colors hover:border-neutral-500 hover:bg-neutral-700 flex items-center justify-center"
@@ -100,9 +128,15 @@
               <mat-icon class="text-neutral-500">add</mat-icon>
             </ng-container>
             <ng-container *ngIf="image1Preview">
-              <img [src]="image1Preview" class="h-full w-full rounded-lg object-cover" />
+              <img
+                [src]="image1Preview"
+                class="h-full w-full rounded-lg object-cover"
+              />
               <button
-                (click)="$event.stopPropagation(); clearImage.emit({num: 1, event: $event})"
+                (click)="
+                  $event.stopPropagation();
+                  clearImage.emit({num: 1, event: $event})
+                "
                 class="absolute -right-2 -top-2 rounded-full bg-neutral-900 p-0.5 text-neutral-400 hover:text-white"
               >
                 <mat-icon class="!h-4 !w-4 text-sm">close</mat-icon>
@@ -111,7 +145,9 @@
           </div>
 
           <!-- Arrow: Shown only if we have a second slot -->
-          <mat-icon *ngIf="mode !== 'Extend Video'" class="text-neutral-500">compare_arrows</mat-icon>
+          <mat-icon *ngIf="mode !== 'Extend Video'" class="text-neutral-500"
+            >compare_arrows</mat-icon
+          >
 
           <!-- Slot 2: Shown for Frames to Video and Concatenate Video -->
           <div
@@ -125,9 +161,15 @@
               <mat-icon class="text-neutral-500">add</mat-icon>
             </ng-container>
             <ng-container *ngIf="image2Preview">
-              <img [src]="image2Preview" class="h-full w-full rounded-lg object-cover" />
+              <img
+                [src]="image2Preview"
+                class="h-full w-full rounded-lg object-cover"
+              />
               <button
-                (click)="$event.stopPropagation(); clearImage.emit({num: 2, event: $event})"
+                (click)="
+                  $event.stopPropagation();
+                  clearImage.emit({num: 2, event: $event})
+                "
                 class="absolute -right-2 -top-2 rounded-full bg-neutral-900 p-0.5 text-neutral-400 hover:text-white"
               >
                 <mat-icon class="!h-4 !w-4 text-sm">close</mat-icon>
@@ -137,75 +179,146 @@
         </ng-container>
 
         <!-- Unified Ingredients Mode Inputs -->
-        <ng-container *ngIf="mode === 'Ingredients to Video' || mode === 'Ingredients to Image'">
+        <ng-container
+          *ngIf="
+            mode === 'Ingredients to Video' || mode === 'Ingredients to Image'
+          "
+        >
           <ng-container *ngIf="getSelectedModelObject() as model">
             <div
               class="relative h-20 w-20 cursor-pointer rounded-xl border-2 border-dashed border-neutral-700 bg-neutral-800 transition-colors hover:border-neutral-500 hover:bg-neutral-700 flex items-center justify-center"
-              [class.opacity-50]="referenceImages.length >= model.capabilities.maxReferenceImages"
-              (click)="referenceImages.length < model.capabilities.maxReferenceImages && openImageSelectorForReference.emit()"
+              [class.opacity-50]="
+                referenceImages.length >= model.capabilities.maxReferenceImages
+              "
+              (click)="
+                referenceImages.length <
+                  model.capabilities.maxReferenceImages &&
+                  openImageSelectorForReference.emit()
+              "
               (dragover)="$event.preventDefault()"
-              (drop)="$event.preventDefault(); onReferenceImageDrop.emit($event)"
+              (drop)="
+                $event.preventDefault(); onReferenceImageDrop.emit($event)
+              "
             >
               <mat-icon class="text-neutral-500">add</mat-icon>
-              <span class="absolute bottom-0 text-[10px] text-neutral-500">{{ referenceImages.length }}/{{
-                model.capabilities.maxReferenceImages }}</span>
-              </div>
-              <!-- Show small previews of reference images -->
+              <span class="absolute bottom-0 text-[10px] text-neutral-500"
+                >{{ referenceImages.length }}/{{
+                  model.capabilities.maxReferenceImages
+                }}</span
+              >
+            </div>
+            <!-- Show small previews of reference images -->
             <div class="flex flex-wrap gap-1">
-              <div *ngFor="let ref of referenceImages; let i = index" class="relative h-12 w-12 flex-shrink-0"
-                [class.highlight-new]="ref.isNew">
-                <img [src]="ref.previewUrl" class="h-full w-full rounded-lg object-cover" />
-                <button (click)="$event.stopPropagation(); clearReferenceImage.emit({index: i, event: $event})"
-                  class="absolute -right-1 -top-1 rounded-full bg-neutral-900 p-0.5 text-neutral-400 hover:text-white">
+              <div
+                *ngFor="let ref of referenceImages; let i = index"
+                class="relative h-12 w-12 flex-shrink-0"
+                [class.highlight-new]="ref.isNew"
+              >
+                <img
+                  [src]="ref.previewUrl"
+                  class="h-full w-full rounded-lg object-cover"
+                />
+                <button
+                  (click)="
+                    $event.stopPropagation();
+                    clearReferenceImage.emit({index: i, event: $event})
+                  "
+                  class="absolute -right-1 -top-1 rounded-full bg-neutral-900 p-0.5 text-neutral-400 hover:text-white"
+                >
                   <mat-icon class="!h-3 !w-3 text-xs">close</mat-icon>
                 </button>
-                </div>
-                </div>
-                </ng-container>
-
-            <!-- Video Reference Slot (only for Ingredients to Video mode AND only for Gemini Omni) -->
-            <div *ngIf="mode === 'Ingredients to Video' && getSelectedModelObject()?.value === 'gemini-omni-generate-preview'"
-              class="relative h-20 w-20 cursor-pointer rounded-xl border-2 border-dashed border-neutral-700 bg-neutral-800 transition-colors hover:border-neutral-500 hover:bg-neutral-700 flex flex-col items-center justify-center"
-              (click)="!referenceVideo && openVideoSelectorForReference.emit()"
-            >
-              <ng-container *ngIf="!referenceVideo">
-                <mat-icon class="text-neutral-500">videocam</mat-icon>
-                <span class="absolute bottom-1 text-[8px] text-neutral-500">Video Ref</span>
-              </ng-container>
-              <ng-container *ngIf="referenceVideo">
-                <img *ngIf="referenceVideo.type === 'media_item' || referenceVideo.previewUrl?.includes('.png') || referenceVideo.previewUrl?.includes('.webp') || referenceVideo.previewUrl?.includes('.jpg') || referenceVideo.previewUrl?.includes('.jpeg') || referenceVideo.previewUrl?.includes('presignedThumbnailUrls')" [src]="referenceVideo.previewUrl" class="h-full w-full rounded-lg object-cover" />
-                <video *ngIf="referenceVideo.type !== 'media_item' && !referenceVideo.previewUrl?.includes('.png') && !referenceVideo.previewUrl?.includes('.webp') && !referenceVideo.previewUrl?.includes('.jpg') && !referenceVideo.previewUrl?.includes('.jpeg') && !referenceVideo.previewUrl?.includes('presignedThumbnailUrls')" [src]="referenceVideo.previewUrl" class="h-full w-full rounded-lg object-cover" muted></video>
-                <button
-                  (click)="$event.stopPropagation(); clearReferenceVideo.emit($event)"
-                  class="absolute -right-2 -top-2 rounded-full bg-neutral-900 p-0.5 text-neutral-400 hover:text-white"
-                >
-                  <mat-icon class="!h-4 !w-4 text-sm">close</mat-icon>
-                </button>
-              </ng-container>
+              </div>
             </div>
+          </ng-container>
 
-            <!-- Audio Reference Slot (only for Ingredients to Video mode AND only for Gemini Omni) -->
-            <div *ngIf="mode === 'Ingredients to Video' && getSelectedModelObject()?.value === 'gemini-omni-generate-preview'"
-              class="relative h-20 w-20 cursor-pointer rounded-xl border-2 border-dashed border-neutral-700 bg-neutral-800 transition-colors hover:border-neutral-500 hover:bg-neutral-700 flex flex-col items-center justify-center"
-              (click)="!referenceAudio && openAudioSelectorForReference.emit()"
-            >
-              <ng-container *ngIf="!referenceAudio">
-                <mat-icon class="text-neutral-500">audiotrack</mat-icon>
-                <span class="absolute bottom-1 text-[8px] text-neutral-500">Audio Ref</span>
-              </ng-container>
-              <ng-container *ngIf="referenceAudio">
-                <mat-icon class="text-blue-400 !text-3xl !h-8 !w-8 flex items-center justify-center">music_note</mat-icon>
-                <span class="absolute bottom-1 text-[8px] text-neutral-300 max-w-[64px] truncate">{{ referenceAudio.name || 'Audio' }}</span>
-                <button
-                  (click)="$event.stopPropagation(); clearReferenceAudio.emit($event)"
-                  class="absolute -right-2 -top-2 rounded-full bg-neutral-900 p-0.5 text-neutral-400 hover:text-white"
-                >
-                  <mat-icon class="!h-4 !w-4 text-sm">close</mat-icon>
-                </button>
-              </ng-container>
-            </div>
+          <!-- Video Reference Slot (only for Ingredients to Video mode AND only for Gemini Omni) -->
+          <div
+            *ngIf="
+              mode === 'Ingredients to Video' &&
+              getSelectedModelObject()?.value === 'gemini-omni-generate-preview'
+            "
+            class="relative h-20 w-20 cursor-pointer rounded-xl border-2 border-dashed border-neutral-700 bg-neutral-800 transition-colors hover:border-neutral-500 hover:bg-neutral-700 flex flex-col items-center justify-center"
+            (click)="!referenceVideo && openVideoSelectorForReference.emit()"
+          >
+            <ng-container *ngIf="!referenceVideo">
+              <mat-icon class="text-neutral-500">videocam</mat-icon>
+              <span class="absolute bottom-1 text-[8px] text-neutral-500"
+                >Video Ref</span
+              >
+            </ng-container>
+            <ng-container *ngIf="referenceVideo">
+              <img
+                *ngIf="
+                  referenceVideo.type === 'media_item' ||
+                  referenceVideo.previewUrl?.includes('.png') ||
+                  referenceVideo.previewUrl?.includes('.webp') ||
+                  referenceVideo.previewUrl?.includes('.jpg') ||
+                  referenceVideo.previewUrl?.includes('.jpeg') ||
+                  referenceVideo.previewUrl?.includes('presignedThumbnailUrls')
+                "
+                [src]="referenceVideo.previewUrl"
+                class="h-full w-full rounded-lg object-cover"
+              />
+              <video
+                *ngIf="
+                  referenceVideo.type !== 'media_item' &&
+                  !referenceVideo.previewUrl?.includes('.png') &&
+                  !referenceVideo.previewUrl?.includes('.webp') &&
+                  !referenceVideo.previewUrl?.includes('.jpg') &&
+                  !referenceVideo.previewUrl?.includes('.jpeg') &&
+                  !referenceVideo.previewUrl?.includes('presignedThumbnailUrls')
+                "
+                [src]="referenceVideo.previewUrl"
+                class="h-full w-full rounded-lg object-cover"
+                muted
+              ></video>
+              <button
+                (click)="
+                  $event.stopPropagation(); clearReferenceVideo.emit($event)
+                "
+                class="absolute -right-2 -top-2 rounded-full bg-neutral-900 p-0.5 text-neutral-400 hover:text-white"
+              >
+                <mat-icon class="!h-4 !w-4 text-sm">close</mat-icon>
+              </button>
+            </ng-container>
+          </div>
+
+          <!-- Audio Reference Slot (only for Ingredients to Video mode AND only for Gemini Omni) -->
+          <div
+            *ngIf="
+              mode === 'Ingredients to Video' &&
+              getSelectedModelObject()?.value === 'gemini-omni-generate-preview'
+            "
+            class="relative h-20 w-20 cursor-pointer rounded-xl border-2 border-dashed border-neutral-700 bg-neutral-800 transition-colors hover:border-neutral-500 hover:bg-neutral-700 flex flex-col items-center justify-center"
+            (click)="!referenceAudio && openAudioSelectorForReference.emit()"
+          >
+            <ng-container *ngIf="!referenceAudio">
+              <mat-icon class="text-neutral-500">audiotrack</mat-icon>
+              <span class="absolute bottom-1 text-[8px] text-neutral-500"
+                >Audio Ref</span
+              >
+            </ng-container>
+            <ng-container *ngIf="referenceAudio">
+              <mat-icon
+                class="text-blue-400 !text-3xl !h-8 !w-8 flex items-center justify-center"
+                >music_note</mat-icon
+              >
+              <span
+                class="absolute bottom-1 text-[8px] text-neutral-300 max-w-[64px] truncate"
+                >{{ referenceAudio.name || 'Audio' }}</span
+              >
+              <button
+                (click)="
+                  $event.stopPropagation(); clearReferenceAudio.emit($event)
+                "
+                class="absolute -right-2 -top-2 rounded-full bg-neutral-900 p-0.5 text-neutral-400 hover:text-white"
+              >
+                <mat-icon class="!h-4 !w-4 text-sm">close</mat-icon>
+              </button>
+            </ng-container>
+          </div>
         </ng-container>
-        </div>
+      </div>
 
       <!-- Right: Generate Button -->
       <div class="flex items-center gap-2">
@@ -245,40 +358,44 @@
       class="absolute left-0 bottom-full z-20 mb-2 w-64 rounded-xl bg-neutral-800 p-2 text-white shadow-lg"
     >
       @if (modes.length > 0) {
-      @for (m of modes; track m.value) {
-      <button (click)="selectMode(m.value)"
-        class="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left font-medium transition-colors"
-        [class.bg-neutral-700]="mode === m.value" [class.hover:bg-neutral-700]="mode !== m.value">
-        <mat-icon [fontIcon]="m.icon"></mat-icon>
-        <span>{{ m.label }}</span>
-      </button>
-      }
+        @for (m of modes; track m.value) {
+          <button
+            (click)="selectMode(m.value)"
+            class="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left font-medium transition-colors"
+            [class.bg-neutral-700]="mode === m.value"
+            [class.hover:bg-neutral-700]="mode !== m.value"
+          >
+            <mat-icon [fontIcon]="m.icon"></mat-icon>
+            <span>{{ m.label }}</span>
+          </button>
+        }
       } @else {
-        <button (click)="selectMode('Text to Video')"
+        <button
+          (click)="selectMode('Text to Video')"
           class="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left font-medium transition-colors"
-          [class.bg-neutral-700]="mode === 'Text to Video'" [class.hover:bg-neutral-700]="
-                    mode !== 'Text to Video'
-                  ">
+          [class.bg-neutral-700]="mode === 'Text to Video'"
+          [class.hover:bg-neutral-700]="mode !== 'Text to Video'"
+        >
           <!-- Mode Icon 1 -->
           <mat-icon>text_fields</mat-icon>
           <span>Text to Video</span>
         </button>
-        <button (click)="selectMode('Frames to Video')"
+        <button
+          (click)="selectMode('Frames to Video')"
           class="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left font-medium transition-colors"
-          [class.bg-neutral-700]="mode === 'Frames to Video'" [class.hover:bg-neutral-700]="
-                    mode !== 'Frames to Video'
-                  ">
+          [class.bg-neutral-700]="mode === 'Frames to Video'"
+          [class.hover:bg-neutral-700]="mode !== 'Frames to Video'"
+        >
           <!-- Mode Icon 2 -->
           <mat-icon fontIcon="image"></mat-icon>
           <span>Frames to Video</span>
         </button>
-        <button (click)="selectMode('Ingredients to Video')"
+        <button
+          (click)="selectMode('Ingredients to Video')"
           class="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left font-medium transition-colors"
-          [class.bg-neutral-700]="
-                                                                                                            mode === 'Ingredients to Video'
-                  " [class.hover:bg-neutral-700]="
-                    mode !== 'Ingredients to Video'
-                  ">
+          [class.bg-neutral-700]="mode === 'Ingredients to Video'"
+          [class.hover:bg-neutral-700]="mode !== 'Ingredients to Video'"
+        >
           <!-- Mode Icon 3 -->
           <mat-icon fontIcon="image_search"></mat-icon>
           <span>Ingredients to Video</span>
@@ -315,7 +432,11 @@
             <span class="flex items-center gap-2 min-w-0">
               <!-- Landscape Icon -->
               <mat-icon class="flex-shrink-0">
-                {{ aspectRatio.includes('16:9') ? 'crop_landscape' : 'crop_portrait' }}
+                {{
+                  aspectRatio.includes('16:9')
+                    ? 'crop_landscape'
+                    : 'crop_portrait'
+                }}
               </mat-icon>
               <span class="truncate whitespace-nowrap">{{ aspectRatio }}</span>
             </span>
@@ -331,26 +452,34 @@
               class="absolute left-0 top-full z-30 mt-1 w-full rounded-lg bg-neutral-700 p-1 shadow-lg max-h-60 overflow-y-auto"
             >
               @if (aspectRatioOptions.length > 0) {
-              @for (option of aspectRatioOptions; track option.value) {
-              <button (click)="selectNewAspectRatio(option.value)"
-                class="block w-full px-3 py-1.5 text-left text-sm rounded hover:bg-neutral-600" [disabled]="option.disabled"
-                [class.opacity-50]="option.disabled" [class.cursor-not-allowed]="option.disabled">
-                <div class="flex items-center gap-2 whitespace-nowrap">
-                  <mat-icon>{{ option.icon || 'crop_landscape' }}</mat-icon>
-                  {{ option.viewValue.replace('\n', '') }}
-                </div>
-              </button>
-              }
+                @for (option of aspectRatioOptions; track option.value) {
+                  <button
+                    (click)="selectNewAspectRatio(option.value)"
+                    class="block w-full px-3 py-1.5 text-left text-sm rounded hover:bg-neutral-600"
+                    [disabled]="option.disabled"
+                    [class.opacity-50]="option.disabled"
+                    [class.cursor-not-allowed]="option.disabled"
+                  >
+                    <div class="flex items-center gap-2 whitespace-nowrap">
+                      <mat-icon>{{ option.icon || 'crop_landscape' }}</mat-icon>
+                      {{ option.viewValue.replace('\n', '') }}
+                    </div>
+                  </button>
+                }
               } @else {
-              <button (click)="selectNewAspectRatio('16:9')"
-                class="block w-full px-3 py-1.5 text-left text-sm rounded hover:bg-neutral-600">
-                <div class="flex items-center gap-2 whitespace-nowrap">
-                  <mat-icon>crop_landscape</mat-icon>
-                  Horizontal (16:9)
-                </div>
-              </button>
-                <button (click)="selectNewAspectRatio('9:16')"
-                  class="block w-full px-3 py-1.5 text-left text-sm rounded hover:bg-neutral-600">
+                <button
+                  (click)="selectNewAspectRatio('16:9')"
+                  class="block w-full px-3 py-1.5 text-left text-sm rounded hover:bg-neutral-600"
+                >
+                  <div class="flex items-center gap-2 whitespace-nowrap">
+                    <mat-icon>crop_landscape</mat-icon>
+                    Horizontal (16:9)
+                  </div>
+                </button>
+                <button
+                  (click)="selectNewAspectRatio('9:16')"
+                  class="block w-full px-3 py-1.5 text-left text-sm rounded hover:bg-neutral-600"
+                >
                   <div class="flex items-center gap-2 whitespace-nowrap">
                     <mat-icon>crop_portrait</mat-icon>
                     Vertical (9:16)
@@ -379,11 +508,11 @@
           >
             <span>{{ outputs }}</span>
             <mat-icon
-            class="transition-transform"
-            [class.rotate-180]="isSettingsDropdownOpen() === 'outputs'"
-          >
-            expand_more
-          </mat-icon>
+              class="transition-transform"
+              [class.rotate-180]="isSettingsDropdownOpen() === 'outputs'"
+            >
+              expand_more
+            </mat-icon>
           </button>
           @if (isSettingsDropdownOpen() === 'outputs') {
             <div
@@ -395,7 +524,10 @@
               >
                 1
               </button>
-              @if (getSelectedModelObject()?.value !== 'gemini-omni-generate-preview') {
+              @if (
+                getSelectedModelObject()?.value !==
+                'gemini-omni-generate-preview'
+              ) {
                 <button
                   (click)="selectOutputs(2)"
                   class="block w-full px-3 py-1.5 text-left text-sm rounded hover:bg-neutral-600"
@@ -453,15 +585,21 @@
               (click)="selectInternalModel(model)"
               class="block w-full px-3 py-1.5 text-left text-sm rounded hover:bg-neutral-600 whitespace-pre-wrap"
               [ngClass]="{
-                'bg-neutral-600':
-                  selectedGenerationModel === model.viewValue,
+                'bg-neutral-600': selectedGenerationModel === model.viewValue,
               }"
             >
               <div class="flex items-center gap-2">
                 @if (model.isImage) {
-                <img [src]="model.imageSrc" class="h-5 w-5 object-contain" alt="model icon" />
+                  <img
+                    [src]="model.imageSrc"
+                    class="h-5 w-5 object-contain"
+                    alt="model icon"
+                  />
                 } @else if (model.isSvg) {
-                <mat-icon [svgIcon]="model.icon || ''" class="!h-5 !w-5"></mat-icon>
+                  <mat-icon
+                    [svgIcon]="model.icon || ''"
+                    class="!h-5 !w-5"
+                  ></mat-icon>
                 }
                 {{ model.viewValue }}
               </div>
@@ -471,5 +609,4 @@
       </div>
     </div>
   }
-
 </div>

@@ -16,7 +16,10 @@
 
 <div class="workbench-container">
   <!-- Beta Label -->
-  <div matTooltip="This is currenty under development, it does not save content so use at your own risk, make sure to download your work before you leave this page!" class="beta-label">
+  <div
+    matTooltip="This is currenty under development, it does not save content so use at your own risk, make sure to download your work before you leave this page!"
+    class="beta-label"
+  >
     BETA
   </div>
   <!-- Main App Container (Dark Theme) -->
@@ -128,11 +131,12 @@
 
         <!-- Bottom Tabs (Video / Audio filter) -->
         <div class="mt-4 flex gap-2 justify-center">
-          <studio-button variant="primary" size="medium" [shape]="(activeTab() !== 'video') ? 'circle' : 'pill'"
+          <studio-button
+            variant="primary"
+            size="medium"
+            [shape]="activeTab() !== 'video' ? 'circle' : 'pill'"
             mat-button
             (click)="activeTab.set('video')"
-            
-            
           >
             <mat-icon svgIcon="video-clap-icon" class="!w-5 !h-5"></mat-icon>
             <span
@@ -141,11 +145,12 @@
               >Videos</span
             >
           </studio-button>
-          <studio-button variant="primary" size="medium" [shape]="(activeTab() !== 'audio') ? 'circle' : 'pill'"
+          <studio-button
+            variant="primary"
+            size="medium"
+            [shape]="activeTab() !== 'audio' ? 'circle' : 'pill'"
             mat-button
             (click)="activeTab.set('audio')"
-            
-            
           >
             <mat-icon svgIcon="sound-sensing-icon" class="!w-5 !h-5"></mat-icon>
             <span
@@ -155,10 +160,12 @@
             >
           </studio-button>
           <div matTooltip="Drive coming soon!" class="inline-block">
-            <studio-button variant="primary" size="medium" shape="circle"
+            <studio-button
+              variant="primary"
+              size="medium"
+              shape="circle"
               mat-button
               [disabled]="true"
-              
             >
               <mat-icon
                 svgIcon="drive-icon"
@@ -167,10 +174,12 @@
             </studio-button>
           </div>
           <!-- Functional Upload Button -->
-          <studio-button variant="primary" size="medium" shape="circle"
+          <studio-button
+            variant="primary"
+            size="medium"
+            shape="circle"
             mat-button
             (click)="openMediaSelector()"
-            
             matTooltip="Upload Media"
           >
             <mat-icon svgIcon="upload-icon" class="!w-5 !h-5"></mat-icon>
@@ -220,58 +229,58 @@
           <div class="flex flex-col gap-3">
             <!-- Exposure Slider -->
             <studio-slider
-                label="Exposure"
-                [valueText]="'{{ exposureVal }}%'"
-                [min]="10"
-                [max]="100"
-                [step]="5"
-                [value]="50"
-              ></studio-slider>
+              label="Exposure"
+              [valueText]="'{{ exposureVal }}%'"
+              [min]="10"
+              [max]="100"
+              [step]="5"
+              [value]="50"
+            ></studio-slider>
 
             <!-- Contrast Slider -->
             <studio-slider
-                label="Contrast"
-                [valueText]="'{{ contrastVal }}%'"
-                [min]="10"
-                [max]="100"
-                [step]="5"
-                [value]="50"
-              ></studio-slider>
+              label="Contrast"
+              [valueText]="'{{ contrastVal }}%'"
+              [min]="10"
+              [max]="100"
+              [step]="5"
+              [value]="50"
+            ></studio-slider>
 
             <!-- Saturation Slider -->
             <studio-slider
-                label="Highlights"
-                [valueText]="'{{ saturateVal }}%'"
-                [min]="10"
-                [max]="100"
-                [step]="5"
-                [value]="50"
-              ></studio-slider>
+              label="Highlights"
+              [valueText]="'{{ saturateVal }}%'"
+              [min]="10"
+              [max]="100"
+              [step]="5"
+              [value]="50"
+            ></studio-slider>
 
             <studio-slider
-                label="Shadows"
-                [valueText]="'{{ saturateVal }}%'"
-                [min]="10"
-                [max]="100"
-                [step]="5"
-                [value]="50"
-              ></studio-slider>
+              label="Shadows"
+              [valueText]="'{{ saturateVal }}%'"
+              [min]="10"
+              [max]="100"
+              [step]="5"
+              [value]="50"
+            ></studio-slider>
             <studio-slider
-                label="whites"
-                [valueText]="'{{ saturateVal }}%'"
-                [min]="10"
-                [max]="100"
-                [step]="5"
-                [value]="50"
-              ></studio-slider>
+              label="whites"
+              [valueText]="'{{ saturateVal }}%'"
+              [min]="10"
+              [max]="100"
+              [step]="5"
+              [value]="50"
+            ></studio-slider>
             <studio-slider
-                label="Blacks"
-                [valueText]="'{{ saturateVal }}%'"
-                [min]="10"
-                [max]="100"
-                [step]="5"
-                [value]="50"
-              ></studio-slider>
+              label="Blacks"
+              [valueText]="'{{ saturateVal }}%'"
+              [min]="10"
+              [max]="100"
+              [step]="5"
+              [value]="50"
+            ></studio-slider>
           </div>
         </div>
         <!-- color Controls-->
@@ -283,41 +292,41 @@
           <div class="flex flex-col gap-3">
             <!-- Exposure Slider -->
             <studio-slider
-                label="Temp"
-                [valueText]="'{{ exposureVal }}%'"
-                [min]="10"
-                [max]="100"
-                [step]="5"
-                [value]="50"
-              ></studio-slider>
+              label="Temp"
+              [valueText]="'{{ exposureVal }}%'"
+              [min]="10"
+              [max]="100"
+              [step]="5"
+              [value]="50"
+            ></studio-slider>
 
             <!-- Contrast Slider -->
             <studio-slider
-                label="Tint"
-                [valueText]="'{{ contrastVal }}%'"
-                [min]="10"
-                [max]="100"
-                [step]="5"
-                [value]="50"
-              ></studio-slider>
+              label="Tint"
+              [valueText]="'{{ contrastVal }}%'"
+              [min]="10"
+              [max]="100"
+              [step]="5"
+              [value]="50"
+            ></studio-slider>
 
             <!-- Saturation Slider -->
             <studio-slider
-                label="Vibrance"
-                [valueText]="'{{ saturateVal }}%'"
-                [min]="10"
-                [max]="100"
-                [step]="5"
-                [value]="50"
-              ></studio-slider>
+              label="Vibrance"
+              [valueText]="'{{ saturateVal }}%'"
+              [min]="10"
+              [max]="100"
+              [step]="5"
+              [value]="50"
+            ></studio-slider>
             <studio-slider
-                label="Saturation"
-                [valueText]="'{{ saturateVal }}%'"
-                [min]="10"
-                [max]="100"
-                [step]="5"
-                [value]="50"
-              ></studio-slider>
+              label="Saturation"
+              [valueText]="'{{ saturateVal }}%'"
+              [min]="10"
+              [max]="100"
+              [step]="5"
+              [value]="50"
+            ></studio-slider>
           </div>
         </div>
         <!--effect controls-->
@@ -329,63 +338,63 @@
           <div class="flex flex-col gap-3">
             <!-- Exposure Slider -->
             <studio-slider
-                label="Texture"
-                [valueText]="'{{ exposureVal }}%'"
-                [min]="10"
-                [max]="100"
-                [step]="5"
-                [value]="50"
-              ></studio-slider>
+              label="Texture"
+              [valueText]="'{{ exposureVal }}%'"
+              [min]="10"
+              [max]="100"
+              [step]="5"
+              [value]="50"
+            ></studio-slider>
 
             <!-- Contrast Slider -->
             <studio-slider
-                label="Clarity"
-                [valueText]="'{{ contrastVal }}%'"
-                [min]="10"
-                [max]="100"
-                [step]="5"
-                [value]="50"
-              ></studio-slider>
+              label="Clarity"
+              [valueText]="'{{ contrastVal }}%'"
+              [min]="10"
+              [max]="100"
+              [step]="5"
+              [value]="50"
+            ></studio-slider>
 
             <!-- Saturation Slider -->
             <studio-slider
-                label="Dehaze"
-                [valueText]="'{{ saturateVal }}%'"
-                [min]="10"
-                [max]="100"
-                [step]="5"
-                [value]="50"
-              ></studio-slider>
+              label="Dehaze"
+              [valueText]="'{{ saturateVal }}%'"
+              [min]="10"
+              [max]="100"
+              [step]="5"
+              [value]="50"
+            ></studio-slider>
 
             <!-- Exposure Slider -->
             <studio-slider
-                label="Vignette"
-                [valueText]="'{{ exposureVal }}%'"
-                [min]="10"
-                [max]="100"
-                [step]="5"
-                [value]="50"
-              ></studio-slider>
+              label="Vignette"
+              [valueText]="'{{ exposureVal }}%'"
+              [min]="10"
+              [max]="100"
+              [step]="5"
+              [value]="50"
+            ></studio-slider>
 
             <!-- Contrast Slider -->
             <studio-slider
-                label="Grain size"
-                [valueText]="'{{ contrastVal }}%'"
-                [min]="10"
-                [max]="100"
-                [step]="5"
-                [value]="50"
-              ></studio-slider>
+              label="Grain size"
+              [valueText]="'{{ contrastVal }}%'"
+              [min]="10"
+              [max]="100"
+              [step]="5"
+              [value]="50"
+            ></studio-slider>
 
             <!-- Saturation Slider -->
             <studio-slider
-                label="Grain Roughness"
-                [valueText]="'{{ saturateVal }}%'"
-                [min]="10"
-                [max]="100"
-                [step]="5"
-                [value]="50"
-              ></studio-slider>
+              label="Grain Roughness"
+              [valueText]="'{{ saturateVal }}%'"
+              [min]="10"
+              [max]="100"
+              [step]="5"
+              [value]="50"
+            ></studio-slider>
           </div>
         </div>
         <!--Detail Controls-->
@@ -397,33 +406,33 @@
           <div class="flex flex-col gap-3">
             <!-- Exposure Slider -->
             <studio-slider
-                label="Sharpning"
-                [valueText]="'{{ exposureVal }}%'"
-                [min]="10"
-                [max]="100"
-                [step]="5"
-                [value]="50"
-              ></studio-slider>
+              label="Sharpning"
+              [valueText]="'{{ exposureVal }}%'"
+              [min]="10"
+              [max]="100"
+              [step]="5"
+              [value]="50"
+            ></studio-slider>
 
             <!-- Contrast Slider -->
             <studio-slider
-                label="Radius"
-                [valueText]="'{{ contrastVal }}%'"
-                [min]="10"
-                [max]="100"
-                [step]="5"
-                [value]="50"
-              ></studio-slider>
+              label="Radius"
+              [valueText]="'{{ contrastVal }}%'"
+              [min]="10"
+              [max]="100"
+              [step]="5"
+              [value]="50"
+            ></studio-slider>
 
             <!-- Saturation Slider -->
             <studio-slider
-                label="Detail"
-                [valueText]="'{{ saturateVal }}%'"
-                [min]="10"
-                [max]="100"
-                [step]="5"
-                [value]="50"
-              ></studio-slider>
+              label="Detail"
+              [valueText]="'{{ saturateVal }}%'"
+              [min]="10"
+              [max]="100"
+              [step]="5"
+              [value]="50"
+            ></studio-slider>
           </div>
         </div>
       </div>
@@ -560,11 +569,12 @@
         <div class="flex flex-row align-items-start">
           <div class="h-16 w-[20rem] flex items-center justify-start gap-4">
             <div class="flex gap-3 p-2">
-              <studio-button variant="primary" size="medium" [shape]="(activeToolButton() !== 'gallery') ? 'circle' : 'pill'"
+              <studio-button
+                variant="primary"
+                size="medium"
+                [shape]="activeToolButton() !== 'gallery' ? 'circle' : 'pill'"
                 mat-button
                 (click)="toggleToolButton('gallery')"
-                
-                
               >
                 <mat-icon
                   svgIcon="photo-merge-auto-icon"
@@ -576,12 +586,14 @@
                   >Gallery</span
                 >
               </studio-button>
-              
+
               <div matTooltip="Audio coming soon!" class="inline-block">
-                <studio-button variant="primary" size="medium" shape="circle"
+                <studio-button
+                  variant="primary"
+                  size="medium"
+                  shape="circle"
                   mat-button
                   [disabled]="true"
-                  
                 >
                   <mat-icon
                     svgIcon="audio-magic-eraser-icon"
@@ -591,10 +603,12 @@
               </div>
 
               <div matTooltip="Stories coming soon!" class="inline-block">
-                <studio-button variant="primary" size="medium" shape="circle"
+                <studio-button
+                  variant="primary"
+                  size="medium"
+                  shape="circle"
                   mat-button
                   [disabled]="true"
-                  
                 >
                   <mat-icon
                     svgIcon="web-stories-icon"
@@ -604,20 +618,24 @@
               </div>
 
               <div matTooltip="Edit coming soon!" class="inline-block">
-                <studio-button variant="primary" size="medium" shape="circle"
+                <studio-button
+                  variant="primary"
+                  size="medium"
+                  shape="circle"
                   mat-button
                   [disabled]="true"
-                  
                 >
                   <mat-icon svgIcon="edit-icon" class="!w-5 !h-5"></mat-icon>
                 </studio-button>
               </div>
 
               <div matTooltip="Agent coming soon!" class="inline-block">
-                <studio-button variant="primary" size="medium" shape="circle"
+                <studio-button
+                  variant="primary"
+                  size="medium"
+                  shape="circle"
                   mat-button
                   [disabled]="true"
-                  
                 >
                   <mat-icon
                     svgIcon="gemini-spark-icon"
@@ -679,20 +697,24 @@
               <!-- <input type="range" [(ngModel)]="pixelsPerSecond" min="5" max="100" step="5"
                                                                                                                                                                     class="w-20 h-1 bg-gray-700 rounded-full appearance-none cursor-pointer accent-gray-400"> -->
               <!-- Split Button -->
-              <studio-button variant="primary" size="medium" shape="circle"
+              <studio-button
+                variant="primary"
+                size="medium"
+                shape="circle"
                 mat-button
                 (click)="splitSelectedClip()"
                 [disabled]="!canSplit()"
-                
                 title="Split Clip (Razor)"
               >
                 <mat-icon class="!w-5 !h-5">content_cut</mat-icon>
               </studio-button>
-              <studio-button variant="primary" size="medium" shape="circle"
+              <studio-button
+                variant="primary"
+                size="medium"
+                shape="circle"
                 mat-button
                 (click)="deleteSelectedClip()"
                 [disabled]="!selectedClipId()"
-                
               >
                 <mat-icon class="!w-5 !h-5">delete</mat-icon>
               </studio-button>
@@ -705,14 +727,17 @@
           class="glass-bg-effect min-h-[12rem] max-w-[108rem] w-[100%] flex-1 flex flex-col items-end p-2 rounded-2xl backdrop-blur-[50px] relative"
           #timelineContainer
         >
-          <studio-button variant="cta" size="small" 
+          <studio-button
+            variant="cta"
+            size="small"
             mat-raised-button
-            
             (click)="downloadVideo()"
             [disabled]="timelineClips().length === 0 || isDownloading()"
           >
             <mat-icon *ngIf="!isDownloading()">download</mat-icon>
-            <mat-icon *ngIf="isDownloading()" class="animate-spin">sync</mat-icon>
+            <mat-icon *ngIf="isDownloading()" class="animate-spin"
+              >sync</mat-icon
+            >
             <span>{{ isDownloading() ? 'Rendering...' : 'Download' }}</span>
           </studio-button>
           <div class="w-full flex-1 flex">
@@ -731,21 +756,23 @@
                   ></mat-icon>
                   <studio-toolbar>
                     <div matTooltip="coming soon!" class="inline-block">
-                        <studio-toolbar-button [disabled]="true">
+                      <studio-toolbar-button [disabled]="true">
                         <mat-icon svgIcon="eye-icon"></mat-icon>
-                        </studio-toolbar-button>
+                      </studio-toolbar-button>
                     </div>
                     <div matTooltip="coming soon!" class="inline-block">
-                        <studio-toolbar-button [disabled]="true">
+                      <studio-toolbar-button [disabled]="true">
                         <mat-icon svgIcon="lock-icon"></mat-icon>
-                        </studio-toolbar-button>
+                      </studio-toolbar-button>
                     </div>
                   </studio-toolbar>
                 </div>
-                <studio-button variant="primary" size="large" shape="circle"
+                <studio-button
+                  variant="primary"
+                  size="large"
+                  shape="circle"
                   mat-button
                   (click)="togglePlay()"
-                  
                 >
                   <mat-icon
                     *ngIf="!isPlaying()"
@@ -924,7 +951,5 @@
         </div>
       </div>
     </div>
-
-
   </div>
 </div>

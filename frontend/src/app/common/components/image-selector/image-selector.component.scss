@@ -32,9 +32,13 @@
   font-family: 'Google Sans', sans-serif;
   overflow: hidden; /* Ensure anything beyond its borders is hidden */
   box-sizing: border-box;
-  
+
   /* Glassmorphism background for the whole dialog content */
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 20px;
@@ -106,14 +110,14 @@
   .drop-message {
     text-align: center;
     color: white;
-    
+
     mat-icon {
       font-size: 48px;
       width: 48px;
       height: 48px;
       margin-bottom: 12px;
     }
-    
+
     p {
       font-size: 18px;
       margin: 0;
@@ -132,7 +136,7 @@
   background: rgba(0, 0, 0, 0.2);
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   gap: 12px;
-  
+
   .selection-info {
     color: rgba(255, 255, 255, 0.7);
     font-size: 14px;
@@ -153,7 +157,10 @@
   overflow: hidden !important; /* Critical: prevent horizontal scrollbar on the dialog itself */
 }
 
-::ng-deep .image-selector-dialog .mat-mdc-dialog-container .mdc-dialog__surface {
+::ng-deep
+  .image-selector-dialog
+  .mat-mdc-dialog-container
+  .mdc-dialog__surface {
   background: transparent !important;
   border-radius: 20px !important;
   overflow: hidden !important; /* Ensure the dialog shell doesn't show scrollbars */
@@ -163,7 +170,7 @@
 /* Ensure global horizontal scroll is disabled for the dialog */
 ::ng-deep .image-selector-dialog {
   overflow: hidden !important;
-  
+
   .mat-mdc-dialog-container {
     padding: 0 !important;
   }

@@ -72,8 +72,17 @@
         matTooltipPosition="right"
         matTooltip="Toggle workspace visibility"
       >
-        <mat-icon>{{ activeWorkspace.scope === WorkspaceScope.PUBLIC ? 'lock' : 'public' }}</mat-icon>
-        <span>Make Workspace {{ activeWorkspace.scope === WorkspaceScope.PUBLIC ? 'Private' : 'Public' }}</span>
+        <mat-icon>{{
+          activeWorkspace.scope === WorkspaceScope.PUBLIC ? 'lock' : 'public'
+        }}</mat-icon>
+        <span
+          >Make Workspace
+          {{
+            activeWorkspace.scope === WorkspaceScope.PUBLIC
+              ? 'Private'
+              : 'Public'
+          }}</span
+        >
       </button>
       <button
         mat-menu-item

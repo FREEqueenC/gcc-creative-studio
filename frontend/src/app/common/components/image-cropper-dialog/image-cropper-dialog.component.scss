@@ -128,7 +128,7 @@ mat-dialog-actions {
   .controls-row {
     display: flex;
     justify-content: flex-start;
-    
+
     .footer-controls {
       display: flex;
       align-items: center;
@@ -149,7 +149,6 @@ mat-dialog-actions {
     gap: 8px;
   }
 }
-
 
 /* Material Dialog Overrides */
 ::ng-deep .mat-mdc-dialog-content {

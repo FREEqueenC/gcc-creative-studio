@@ -24,7 +24,10 @@
   max-width: var(--max-container-width);
   margin: 0 auto;
   margin-top: calc(10vh + 0px);
-  margin-left: max(calc(5vw + 4.5rem), calc(50% - var(--max-container-width) / 2));
+  margin-left: max(
+    calc(5vw + 4.5rem),
+    calc(50% - var(--max-container-width) / 2)
+  );
 }
 
 .video-container {
@@ -44,7 +47,7 @@
 
 .settings-btn {
   color: rgba(255, 255, 255, 0.6) !important;
-  
+
   &:hover {
     color: white !important;
     background: rgba(255, 255, 255, 0.1) !important;

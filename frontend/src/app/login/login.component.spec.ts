@@ -21,14 +21,13 @@ import {
   tick,
 } from '@angular/core/testing';
 import {RouterTestingModule} from '@angular/router/testing';
-import {of, throwError, NEVER} from 'rxjs';
+import {of, throwError} from 'rxjs';
 import {LoginComponent} from './login.component';
 import {AuthService} from './../common/services/auth.service';
 import {UserModel} from './../common/models/user.model';
 import {MatSnackBar} from '@angular/material/snack-bar';
 import {Router} from '@angular/router';
-import {Injector, NgZone} from '@angular/core';
-import {environment} from '../../environments/environment';
+import {Injector} from '@angular/core';
 import {MatCardModule} from '@angular/material/card';
 import {MatFormFieldModule} from '@angular/material/form-field';
 import {MatInputModule} from '@angular/material/input';
@@ -38,7 +37,9 @@ import {NotificationService} from '../common/services/notification.service';
 
 // Define a MockAuthService class
 class MockAuthService {
-  handleGoogleCredentialResponse = jasmine.createSpy('handleGoogleCredentialResponse');
+  handleGoogleCredentialResponse = jasmine.createSpy(
+    'handleGoogleCredentialResponse',
+  );
 }
 
 describe('LoginComponent', () => {
@@ -105,7 +106,9 @@ describe('LoginComponent', () => {
       tick();
 
       expect(component.loader).toBeFalse();
-      expect(authService.handleGoogleCredentialResponse).toHaveBeenCalledWith('test-cred');
+      expect(authService.handleGoogleCredentialResponse).toHaveBeenCalledWith(
+        'test-cred',
+      );
       expect(router.navigate).toHaveBeenCalledWith(['/']);
     }));
 
@@ -115,11 +118,13 @@ describe('LoginComponent', () => {
       authService.handleGoogleCredentialResponse.and.returnValue(
         throwError(() => error),
       );
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       spyOn(component as any, 'handleLoginError');
 
       component.handleCredentialResponse({credential: 'test-cred'});
       tick();
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((component as any).handleLoginError).toHaveBeenCalledWith(error);
     }));
   });
@@ -129,7 +134,7 @@ describe('LoginComponent', () => {
       component.loader = true;
       const errorMessage = {message: 'Test error message'};
 
-      // Cast to any to access private method for testing
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (component as any).handleLoginError(errorMessage);
 
       expect(component.loader).toBeFalse();
@@ -145,6 +150,7 @@ describe('LoginComponent', () => {
     it('should execute postErrorAction if provided', () => {
       const postErrorAction = jasmine.createSpy('postErrorAction');
       const errorMessage = {message: 'Test error'};
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (component as any).handleLoginError(errorMessage, postErrorAction);
       expect(postErrorAction).toHaveBeenCalled();
     });

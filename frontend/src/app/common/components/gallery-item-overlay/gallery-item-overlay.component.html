@@ -18,8 +18,15 @@
 <div class="gallery-overlay">
   <div class="icon-container left-icon">
     <!-- Item Type Icon -->
-    <mat-icon *ngIf="itemType === 'media_item'" svgIcon="gemini-spark-icon" class="!w-4 !h-4"></mat-icon>
-    <mat-icon *ngIf="itemType === 'source_asset'" class="!w-4 !h-4 !text-base !overflow-visible">cloud_upload</mat-icon>
+    <mat-icon
+      *ngIf="itemType === 'media_item'"
+      svgIcon="gemini-spark-icon"
+      class="!w-4 !h-4"
+    ></mat-icon>
+    <mat-icon
+      *ngIf="itemType === 'source_asset'"
+      class="!w-4 !h-4 !text-base !overflow-visible"
+      >cloud_upload</mat-icon
+    >
   </div>
-
 </div>

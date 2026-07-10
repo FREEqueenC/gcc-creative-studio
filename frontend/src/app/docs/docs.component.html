@@ -13,18 +13,30 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -->
-<div class="docs-wrapper min-h-screen p-6 md:p-12 text-white font-sans relative overflow-hidden">
+<div
+  class="docs-wrapper min-h-screen p-6 md:p-12 text-white font-sans relative overflow-hidden"
+>
   <!-- Glowing Background Orbs -->
-  <div class="absolute top-0 right-1/4 w-96 h-96 bg-purple-600/20 rounded-full blur-[120px] pointer-events-none"></div>
-  <div class="absolute bottom-10 left-1/4 w-[500px] h-[500px] bg-cyan-600/10 rounded-full blur-[150px] pointer-events-none"></div>
+  <div
+    class="absolute top-0 right-1/4 w-96 h-96 bg-purple-600/20 rounded-full blur-[120px] pointer-events-none"
+  ></div>
+  <div
+    class="absolute bottom-10 left-1/4 w-[500px] h-[500px] bg-cyan-600/10 rounded-full blur-[150px] pointer-events-none"
+  ></div>
 
   <!-- Header with Brand Logo -->
   <header class="flex items-center justify-between mb-8 z-10 relative">
     <div class="flex items-center gap-3">
-      <img src="/assets/images/aetherisX-logo.png" alt="Aetheris X Logo" class="w-12 h-12 object-contain" />
+      <img
+        src="/assets/images/aetherisX-logo.png"
+        alt="Aetheris X Logo"
+        class="w-12 h-12 object-contain"
+      />
       <div>
         <h1 class="text-2xl font-bold tracking-wider Outfit">AETHERIS X</h1>
-        <p class="text-xs text-neutral-400 font-medium">Technical Manual & Developer Center</p>
+        <p class="text-xs text-neutral-400 font-medium">
+          Technical Manual & Developer Center
+        </p>
       </div>
     </div>
   </header>
@@ -32,33 +44,62 @@ limitations under the License.
   <div class="grid grid-cols-1 xl:grid-cols-4 gap-6 z-10 relative">
     <!-- Sidebar Navigation -->
     <div class="xl:col-span-1 flex flex-col gap-3">
-      <div class="glass-card p-4 flex flex-col gap-2 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl">
-        <h3 class="text-xs font-bold text-neutral-400 uppercase tracking-widest px-3 mb-2">Documentation</h3>
-        
+      <div
+        class="glass-card p-4 flex flex-col gap-2 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl"
+      >
+        <h3
+          class="text-xs font-bold text-neutral-400 uppercase tracking-widest px-3 mb-2"
+        >
+          Documentation
+        </h3>
+
         <button
           *ngFor="let cat of categories"
           (click)="selectCategory(cat.id)"
           [class.active-item]="selectedCategoryId === cat.id"
           class="flex items-center gap-3 w-full text-left py-3 px-4 rounded-xl transition-all duration-300 text-neutral-300 hover:text-white hover:bg-white/5 group"
         >
-          <mat-icon class="text-neutral-400 group-hover:text-cyan-400 transition-colors">{{ cat.icon }}</mat-icon>
+          <mat-icon
+            class="text-neutral-400 group-hover:text-cyan-400 transition-colors"
+            >{{ cat.icon }}</mat-icon
+          >
           <span class="font-medium text-sm">{{ cat.title }}</span>
         </button>
       </div>
 
       <!-- Quick Links Card -->
-      <div class="glass-card p-5 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl flex flex-col gap-3">
-        <h4 class="text-xs font-bold text-neutral-400 uppercase tracking-widest">Quick References</h4>
+      <div
+        class="glass-card p-5 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl flex flex-col gap-3"
+      >
+        <h4
+          class="text-xs font-bold text-neutral-400 uppercase tracking-widest"
+        >
+          Quick References
+        </h4>
         <div class="flex flex-col gap-2 text-sm text-neutral-300">
-          <div class="flex items-center justify-between bg-white/5 p-2.5 rounded-lg border border-white/5">
+          <div
+            class="flex items-center justify-between bg-white/5 p-2.5 rounded-lg border border-white/5"
+          >
             <span>LEV Token Address</span>
-            <button mat-icon-button class="text-neutral-400 hover:text-cyan-400" [cdkCopyToClipboard]="'0xf61771F3C6c2a59C8C99f7f2Fd04684b7182E340'">
+            <button
+              mat-icon-button
+              class="text-neutral-400 hover:text-cyan-400"
+              [cdkCopyToClipboard]="
+                '0xf61771F3C6c2a59C8C99f7f2Fd04684b7182E340'
+              "
+            >
               <mat-icon class="scale-90">content_copy</mat-icon>
             </button>
           </div>
-          <div class="flex items-center justify-between bg-white/5 p-2.5 rounded-lg border border-white/5">
+          <div
+            class="flex items-center justify-between bg-white/5 p-2.5 rounded-lg border border-white/5"
+          >
             <span>reCAPTCHA Site Key</span>
-            <button mat-icon-button class="text-neutral-400 hover:text-cyan-400" [cdkCopyToClipboard]="'6LeRPkAtAAAAAKnaiVVAsifsZcq2mSi6Zi_yKlLe'">
+            <button
+              mat-icon-button
+              class="text-neutral-400 hover:text-cyan-400"
+              [cdkCopyToClipboard]="'6LeRPkAtAAAAAKnaiVVAsifsZcq2mSi6Zi_yKlLe'"
+            >
               <mat-icon class="scale-90">content_copy</mat-icon>
             </button>
           </div>
@@ -67,92 +108,155 @@ limitations under the License.
     </div>
 
     <!-- Main Content Viewer -->
-    <div class="xl:col-span-2 glass-card p-6 md:p-8 rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl min-h-[500px] flex flex-col">
+    <div
+      class="xl:col-span-2 glass-card p-6 md:p-8 rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl min-h-[500px] flex flex-col"
+    >
       <!-- Section: Overview -->
-      <div *ngIf="selectedCategoryId === 'overview'" class="flex-grow flex flex-col gap-4">
-        <h2 class="text-3xl font-extrabold Outfit mb-2 linear-text">Platform Overview</h2>
+      <div
+        *ngIf="selectedCategoryId === 'overview'"
+        class="flex-grow flex flex-col gap-4"
+      >
+        <h2 class="text-3xl font-extrabold Outfit mb-2 linear-text">
+          Platform Overview
+        </h2>
         <p class="text-neutral-300 leading-relaxed text-sm">
-          Aetheris X Creative Studio is a next-generation decentralized multimedia generative suite designed to bridge high-performance generative models with on-chain identity and asset control.
+          Aetheris X Creative Studio is a next-generation decentralized
+          multimedia generative suite designed to bridge high-performance
+          generative models with on-chain identity and asset control.
         </p>
-        
+
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-4">
           <div class="bg-white/5 p-4 rounded-xl border border-white/5">
             <h4 class="font-bold text-cyan-400 mb-1">Vertex AI Integrations</h4>
             <p class="text-xs text-neutral-400 leading-relaxed">
-              State-of-the-art models including Imagen (Image Generation/Upscaling), Veo (High-fidelity Video), and Gemini (Critic feedback and Prompt enhancement).
+              State-of-the-art models including Imagen (Image
+              Generation/Upscaling), Veo (High-fidelity Video), and Gemini
+              (Critic feedback and Prompt enhancement).
             </p>
           </div>
           <div class="bg-white/5 p-4 rounded-xl border border-white/5">
-            <h4 class="font-bold text-purple-400 mb-1">Multi-Chain Ownership</h4>
+            <h4 class="font-bold text-purple-400 mb-1">
+              Multi-Chain Ownership
+            </h4>
             <p class="text-xs text-neutral-400 leading-relaxed">
-              Minting creative output as NFTs on Ethereum L2 (Base Mainnet) with LEV tokens, or Flow Blockchain using resource-oriented Cadence smart contracts.
+              Minting creative output as NFTs on Ethereum L2 (Base Mainnet) with
+              LEV tokens, or Flow Blockchain using resource-oriented Cadence
+              smart contracts.
             </p>
           </div>
         </div>
       </div>
 
       <!-- Section: Local Setup -->
-      <div *ngIf="selectedCategoryId === 'setup'" class="flex-grow flex flex-col gap-4">
-        <h2 class="text-3xl font-extrabold Outfit mb-2 linear-text">Local Development Setup</h2>
+      <div
+        *ngIf="selectedCategoryId === 'setup'"
+        class="flex-grow flex flex-col gap-4"
+      >
+        <h2 class="text-3xl font-extrabold Outfit mb-2 linear-text">
+          Local Development Setup
+        </h2>
         <p class="text-neutral-300 leading-relaxed text-sm">
-          Follow these quick steps to spin up the local development suite using Docker.
+          Follow these quick steps to spin up the local development suite using
+          Docker.
         </p>
 
         <h4 class="font-semibold text-cyan-400 mt-2">1. Prerequisites</h4>
-        <ul class="list-disc list-inside text-xs text-neutral-400 flex flex-col gap-1.5 pl-2">
+        <ul
+          class="list-disc list-inside text-xs text-neutral-400 flex flex-col gap-1.5 pl-2"
+        >
           <li>Install Docker & Docker Compose</li>
-          <li>Install Google Cloud SDK (gcloud) and run <code class="bg-white/10 px-1 py-0.5 rounded text-white">gcloud auth application-default login</code></li>
+          <li>
+            Install Google Cloud SDK (gcloud) and run
+            <code class="bg-white/10 px-1 py-0.5 rounded text-white"
+              >gcloud auth application-default login</code
+            >
+          </li>
           <li>Set up target Google Cloud project ID</li>
         </ul>
 
-        <h4 class="font-semibold text-cyan-400 mt-2">2. Environment Configuration</h4>
+        <h4 class="font-semibold text-cyan-400 mt-2">
+          2. Environment Configuration
+        </h4>
         <p class="text-neutral-300 text-xs pl-2">
-          Configure a local PostgreSQL instance by setting the following database values inside your <code class="text-purple-400">backend/.env</code>:
+          Configure a local PostgreSQL instance by setting the following
+          database values inside your
+          <code class="text-purple-400">backend/.env</code>:
         </p>
-        <pre class="bg-black/40 p-4 rounded-xl text-[11px] text-neutral-300 border border-white/5 font-mono">
+        <pre
+          class="bg-black/40 p-4 rounded-xl text-[11px] text-neutral-300 border border-white/5 font-mono"
+        >
 DB_HOST="postgres"
 DB_PORT="5432"
 DB_USER="studio_user"
 DB_PASS="studio_pass"
 DB_NAME="creative_studio"
-USE_CLOUD_SQL_AUTH_PROXY=false</pre>
+USE_CLOUD_SQL_AUTH_PROXY=false</pre
+        >
       </div>
 
       <!-- Section: Web3 & NFTs -->
-      <div *ngIf="selectedCategoryId === 'web3'" class="flex-grow flex flex-col gap-4">
-        <h2 class="text-3xl font-extrabold Outfit mb-2 linear-text">Multi-Chain Web3 Tokenization</h2>
+      <div
+        *ngIf="selectedCategoryId === 'web3'"
+        class="flex-grow flex flex-col gap-4"
+      >
+        <h2 class="text-3xl font-extrabold Outfit mb-2 linear-text">
+          Multi-Chain Web3 Tokenization
+        </h2>
         <p class="text-neutral-300 leading-relaxed text-sm">
-          Mint and verify generated media on-chain using two distinct ecosystems:
+          Mint and verify generated media on-chain using two distinct
+          ecosystems:
         </p>
 
         <div class="flex flex-col gap-4 my-2">
           <div class="bg-white/5 p-4 rounded-xl border border-white/5">
-            <h4 class="font-bold text-blue-400 mb-1">Base Mainnet (LEV Token)</h4>
+            <h4 class="font-bold text-blue-400 mb-1">
+              Base Mainnet (LEV Token)
+            </h4>
             <p class="text-xs text-neutral-300 mb-2">
-              Ethereum L2 NFT mapping. Uses standard ERC-721 smart contracts. Media files are automatically pinned to IPFS through the Pinata API before triggering smart wallet transactions.
+              Ethereum L2 NFT mapping. Uses standard ERC-721 smart contracts.
+              Media files are automatically pinned to IPFS through the Pinata
+              API before triggering smart wallet transactions.
             </p>
-            <span class="text-[10px] text-neutral-500 font-mono">LEV Contract: 0xf61771F3C6c2a59C8C99f7f2Fd04684b7182E340</span>
+            <span class="text-[10px] text-neutral-500 font-mono"
+              >LEV Contract: 0xf61771F3C6c2a59C8C99f7f2Fd04684b7182E340</span
+            >
           </div>
 
           <div class="bg-white/5 p-4 rounded-xl border border-white/5">
-            <h4 class="font-bold text-emerald-400 mb-1">Flow Blockchain (Cadence)</h4>
+            <h4 class="font-bold text-emerald-400 mb-1">
+              Flow Blockchain (Cadence)
+            </h4>
             <p class="text-xs text-neutral-300 mb-2">
-              Uses Flow's resource-oriented Cadence smart contract standards to manage digital collectibles safely on-chain. Uses the Flow Client Library (FCL) for wallet authentication.
+              Uses Flow's resource-oriented Cadence smart contract standards to
+              manage digital collectibles safely on-chain. Uses the Flow Client
+              Library (FCL) for wallet authentication.
             </p>
-            <span class="text-[10px] text-neutral-500 font-mono">Collection Storage Path: /storage/CreativeStudioNFTCollection</span>
+            <span class="text-[10px] text-neutral-500 font-mono"
+              >Collection Storage Path:
+              /storage/CreativeStudioNFTCollection</span
+            >
           </div>
         </div>
       </div>
 
       <!-- Section: Edge Agent APIs -->
-      <div *ngIf="selectedCategoryId === 'agents'" class="flex-grow flex flex-col gap-4">
-        <h2 class="text-3xl font-extrabold Outfit mb-2 linear-text">Edge Agent APIs & Workflows</h2>
+      <div
+        *ngIf="selectedCategoryId === 'agents'"
+        class="flex-grow flex flex-col gap-4"
+      >
+        <h2 class="text-3xl font-extrabold Outfit mb-2 linear-text">
+          Edge Agent APIs & Workflows
+        </h2>
         <p class="text-neutral-300 leading-relaxed text-sm">
           Trigger complex workflows programmatically using our REST gateways.
         </p>
 
-        <h4 class="font-semibold text-cyan-400 mt-2">1. Workflow Execution Route</h4>
-        <pre class="bg-black/40 p-4 rounded-xl text-[11px] text-neutral-300 border border-white/5 font-mono">
+        <h4 class="font-semibold text-cyan-400 mt-2">
+          1. Workflow Execution Route
+        </h4>
+        <pre
+          class="bg-black/40 p-4 rounded-xl text-[11px] text-neutral-300 border border-white/5 font-mono"
+        >
 POST http://localhost:8080/api/agent/run-workflow
 Headers:
   Authorization: Bearer &lt;AGENT_KEY&gt;
@@ -161,40 +265,63 @@ Body:
   {{ '{' }}
     "recipe_id": "image_critic_video",
     "params": {{ '{' }} "prompt": "Neon cyberpunk city corridor" {{ '}' }}
-  {{ '}' }}</pre>
+  {{ '}' }}</pre
+        >
 
         <h4 class="font-semibold text-cyan-400 mt-2">2. Webhook Callbacks</h4>
         <p class="text-neutral-300 text-xs pl-2">
-          Add webhook callback endpoints in your workspace configurations to receive finished media files asynchronously.
+          Add webhook callback endpoints in your workspace configurations to
+          receive finished media files asynchronously.
         </p>
       </div>
     </div>
 
     <!-- AI Developer Agent Assistant -->
-    <div class="xl:col-span-1 glass-card rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl flex flex-col h-[500px]">
+    <div
+      class="xl:col-span-1 glass-card rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl flex flex-col h-[500px]"
+    >
       <!-- Chat Header -->
-      <div class="p-4 border-b border-white/10 flex items-center justify-between">
+      <div
+        class="p-4 border-b border-white/10 flex items-center justify-between"
+      >
         <div class="flex items-center gap-2">
-          <div class="w-2.5 h-2.5 bg-cyan-400 rounded-full animate-pulse shadow-[0_0_8px_#22d3ee]"></div>
-          <span class="text-xs font-bold uppercase tracking-wider Outfit text-cyan-400">AI Docs Agent</span>
+          <div
+            class="w-2.5 h-2.5 bg-cyan-400 rounded-full animate-pulse shadow-[0_0_8px_#22d3ee]"
+          ></div>
+          <span
+            class="text-xs font-bold uppercase tracking-wider Outfit text-cyan-400"
+            >AI Docs Agent</span
+          >
         </div>
         <button mat-icon-button (click)="chatMessages = []" title="Clear Chat">
-          <mat-icon class="scale-75 text-neutral-400 hover:text-white">delete_outline</mat-icon>
+          <mat-icon class="scale-75 text-neutral-400 hover:text-white"
+            >delete_outline</mat-icon
+          >
         </button>
       </div>
 
       <!-- Chat Messages Scroll Container -->
-      <div #chatScrollContainer class="flex-grow p-4 overflow-y-auto flex flex-col gap-3">
+      <div
+        #chatScrollContainer
+        class="flex-grow p-4 overflow-y-auto flex flex-col gap-3"
+      >
         <div
           *ngFor="let msg of chatMessages"
-          [ngClass]="msg.role === 'user' ? 'self-end bg-cyan-500/20 text-neutral-100 border border-cyan-500/30' : 'self-start bg-white/5 text-neutral-300 border border-white/5'"
+          [ngClass]="
+            msg.role === 'user'
+              ? 'self-end bg-cyan-500/20 text-neutral-100 border border-cyan-500/30'
+              : 'self-start bg-white/5 text-neutral-300 border border-white/5'
+          "
           class="max-w-[85%] rounded-2xl p-3 text-xs leading-relaxed"
         >
           {{ msg.content }}
         </div>
-        
+
         <!-- Loading Indicator -->
-        <div *ngIf="isChatLoading" class="self-start bg-white/5 text-neutral-400 p-3 rounded-2xl flex items-center gap-2 border border-white/5">
+        <div
+          *ngIf="isChatLoading"
+          class="self-start bg-white/5 text-neutral-400 p-3 rounded-2xl flex items-center gap-2 border border-white/5"
+        >
           <mat-spinner [diameter]="14" class="cyan-spinner"></mat-spinner>
           <span class="text-[10px]">Thinking...</span>
         </div>
@@ -202,7 +329,9 @@ Body:
 
       <!-- Chat Input Area -->
       <div class="p-3 border-t border-white/10 bg-white/5">
-        <div class="flex items-center gap-2 bg-black/30 rounded-xl px-3 py-1.5 border border-white/5">
+        <div
+          class="flex items-center gap-2 bg-black/30 rounded-xl px-3 py-1.5 border border-white/5"
+        >
           <input
             type="text"
             [(ngModel)]="userInput"
@@ -210,7 +339,10 @@ Body:
             placeholder="Ask the docs agent..."
             class="bg-transparent border-none outline-none text-xs flex-grow text-white placeholder-neutral-500"
           />
-          <button (click)="sendMessage()" class="text-neutral-400 hover:text-cyan-400 p-1 flex items-center justify-center transition-colors">
+          <button
+            (click)="sendMessage()"
+            class="text-neutral-400 hover:text-cyan-400 p-1 flex items-center justify-center transition-colors"
+          >
             <mat-icon class="scale-90">send</mat-icon>
           </button>
         </div>

@@ -203,18 +203,18 @@
     }
   }
 
-                .checkbox-container {
-                  display: flex;
-                  align-items: center;
-                  gap: 8px;
-                  padding: 4px 12px 4px 0px;
-                  margin: 0 4px 4px 0px;
-        
-                  ::ng-deep .mdc-label {
-                    font-size: 11px !important;
-                    color: rgba(255, 255, 255, 0.7) !important;
-                  }
-                }
+  .checkbox-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 12px 4px 0px;
+    margin: 0 4px 4px 0px;
+
+    ::ng-deep .mdc-label {
+      font-size: 11px !important;
+      color: rgba(255, 255, 255, 0.7) !important;
+    }
+  }
   .menu-items {
     display: flex;
     flex-direction: column;
@@ -267,8 +267,8 @@
       width: 32px !important;
       height: 32px !important;
       display: inline-flex !important;
-        align-items: center;
-        justify-content: center;
+      align-items: center;
+      justify-content: center;
 
       ::ng-deep .mat-icon {
         font-size: 18px;

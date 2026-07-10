@@ -28,7 +28,11 @@
   background-image:
     // Top Layer: The button's dark body color (restricted to the padding box)
     linear-gradient(180deg, rgba(60, 60, 60, 0.6), rgba(40, 40, 40, 0.8)),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.1) 100%);
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.4) 0%,
+      rgba(255, 255, 255, 0.1) 100%
+    );
 
   // 3. Clip the backgrounds so they act like a Fill and a Border
   background-origin: border-box;
@@ -51,21 +55,21 @@
 
   // Fix content projection alignment inside Material's wrapper
   & ::ng-deep {
-    .mdc-button__label, 
+    .mdc-button__label,
     .mat-mdc-button-label {
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
     }
-    
+
     // Ensure icon doesn't shrink
     mat-icon,
     img {
-        flex-shrink: 0;
-        width: 20px;
-        height: 20px;
-        object-fit: contain;
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+      object-fit: contain;
     }
   }
 
@@ -75,9 +79,16 @@
   &:hover {
     transform: translateY(-1px);
     // On hover, brighten the body and the border gradient
-    background-image:
-      linear-gradient(180deg, rgba(60, 60, 60, 0.6), rgba(40, 40, 40, 0.8)),
-      linear-gradient(180deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.2) 100%); // Brighter border
+    background-image: linear-gradient(
+        180deg,
+        rgba(60, 60, 60, 0.6),
+        rgba(40, 40, 40, 0.8)
+      ),
+      linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.8) 0%,
+        rgba(255, 255, 255, 0.2) 100%
+      ); // Brighter border
     box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.3);
   }
 
@@ -92,8 +103,17 @@
 
     // "Tuned down" gray background
     background-image:
-      linear-gradient(180deg, rgba(80, 80, 80, 0.3) 0%, rgba(40, 40, 40, 0.1) 100%), // Darker/Grayer body
-      linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%); // Very faint border
+      linear-gradient(
+        180deg,
+        rgba(80, 80, 80, 0.3) 0%,
+        rgba(40, 40, 40, 0.1) 100%
+      ),
+      // Darker/Grayer body
+      linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.05) 0%,
+          rgba(255, 255, 255, 0.02) 100%
+        ); // Very faint border
 
     // Ensure highlighted glass effect is gone or very subtle
     box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
@@ -107,7 +127,11 @@
   // 2. The Magic: Stacked Backgrounds (Blue Edition)
   background-image:
     // Top Layer: Darker at top, Lighter at bottom
-    linear-gradient(180deg, rgba(11, 87, 208, 0.8) 0%, rgba(168, 225, 250, 0.52) 100%),
+    linear-gradient(
+      180deg,
+      rgba(11, 87, 208, 0.8) 0%,
+      rgba(168, 225, 250, 0.52) 100%
+    ),
     // Border Layer: Uniform White/Transparent for balanced border width
     linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.4));
 
@@ -119,8 +143,9 @@
   backdrop-filter: blur(10px);
 
   // 5. Highlights & Glows
-  box-shadow: 
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.423), // Subtle Top Highlight
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.423),
+    // Subtle Top Highlight
     0 4px 12px 0 rgba(26, 115, 232, 0.25); // Reduced Glow
 
   // Standard settings
@@ -130,7 +155,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  
+
   // Fix content projection alignment inside Material's wrapper
   & ::ng-deep {
     .mdc-button__label,
@@ -144,10 +169,10 @@
     // Ensure icon doesn't shrink
     mat-icon,
     img {
-        flex-shrink: 0;
-        width: 20px;
-        height: 20px;
-        object-fit: contain;
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+      object-fit: contain;
     }
   }
 
@@ -159,11 +184,19 @@
     // Brighter on hover
     background-image:
       // Top Layer: Darker at top, Lighter at bottom
-      linear-gradient(180deg, rgba(11, 87, 208, 0.8) 0%, rgba(168, 225, 250, 0.52) 100%),
+      linear-gradient(
+        180deg,
+        rgba(11, 87, 208, 0.8) 0%,
+        rgba(168, 225, 250, 0.52) 100%
+      ),
       // Border Layer: Uniform White/Transparent for balanced border width
-      linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.4));
-      
-    box-shadow: 
+      linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.1),
+          rgba(255, 255, 255, 0.4)
+        );
+
+    box-shadow:
       inset 0 1px 0 0 rgba(255, 255, 255, 0.7),
       0 6px 20px 0 rgba(26, 115, 232, 0.7);
   }
@@ -179,8 +212,17 @@
 
     // "Tuned down" gray background
     background-image:
-      linear-gradient(180deg, rgba(80, 80, 80, 0.3) 0%, rgba(40, 40, 40, 0.1) 100%), // Darker/Grayer body
-      linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%); // Very faint border
+      linear-gradient(
+        180deg,
+        rgba(80, 80, 80, 0.3) 0%,
+        rgba(40, 40, 40, 0.1) 100%
+      ),
+      // Darker/Grayer body
+      linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.05) 0%,
+          rgba(255, 255, 255, 0.02) 100%
+        ); // Very faint border
 
     // Ensure highlighted glass effect is gone or very subtle
     box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
@@ -227,7 +269,7 @@
 .btn-medium {
   height: 38px;
   font-size: 14px;
-  
+
   ::ng-deep mat-icon {
     width: 20px;
     height: 20px;

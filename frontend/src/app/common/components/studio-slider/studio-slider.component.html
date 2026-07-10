@@ -15,7 +15,10 @@
 -->
 
 <div class="studio-slider-container w-full">
-  <div class="flex justify-between items-center mb-1 text-sm text-gray-300 w-full" *ngIf="label || valueText">
+  <div
+    class="flex justify-between items-center mb-1 text-sm text-gray-300 w-full"
+    *ngIf="label || valueText"
+  >
     <span class="font-medium" *ngIf="label">{{ label }}</span>
     <span *ngIf="valueText">{{ valueText }}</span>
   </div>
@@ -26,6 +29,10 @@
     [disabled]="disabled"
     class="studio-slider py-2 !w-full"
   >
-    <input matSliderThumb [(ngModel)]="value" (ngModelChange)="onModelChange($event)" />
+    <input
+      matSliderThumb
+      [(ngModel)]="value"
+      (ngModelChange)="onModelChange($event)"
+    />
   </mat-slider>
 </div>

@@ -14,15 +14,39 @@
  limitations under the License.
 -->
 
-<mat-form-field appearance="outline" class="!mb-0 !p-0 !text-xs studio-date-range" [class]="'size-' + size" subscriptSizing="dynamic">
+<mat-form-field
+  appearance="outline"
+  class="!mb-0 !p-0 !text-xs studio-date-range"
+  [class]="'size-' + size"
+  subscriptSizing="dynamic"
+>
   <mat-date-range-input [rangePicker]="picker" class="!text-white/80">
-    <input matStartDate placeholder="Start" [(ngModel)]="startDate" (dateChange)="onDateChange()">
-    <input matEndDate placeholder="End" [(ngModel)]="endDate" (dateChange)="onDateChange()">
+    <input
+      matStartDate
+      placeholder="Start"
+      [(ngModel)]="startDate"
+      (dateChange)="onDateChange()"
+    />
+    <input
+      matEndDate
+      placeholder="End"
+      [(ngModel)]="endDate"
+      (dateChange)="onDateChange()"
+    />
   </mat-date-range-input>
-  <button mat-icon-button matSuffix *ngIf="startDate || endDate" (click)="clearDates($event)"
-    class="!w-6 !h-6 !leading-none !p-0">
+  <button
+    mat-icon-button
+    matSuffix
+    *ngIf="startDate || endDate"
+    (click)="clearDates($event)"
+    class="!w-6 !h-6 !leading-none !p-0"
+  >
     <mat-icon class="!text-white/60 !text-sm !mt-[0.1rem]">close</mat-icon>
   </button>
-  <mat-datepicker-toggle matIconSuffix [for]="picker" class="!text-white/60"></mat-datepicker-toggle>
+  <mat-datepicker-toggle
+    matIconSuffix
+    [for]="picker"
+    class="!text-white/60"
+  ></mat-datepicker-toggle>
   <mat-date-range-picker #picker></mat-date-range-picker>
 </mat-form-field>

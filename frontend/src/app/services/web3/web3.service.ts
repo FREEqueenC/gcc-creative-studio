@@ -124,7 +124,7 @@ export class Web3Service {
         // Simple transaction execution description
         // In full integration we encode the contract call: mintCreativeAsset(currentAddress, prepData.metadataUrl)
         console.log(
-          `Interacting with contract ${prepData.contractAddress} to mint for ${currentAddress}`
+          `Interacting with contract ${prepData.contractAddress} to mint for ${currentAddress}`,
         );
 
         // Return a mock/expected transaction hash for local sandbox to complete visual cycle smoothly

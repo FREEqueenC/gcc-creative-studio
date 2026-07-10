@@ -21,7 +21,9 @@
       <div class="title-group">
         <h1 class="page-title">My Workflows</h1>
       </div>
-      <studio-button variant="cta" size="medium"
+      <studio-button
+        variant="cta"
+        size="medium"
         mat-flat-button
         *ngIf="authService.isUserAdmin() || authService.isUserWorkflows()"
         (click)="createNewWorkflow()"
@@ -30,13 +32,16 @@
         New
       </studio-button>
     </div>
-
   </div>
 
   <!-- Agent Integration Panel -->
-  <mat-expansion-panel class="!bg-slate-900/40 !border !border-white/10 !rounded-xl !mb-6 !overflow-hidden !text-white backdrop-blur-md">
+  <mat-expansion-panel
+    class="!bg-slate-900/40 !border !border-white/10 !rounded-xl !mb-6 !overflow-hidden !text-white backdrop-blur-md"
+  >
     <mat-expansion-panel-header class="!text-white">
-      <mat-panel-title class="flex items-center gap-2 !text-cyan-400 font-semibold">
+      <mat-panel-title
+        class="flex items-center gap-2 !text-cyan-400 font-semibold"
+      >
         <mat-icon class="text-cyan-400">smart_toy</mat-icon>
         Aetheris Agentic API Integration
       </mat-panel-title>
@@ -47,23 +52,40 @@
 
     <div class="py-3 space-y-4 text-sm text-gray-300">
       <p>
-        Expose your creative workflows directly to the <strong>Aetheris Agentic Cloud</strong> (`freequeenc.github.io`) to automate multimedia campaigns, social postings, and smart-contract-triggered media generation.
+        Expose your creative workflows directly to the
+        <strong>Aetheris Agentic Cloud</strong> (`freequeenc.github.io`) to
+        automate multimedia campaigns, social postings, and
+        smart-contract-triggered media generation.
       </p>
 
       <div class="space-y-2 bg-black/20 border border-white/5 p-4 rounded-lg">
         <div class="flex justify-between items-center">
-          <span class="text-gray-400 text-xs font-semibold uppercase">API Key (X-Agent-Key):</span>
-          <code class="bg-white/5 px-2 py-1 rounded text-cyan-300 font-mono text-xs select-all">aetheris-dev-secret-key-11911</code>
+          <span class="text-gray-400 text-xs font-semibold uppercase"
+            >API Key (X-Agent-Key):</span
+          >
+          <code
+            class="bg-white/5 px-2 py-1 rounded text-cyan-300 font-mono text-xs select-all"
+            >aetheris-dev-secret-key-11911</code
+          >
         </div>
         <div class="flex justify-between items-center pt-2">
-          <span class="text-gray-400 text-xs font-semibold uppercase">Endpoint URL:</span>
-          <code class="bg-white/5 px-2 py-1 rounded text-purple-300 font-mono text-xs select-all">/api/workflows/agent/execute</code>
+          <span class="text-gray-400 text-xs font-semibold uppercase"
+            >Endpoint URL:</span
+          >
+          <code
+            class="bg-white/5 px-2 py-1 rounded text-purple-300 font-mono text-xs select-all"
+            >/api/workflows/agent/execute</code
+          >
         </div>
       </div>
 
       <div class="space-y-1">
-        <strong class="text-white text-xs uppercase tracking-wider block">Example cURL Request:</strong>
-        <pre class="bg-black/30 border border-white/5 p-3 rounded-lg overflow-x-auto text-xs font-mono text-gray-300 select-all">
+        <strong class="text-white text-xs uppercase tracking-wider block"
+          >Example cURL Request:</strong
+        >
+        <pre
+          class="bg-black/30 border border-white/5 p-3 rounded-lg overflow-x-auto text-xs font-mono text-gray-300 select-all"
+        >
 curl -X POST http://localhost:8080/api/workflows/agent/execute \
   -H "Content-Type: application/json" \
   -H "X-Agent-Key: aetheris-dev-secret-key-11911" \
@@ -73,7 +95,8 @@ curl -X POST http://localhost:8080/api/workflows/agent/execute \
     "args": &#123;
       "prompt": "Create an announcement image for Levity Protocol token launch"
     &#125;
-  &#125;'</pre>
+  &#125;'</pre
+        >
       </div>
     </div>
   </mat-expansion-panel>
@@ -88,10 +111,7 @@ curl -X POST http://localhost:8080/api/workflows/agent/execute \
     <span class="block sm:inline">{{ errorMessage }}</span>
   </div>
 
-  <div
-    class="workflows-list"
-    *ngIf="!errorMessage"
-  >
+  <div class="workflows-list" *ngIf="!errorMessage">
     <div class="workflows-filter">
       <studio-search-filter
         [(value)]="currentFilter"
@@ -107,76 +127,72 @@ curl -X POST http://localhost:8080/api/workflows/agent/execute \
       *ngIf="isLoading && dataSource.data.length === 0"
       class="flex justify-center items-center py-20"
     >
-      <mat-spinner
-        diameter="50"
-        color="accent"
-      ></mat-spinner>
+      <mat-spinner diameter="50" color="accent"></mat-spinner>
     </div>
 
     <div *ngIf="dataSource.data.length > 0 || !isLoading">
+      <div
+        *ngFor="let wf of obs$ | async"
+        class="workflow-card"
+        (click)="navigateToHistory(wf)"
+      >
+        <!-- Double click to view history -->
 
-    <div
-      *ngFor="let wf of obs$ | async"
-      class="workflow-card"
-      (click)="navigateToHistory(wf)"
-    >
-      <!-- Double click to view history -->
+        <div class="card-content">
+          <!-- Info Left -->
+          <div class="info-group">
+            <h2>{{ wf.name }}</h2>
+            <p class="description">
+              {{ wf.description || 'No description provided' }}
+            </p>
 
-      <div class="card-content">
-        <!-- Info Left -->
-        <div class="info-group">
-          <h2>{{ wf.name }}</h2>
-          <p class="description">{{ wf.description || 'No description provided' }}</p>
+            <div class="meta-row">
+              <span>Created: {{ wf.createdAt | date: 'longDate' }}</span>
 
-          <div class="meta-row">
-            <span>Created: {{ wf.createdAt | date:'longDate' }}</span>
-
-            <div class="time-ago">
-              <mat-icon class="tiny-icon">schedule</mat-icon>
-              <span> {{ formatTimeAgo(wf.updatedAt) }}</span>
+              <div class="time-ago">
+                <mat-icon class="tiny-icon">schedule</mat-icon>
+                <span> {{ formatTimeAgo(wf.updatedAt) }}</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- Actions Right (Always visible or hover? Screenshot shows them clearly) -->
-        <div
-          class="actions-group"
-          *ngIf="authService.isUserAdmin() || authService.isUserWorkflows()"
-        >
-          <button
-            mat-icon-button
-            (click)="$event.stopPropagation()"
-            [routerLink]="['/workflows/edit', wf.id]"
-            [queryParams]="{ returnUrl: '/workflows' }"
-            matTooltip="Edit Definition"
+          <!-- Actions Right (Always visible or hover? Screenshot shows them clearly) -->
+          <div
+            class="actions-group"
+            *ngIf="authService.isUserAdmin() || authService.isUserWorkflows()"
           >
-            <mat-icon>edit</mat-icon>
-          </button>
-          <button
-            mat-icon-button
-            (click)="deleteWorkflow(wf, $event)"
-            matTooltip="Delete Workflow"
-          >
-            <mat-icon>delete</mat-icon>
-          </button>
+            <button
+              mat-icon-button
+              (click)="$event.stopPropagation()"
+              [routerLink]="['/workflows/edit', wf.id]"
+              [queryParams]="{returnUrl: '/workflows'}"
+              matTooltip="Edit Definition"
+            >
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button
+              mat-icon-button
+              (click)="deleteWorkflow(wf, $event)"
+              matTooltip="Delete Workflow"
+            >
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
         </div>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="(obs$ | async)?.length === 0" class="empty-state">
+        <mat-icon>toc</mat-icon>
+        <p>No workflows found.</p>
       </div>
     </div>
 
-    <!-- Empty State -->
-    <div
-      *ngIf="(obs$ | async)?.length === 0"
-      class="empty-state"
+    <mat-paginator
+      class="!bg-transparent text-gray-400 mt-4"
+      [pageSizeOptions]="[5, 10, 25, 100]"
+      showFirstLastButtons
     >
-      <mat-icon>toc</mat-icon>
-      <p>No workflows found.</p>
-    </div>
+    </mat-paginator>
   </div>
-
-  <mat-paginator
-    class="!bg-transparent text-gray-400 mt-4"
-    [pageSizeOptions]="[5, 10, 25, 100]"
-    showFirstLastButtons
-  >
-  </mat-paginator>
 </div>

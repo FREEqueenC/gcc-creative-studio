@@ -83,7 +83,6 @@
       </div>
     </div>
 
-
     <!-- Overlays for VTO job status (processing / failed) -->
     <ng-container *ngIf="activeVtoJob$ | async as job">
       <!-- Processing Overlay -->
@@ -91,9 +90,17 @@
         *ngIf="job.status === JobStatus.PROCESSING"
         class="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black bg-opacity-70 text-center p-4"
       >
-        <mat-progress-spinner color="primary" mode="indeterminate" [diameter]="50"></mat-progress-spinner>
-        <p class="!mt-6 text-white text-lg">Your virtual try-on is being generated...</p>
-        <p class="text-gray-400 text-sm">This may take a few moments. You can safely navigate away.</p>
+        <mat-progress-spinner
+          color="primary"
+          mode="indeterminate"
+          [diameter]="50"
+        ></mat-progress-spinner>
+        <p class="!mt-6 text-white text-lg">
+          Your virtual try-on is being generated...
+        </p>
+        <p class="text-gray-400 text-sm">
+          This may take a few moments. You can safely navigate away.
+        </p>
       </div>
 
       <!-- Failed Overlay -->
@@ -101,10 +108,19 @@
         *ngIf="job.status === JobStatus.FAILED && showErrorOverlay"
         class="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black bg-opacity-70 rounded-xl text-center p-4"
       >
-        <mat-icon class="text-red-500 !w-16 !h-16 !text-6xl">error_outline</mat-icon>
+        <mat-icon class="text-red-500 !w-16 !h-16 !text-6xl"
+          >error_outline</mat-icon
+        >
         <p class="mt-4 text-white text-lg">VTO Generation Failed</p>
-        <p class="text-gray-400 text-sm max-w-md">{{ job.errorMessage || job.error_message || 'An error occurred' }}</p>
-        <button mat-raised-button color="primary" (click)="closeErrorOverlay()" class="mt-4">
+        <p class="text-gray-400 text-sm max-w-md">
+          {{ job.errorMessage || job.error_message || 'An error occurred' }}
+        </p>
+        <button
+          mat-raised-button
+          color="primary"
+          (click)="closeErrorOverlay()"
+          class="mt-4"
+        >
           Close
         </button>
       </div>
@@ -149,8 +165,11 @@
                 </mat-card>
               </div>
               <div class="flex justify-start mt-6">
-                <button mat-raised-button class="!bg-gradient-to-r from-blue-500 via-violet-500 to-red-400 !text-white font-bold"
-                  matStepperNext>
+                <button
+                  mat-raised-button
+                  class="!bg-gradient-to-r from-blue-500 via-violet-500 to-red-400 !text-white font-bold"
+                  matStepperNext
+                >
                   Next
                 </button>
               </div>

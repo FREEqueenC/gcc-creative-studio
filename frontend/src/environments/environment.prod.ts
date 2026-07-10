@@ -29,5 +29,6 @@ export const environment = {
   EMAIL_REGEX:
     /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
   ADMIN: 'admin',
-  GOOGLE_CLIENT_ID: '766520697417-1nj27fsrs98f9rtjpmq20gn856jpmq0v.apps.googleusercontent.com',
+  GOOGLE_CLIENT_ID:
+    '766520697417-1nj27fsrs98f9rtjpmq20gn856jpmq0v.apps.googleusercontent.com',
 };

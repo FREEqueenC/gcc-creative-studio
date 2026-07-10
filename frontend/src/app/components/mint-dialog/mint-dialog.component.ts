@@ -71,8 +71,8 @@ export class MintDialogComponent implements OnInit {
     try {
       this.errorMessage = null;
       await this.web3Service.connectWallet(this.selectedChain);
-    } catch (err: any) {
-      this.errorMessage = err.message || 'Failed to connect wallet';
+    } catch (err) {
+      this.errorMessage = (err as Error).message || 'Failed to connect wallet';
     }
   }
 
@@ -86,8 +86,10 @@ export class MintDialogComponent implements OnInit {
         this.selectedChain,
       );
       this.step = 'confirm-mint';
-    } catch (err: any) {
-      this.errorMessage = err.error?.detail || 'Failed to load mint parameters';
+    } catch (err) {
+      this.errorMessage =
+        (err as {error?: {detail?: string}}).error?.detail ||
+        'Failed to load mint parameters';
       this.step = 'select-chain';
     }
   }
@@ -104,8 +106,9 @@ export class MintDialogComponent implements OnInit {
         this.prepData,
       );
       this.step = 'success';
-    } catch (err: any) {
-      this.errorMessage = err.message || 'Transaction failed or rejected';
+    } catch (err) {
+      this.errorMessage =
+        (err as Error).message || 'Transaction failed or rejected';
       this.step = 'confirm-mint';
     }
   }

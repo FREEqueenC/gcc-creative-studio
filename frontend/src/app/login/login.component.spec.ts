@@ -64,6 +64,7 @@ describe('LoginComponent', () => {
   };
 
   beforeEach(async () => {
+    consoleErrorSpy = spyOn(console, 'error');
     const snackBarSpy = jasmine.createSpyObj('MatSnackBar', ['open']);
     const notificationServiceSpy = jasmine.createSpyObj('NotificationService', [
       'show',
@@ -105,9 +106,6 @@ describe('LoginComponent', () => {
   });
 
   describe('loginWithGoogle', () => {
-    beforeEach(() => {
-      consoleErrorSpy = spyOn(console, 'error');
-    });
     it('should show loader and reset error flags', fakeAsync(() => {
       authService.signInWithGoogleFirebase.and.returnValue(NEVER); // Use NEVER to prevent completion or error
       authService.signInForGoogleIdentityPlatform.and.returnValue(NEVER); // Use NEVER
@@ -224,9 +222,6 @@ describe('LoginComponent', () => {
   });
 
   describe('handleLoginError', () => {
-    beforeEach(() => {
-      consoleErrorSpy = spyOn(console, 'error');
-    });
     it('should hide loader and show snackbar', () => {
       component.loader = true;
       const errorMessage = {message: 'Test error message'};

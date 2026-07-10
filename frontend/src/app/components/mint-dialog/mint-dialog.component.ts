@@ -52,7 +52,7 @@ export class MintDialogComponent implements OnInit {
     this.web3Service.walletAddress.subscribe(addr => {
       this.walletAddress = addr;
       if (addr && this.step === 'connect-wallet') {
-        this.loadPrepData();
+        void this.loadPrepData();
       }
     });
   }
@@ -60,7 +60,7 @@ export class MintDialogComponent implements OnInit {
   selectChain(chain: 'base' | 'flow') {
     this.selectedChain = chain;
     if (this.walletAddress) {
-      this.loadPrepData();
+      void this.loadPrepData();
     } else {
       this.step = 'connect-wallet';
     }

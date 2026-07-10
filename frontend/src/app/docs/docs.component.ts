@@ -113,6 +113,8 @@ export class DocsComponent implements OnInit, AfterViewChecked {
     try {
       this.chatScrollContainer.nativeElement.scrollTop =
         this.chatScrollContainer.nativeElement.scrollHeight;
-    } catch (err) {}
+    } catch (err) {
+      // Silently ignore errors when scrolling container is not available
+    }
   }
 }

@@ -100,6 +100,9 @@ class ConfigService(BaseSettings):
     # --- Pinata IPFS ---
     PINATA_JWT: str = ""
 
+    # --- Inworld TTS ---
+    INWORLD_API_KEY: str = ""
+
     @model_validator(mode="before")
     @classmethod
     def get_default_project_id(cls, values: Any) -> Any:

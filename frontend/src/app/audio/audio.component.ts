@@ -40,7 +40,7 @@ import {
 } from '../utils/handleMessageSnackbar';
 
 // UI Helper type
-type UiModelType = 'lyria' | 'chirp' | 'gemini-tts';
+type UiModelType = 'lyria' | 'chirp' | 'gemini-tts' | 'inworld-tts';
 
 interface VoiceOption {
   id: VoiceEnum | string; // Allow string for custom cloned voices later
@@ -89,6 +89,7 @@ export class AudioComponent implements OnInit {
   mediaItem: MediaItem | null = null;
 
   languages: LanguageOption[] = [
+    {code: LanguageEnum.AUTO, name: 'Auto-detect Language'},
     {code: LanguageEnum.AR_XA, name: 'Arabic'},
     {code: LanguageEnum.BG_BG, name: 'Bulgarian (Bulgaria)'},
     {code: LanguageEnum.BN_IN, name: 'Bengali (India)'},
@@ -139,6 +140,7 @@ export class AudioComponent implements OnInit {
 
   // Map Enums to Voice Options
   voices: VoiceOption[] = [
+    {id: VoiceEnum.SNOWY_CLIFF, name: 'Snowy Cliff (Inworld)', type: 'preset'},
     {id: VoiceEnum.ACHERNAR, name: 'Achernar (Female)', type: 'preset'},
     {id: VoiceEnum.ACHIRD, name: 'Achird (Male)', type: 'preset'},
     {id: VoiceEnum.ALGENIB, name: 'Algenib (Male)', type: 'preset'},
@@ -271,6 +273,8 @@ export class AudioComponent implements OnInit {
       backendModel = GenerationModelEnum.LYRIA_002;
     } else if (this.selectedModel === 'chirp') {
       backendModel = GenerationModelEnum.CHIRP_3;
+    } else if (this.selectedModel === 'inworld-tts') {
+      backendModel = GenerationModelEnum.INWORLD_TTS_2;
     } else {
       // Default to Flash TTS for Gemini selection
       backendModel = GenerationModelEnum.GEMINI_2_5_FLASH_TTS;

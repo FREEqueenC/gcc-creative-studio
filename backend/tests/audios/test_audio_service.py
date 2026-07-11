@@ -275,3 +275,71 @@ class TestBackgroundWorkers:
             called_config.speech_config.voice_config.prebuilt_voice_config.voice_name
             == "Aoede"
         )
+
+    @patch("src.database.WorkerDatabase")
+    @patch("src.audios.audio_service.MediaRepository")
+    @patch("src.audios.audio_service.GcsService")
+    @patch("httpx.AsyncClient")
+    def test_process_inworld_in_background_sync(
+        self,
+        mock_client_cls,
+        mock_gcs,
+        mock_repo_cls,
+        mock_worker_db,
+        sample_user,
+    ):
+        inworld_dto = CreateAudioDto(
+            workspace_id=1,
+            prompt="Inworld prompt",
+            model=GenerationModelEnum.INWORLD_TTS_2,
+            sample_count=1,
+            language_code=LanguageEnum.AUTO,
+            voice_name=VoiceEnum.SNOWY_CLIFF,
+        )
+
+        mock_db_factory = MagicMock()
+        mock_worker_db.return_value.__aenter__.return_value = mock_db_factory
+        mock_db_session = AsyncMock()
+        mock_db_factory.return_value.__aenter__.return_value = mock_db_session
+
+        mock_repo = AsyncMock()
+        mock_repo_cls.return_value = mock_repo
+
+        mock_gcs_singleton = MagicMock()
+        mock_gcs_singleton.store_to_gcs.return_value = "gs://foo/inworld.mp3"
+        mock_gcs.return_value = mock_gcs_singleton
+
+        # Setup mock httpx client response
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "audioContent": "SGVsbG8="  # Base64 encoded 'Hello'
+        }
+        mock_client_instance = AsyncMock()
+        mock_client_instance.post.return_value = mock_response
+        mock_client_cls.return_value.__aenter__.return_value = mock_client_instance
+
+        # Mock ConfigService.INWORLD_API_KEY
+        from src.config.config_service import config_service
+        with patch.object(config_service, "INWORLD_API_KEY", "dummy_key"):
+            _process_audio_in_background(
+                media_item_id=127,
+                request_dto=inworld_dto,
+                user_email=sample_user.email,
+                user_id=sample_user.id,
+            )
+
+        mock_repo.update.assert_called_with(
+            127,
+            {
+                "status": JobStatusEnum.COMPLETED,
+                "gcs_uris": ["gs://foo/inworld.mp3"],
+                "generation_time": pytest.approx(0, abs=10.0),
+            },
+        )
+        mock_client_instance.post.assert_called_once()
+        call_args, call_kwargs = mock_client_instance.post.call_args
+        assert call_args[0] == "https://api.inworld.ai/tts/v1/voice"
+        assert call_kwargs["json"]["voiceId"] == "snowy-cliff-3704__ashelle"
+        assert call_kwargs["json"]["language"] == "AUTO"
+

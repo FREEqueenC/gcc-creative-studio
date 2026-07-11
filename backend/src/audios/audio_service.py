@@ -287,6 +287,75 @@ def _process_audio_in_background(
                             results = await asyncio.gather(*tasks)
                             permanent_gcs_uris = [u for u in results if u]
 
+                        elif request_dto.model in AudioService.INWORLD_MODELS:
+                            api_key = cfg.INWORLD_API_KEY
+                            if not api_key:
+                                raise ValueError("INWORLD_API_KEY is not configured in the environment.")
+
+                            async def generate_inworld(index: int) -> str | None:
+                                try:
+                                    voice_id = (
+                                        request_dto.voice_name.value
+                                        if request_dto.voice_name
+                                        else "snowy-cliff-3704__ashelle"
+                                    )
+                                    # Normalize voice ID if the Enum value doesn't already match
+                                    if voice_id == VoiceEnum.SNOWY_CLIFF.value:
+                                        voice_id = "snowy-cliff-3704__ashelle"
+
+                                    language = (
+                                        request_dto.language_code.value
+                                        if request_dto.language_code
+                                        else "AUTO"
+                                    )
+                                    if language == LanguageEnum.AUTO.value:
+                                        language = "AUTO"
+
+                                    import httpx
+                                    headers = {
+                                        "Authorization": f"Basic {api_key}",
+                                        "Content-Type": "application/json"
+                                    }
+                                    payload = {
+                                        "text": request_dto.prompt,
+                                        "voiceId": voice_id,
+                                        "modelId": "inworld-tts-2",
+                                        "timestampType": "WORD",
+                                        "audioConfig": {
+                                            "speakingRate": 1
+                                        },
+                                        "deliveryMode": "BALANCED",
+                                        "language": language
+                                    }
+                                    async with httpx.AsyncClient() as client:
+                                        response = await client.post(
+                                            "https://api.inworld.ai/tts/v1/voice",
+                                            json=payload,
+                                            headers=headers,
+                                            timeout=60.0
+                                        )
+                                        response.raise_for_status()
+                                        res_data = response.json()
+                                        audio_content = base64.b64decode(res_data["audioContent"])
+
+                                    file_name = f"inworld_{media_item_id}_{uid_short}_{index}.mp3"
+                                    return gcs_service.store_to_gcs(
+                                        folder="inworld_audio",
+                                        file_name=file_name,
+                                        mime_type=MimeTypeEnum.AUDIO_MP3,
+                                        contents=audio_content,
+                                        decode=False,
+                                    )
+                                except Exception as e:
+                                    worker_logger.error(f"Inworld TTS generation error: {e}")
+                                    return None
+
+                            tasks = [
+                                generate_inworld(i) for i in range(request_dto.sample_count)
+                            ]
+                            results = await asyncio.gather(*tasks)
+                            permanent_gcs_uris = [u for u in results if u]
+
                         else:
                             raise ValueError(
                                 f"Model {request_dto.model} is not supported."
@@ -337,6 +406,9 @@ class AudioService:
     }
     MUSIC_MODELS = {
         GenerationModelEnum.LYRIA_002,
+    }
+    INWORLD_MODELS = {
+        GenerationModelEnum.INWORLD_TTS_2,
     }
 
     def __init__(

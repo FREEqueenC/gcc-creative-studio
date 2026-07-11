@@ -61,6 +61,7 @@ export enum LanguageEnum {
   TR_TR = 'tr-TR',
   UK_UA = 'uk-UA',
   VI_VN = 'vi-VN',
+  AUTO = 'AUTO',
 }
 
 export enum VoiceEnum {
@@ -94,4 +95,5 @@ export enum VoiceEnum {
   VINDEMIATRIX = 'Vindemiatrix',
   ZEPHYR = 'Zephyr',
   ZUBENELGENUBI = 'Zubenelgenubi',
+  SNOWY_CLIFF = 'snowy-cliff-3704__ashelle',
 }

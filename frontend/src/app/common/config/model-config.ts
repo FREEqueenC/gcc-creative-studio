@@ -287,6 +287,21 @@ export const MODEL_CONFIGS: GenerationModelConfig[] = [
       supportsNegativePrompt: false,
     },
   },
+  {
+    value: 'inworld-tts-2',
+    viewValue: 'Inworld TTS',
+    type: 'AUDIO',
+    icon: 'record_voice_over',
+    capabilities: {
+      supportedModes: ['Text to Audio'],
+      maxReferenceImages: 0,
+      supportedAspectRatios: [],
+      supportsVoice: true,
+      supportsLanguage: true,
+      supportsSeed: false,
+      supportsNegativePrompt: false,
+    },
+  },
 ];
 
 export const ASPECT_RATIO_LABELS: Record<string, string> = {

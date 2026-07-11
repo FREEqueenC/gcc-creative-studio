@@ -34,13 +34,18 @@ $ENV_VARS += "DB_PASS=studio_pass"
 $ENV_VARS += "DB_NAME=creative_studio"
 $ENV_VARS += "USE_CLOUD_SQL_AUTH_PROXY=false"
 
-# Load Pinata JWT if present in local .env
+# Load Pinata JWT and Inworld API Key if present in local .env
 $LOCAL_ENV_PATH = Join-Path (Get-Location) "backend\.env"
 if (Test-Path $LOCAL_ENV_PATH) {
     $PinataLine = Get-Content $LOCAL_ENV_PATH | Select-String "PINATA_JWT="
     if ($PinataLine) {
         $ENV_VARS += $PinataLine.ToString().Trim()
         Write-Host "Loaded PINATA_JWT configuration from local backend/.env" -ForegroundColor Green
+    }
+    $InworldLine = Get-Content $LOCAL_ENV_PATH | Select-String "INWORLD_API_KEY="
+    if ($InworldLine) {
+        $ENV_VARS += $InworldLine.ToString().Trim()
+        Write-Host "Loaded INWORLD_API_KEY configuration from local backend/.env" -ForegroundColor Green
     }
 }
 

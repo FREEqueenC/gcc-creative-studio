@@ -65,6 +65,7 @@ class LanguageEnum(str, Enum):
     TR_TR = "tr-TR"
     UK_UA = "uk-UA"
     VI_VN = "vi-VN"
+    AUTO = "AUTO"
 
 
 class VoiceEnum(str, Enum):
@@ -100,3 +101,4 @@ class VoiceEnum(str, Enum):
     VINDEMIATRIX = "Vindemiatrix"
     ZEPHYR = "Zephyr"
     ZUBENELGENUBI = "Zubenelgenubi"
+    SNOWY_CLIFF = "snowy-cliff-3704__ashelle"

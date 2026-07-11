@@ -31,6 +31,7 @@ export enum GenerationModelEnum {
   GEMINI_2_5_FLASH_TTS = 'gemini-2.5-flash-tts',
   GEMINI_2_5_FLASH_LITE_PREVIEW_TTS = 'gemini-2.5-flash-lite-preview-tts',
   GEMINI_2_5_PRO_TTS = 'gemini-2.5-pro-tts',
+  INWORLD_TTS_2 = 'inworld-tts-2',
 }
 
 // 2. Define the Generic Request DTO

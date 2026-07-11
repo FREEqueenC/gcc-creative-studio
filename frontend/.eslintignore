@@ -1,7 +1,0 @@
-build/
-dist/
-.eslintrc.js
-ios/
-android/
-*.config.js
-server.ts

@@ -65,7 +65,7 @@ async def get_current_user(
             # (OIDC) ---
             # Verifies the Google-issued OIDC ID token. The audience must be the
             # OAuth 2.0 client ID of the Identity Platform-protected resource.
-            google_token_audience = config_service.GOOGLE_TOKEN_AUDIENCE
+            google_token_audience = config_service.GOOGLE_TOKEN_AUDIENCE.strip()
             decoded_token = await asyncio.to_thread(
                 id_token.verify_oauth2_token,
                 token,

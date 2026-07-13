@@ -127,6 +127,17 @@ class CreateImagenDto(BaseDto):
             GenerationModelEnum.GEMINI_3_PRO_IMAGE,
             GenerationModelEnum.GEMINI_3_1_FLASH_IMAGE_PREVIEW,
             GenerationModelEnum.GEMINI_3_1_FLASH_IMAGE,
+            GenerationModelEnum.IMAGEN_3_001,
+            GenerationModelEnum.IMAGEN_3_FAST,
+            GenerationModelEnum.IMAGEN_3_002,
+            GenerationModelEnum.IMAGEN_4_001,
+            GenerationModelEnum.IMAGEN_4_ULTRA,
+            GenerationModelEnum.IMAGEN_4_ULTRA_PREVIEW,
+            GenerationModelEnum.IMAGEN_4_FAST,
+            GenerationModelEnum.IMAGEN_4_FAST_PREVIEW,
+            GenerationModelEnum.IMAGEGEN_006,
+            GenerationModelEnum.IMAGEGEN_005,
+            GenerationModelEnum.IMAGEGEN_002,
         ]
         if value not in valid_generation_models:
             raise ValueError("Invalid generation model for imagen.")

@@ -51,6 +51,42 @@ export interface GenerationModelConfig {
 export const MODEL_CONFIGS: GenerationModelConfig[] = [
   // --- Image Models ---
   {
+    value: 'imagen-3.0-generate-002',
+    viewValue: 'Imagen 3 (High Quality)',
+    type: 'IMAGE',
+    icon: 'image',
+    capabilities: {
+      supportedModes: ['Text to Image'],
+      maxReferenceImages: 0,
+      supportedAspectRatios: [
+        '1:1',
+        '3:4',
+        '4:3',
+        '9:16',
+        '16:9'
+      ],
+      supportsNegativePrompt: true,
+    },
+  },
+  {
+    value: 'imagen-3.0-fast-generate-001',
+    viewValue: 'Imagen 3 (Fast)',
+    type: 'IMAGE',
+    icon: 'bolt',
+    capabilities: {
+      supportedModes: ['Text to Image'],
+      maxReferenceImages: 0,
+      supportedAspectRatios: [
+        '1:1',
+        '3:4',
+        '4:3',
+        '9:16',
+        '16:9'
+      ],
+      supportsNegativePrompt: true,
+    },
+  },
+  {
     value: 'gemini-3.1-flash-image',
     viewValue: 'Nano Banana 2',
     type: 'IMAGE',

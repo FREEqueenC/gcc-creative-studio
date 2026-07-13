@@ -252,7 +252,7 @@ export class AuthService {
             () =>
               new Error(
                 error?.error?.detail ||
-                  `Could not synchronize user profile with the server. ${error?.error?.detail}`,
+                  `Could not synchronize user profile with the server. ${error?.message || ''}`,
               ),
           );
         }),

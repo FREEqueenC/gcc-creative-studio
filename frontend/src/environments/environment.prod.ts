@@ -25,7 +25,7 @@ export const environment = {
   },
   production: true,
   isLocal: false,
-  backendURL: '/api',
+  backendURL: 'https://aetherisx-backend-766520697417.us-central1.run.app/api',
   EMAIL_REGEX:
     /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
   ADMIN: 'admin',

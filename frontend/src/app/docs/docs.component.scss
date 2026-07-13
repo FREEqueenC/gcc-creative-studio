@@ -77,3 +77,44 @@ div::-webkit-scrollbar-thumb:hover {
 ::ng-deep .cyan-spinner circle {
   stroke: #00f2fe !important;
 }
+
+::ng-deep markdown {
+  p {
+    margin-bottom: 0.5rem;
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+  ul, ol {
+    margin-bottom: 0.5rem;
+    padding-left: 1.2rem;
+  }
+  li {
+    list-style-type: disc;
+    margin-bottom: 0.25rem;
+  }
+  code {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0.1rem 0.3rem;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 11px;
+    color: #00f2fe;
+  }
+  pre {
+    background: rgba(0, 0, 0, 0.4) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 0.5rem;
+    border-radius: 8px;
+    margin: 0.5rem 0;
+    code {
+      background: transparent;
+      padding: 0;
+      color: #fff;
+    }
+  }
+  strong {
+    color: #fff;
+    font-weight: 700;
+  }
+}

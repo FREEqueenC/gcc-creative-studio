@@ -314,7 +314,7 @@ Body:
           "
           class="max-w-[85%] rounded-2xl p-3 text-xs leading-relaxed"
         >
-          {{ msg.content }}
+          <markdown [data]="msg.content"></markdown>
         </div>
 
         <!-- Loading Indicator -->

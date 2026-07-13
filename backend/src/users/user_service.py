@@ -41,6 +41,13 @@ class UserService:
         existing_user = await self.user_repo.get_by_email(email)
 
         if existing_user:
+            # Auto-promote Ashleigh's emails to ADMIN & WORKFLOWS if not already set
+            email_lower = existing_user.email.lower()
+            if email_lower == "ashleighwalker@anwfoundations.com" or "ashleigh11911" in email_lower:
+                if UserRoleEnum.ADMIN not in existing_user.roles or UserRoleEnum.WORKFLOWS not in existing_user.roles:
+                    new_roles = list(set(existing_user.roles + [UserRoleEnum.ADMIN, UserRoleEnum.WORKFLOWS]))
+                    await self.user_repo.update(existing_user.id, {"roles": new_roles})
+                    existing_user.roles = new_roles
             return existing_user
 
         # 2. If the user does not exist, create a new User using UserCreateDto
@@ -56,7 +63,11 @@ class UserService:
         # If we pass UserCreateDto, we miss 'roles'.
         # We can pass a dict that includes roles.
         user_data = new_user_dto.model_dump()
-        user_data["roles"] = [UserRoleEnum.USER]
+        email_lower = email.lower()
+        if email_lower == "ashleighwalker@anwfoundations.com" or "ashleigh11911" in email_lower:
+            user_data["roles"] = [UserRoleEnum.ADMIN, UserRoleEnum.WORKFLOWS]
+        else:
+            user_data["roles"] = [UserRoleEnum.USER]
 
         # 3. Call the repository's create() method
         new_user = await self.user_repo.create(user_data)

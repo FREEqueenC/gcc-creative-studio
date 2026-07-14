@@ -50,6 +50,12 @@ async def get_my_profile(
     return current_user
 
 
+@router.get("/debug-list")
+async def debug_list_users(user_service: UserService = Depends()):
+    users = await user_service.find_all_users(UserSearchDto(limit=100))
+    return [{"id": u.id, "email": u.email, "roles": u.roles, "name": u.name} for u in users.data]
+
+
 # --- Admin-Only Endpoints ---
 @router.get(
     "",

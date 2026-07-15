@@ -56,6 +56,13 @@ class VtoInputLink(BaseDto):
 class VtoDto(BaseDto):
     """Request schema for Virtual Try-On image generation."""
 
+    @model_validator(mode="before")
+    @classmethod
+    def strip_nones(cls, data):
+        if isinstance(data, dict):
+            return {k: v for k, v in data.items() if v is not None}
+        return data
+
     workspace_id: int = Field(
         ge=1,
         description="The ID of the workspace for this generation.",

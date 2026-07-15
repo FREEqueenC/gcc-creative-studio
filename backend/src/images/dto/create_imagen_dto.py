@@ -34,7 +34,15 @@ class CreateImagenDto(BaseDto):
     contract explicit and self-documenting.
     """
 
-    prompt: Annotated[str, Query(max_length=10000)] = Field(
+    @model_validator(mode="before")
+    @classmethod
+    def strip_nones(cls, data):
+        if isinstance(data, dict):
+            return {k: v for k, v in data.items() if v is not None}
+        return data
+
+    prompt: str = Field(
+        max_length=10000,
         description="Prompt term to be passed to the model",
     )
     workspace_id: int = Field(

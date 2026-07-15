@@ -13,9 +13,7 @@
 # limitations under the License.
 
 
-from typing import Annotated
 
-from fastapi import Query
 from pydantic import Field, field_validator, model_validator
 
 from src.common.base_dto import (

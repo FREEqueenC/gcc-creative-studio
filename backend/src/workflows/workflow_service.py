@@ -262,8 +262,7 @@ class WorkflowService:
         except ValidationError as e:
             raise ValueError(str(e))
         except Exception as e:
-            # TODO: Improve error handling here
-            logging.exception(e)
+            logger.exception("Unexpected error creating workflow")
             raise e
 
     async def get_workflow(self, user_id: int, workflow_id: str):

@@ -15,7 +15,7 @@
  */
 
 import {Component, NgZone, Inject, PLATFORM_ID} from '@angular/core';
-import {GoogleAuthProvider} from '@angular/fire/auth';
+import {GoogleAuthProvider, GithubAuthProvider} from '@angular/fire/auth';
 import {Router} from '@angular/router';
 import {AuthService} from './../common/services/auth.service';
 import {UserModel} from './../common/models/user.model';
@@ -40,6 +40,7 @@ interface LooseObject {
 })
 export class LoginComponent {
   private readonly provider: GoogleAuthProvider = new GoogleAuthProvider();
+  private readonly githubProvider: GithubAuthProvider = new GithubAuthProvider();
 
   loader = false;
   invalidLogin = false;
@@ -101,6 +102,21 @@ export class LoginComponent {
     if (postErrorAction) {
       postErrorAction();
     }
+  }
+
+  loginWithGithub() {
+    this.loader = true;
+    this.authService.signInWithGithub().subscribe({
+      next: () => {
+        this.ngZone.run(() => {
+          this.loader = false;
+          void this.router.navigate([HOME_ROUTE]);
+        });
+      },
+      error: (error: any) => {
+        this.handleLoginError(error);
+      },
+    });
   }
 
   redirect(user: UserModel) {

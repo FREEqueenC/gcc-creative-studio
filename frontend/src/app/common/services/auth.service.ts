@@ -23,6 +23,7 @@ import {Auth, IdTokenResult, onIdTokenChanged, User} from '@angular/fire/auth';
 import {UserService} from '../services/user.service';
 import {
   GoogleAuthProvider,
+  GithubAuthProvider,
   signInWithPopup,
   UserCredential,
 } from '@angular/fire/auth';
@@ -145,6 +146,48 @@ export class AuthService {
         this.clearSessionData();
         return throwError(
           () => new Error(`Sign-in failed. Please try again. ${error}`),
+        );
+      }),
+    );
+  }
+
+  /**
+   * Signs in with GitHub via Firebase popup.
+   * Reuses the same token-sync flow as Google sign-in.
+   */
+  signInWithGithub(): Observable<string> {
+    const githubProvider = new GithubAuthProvider();
+    githubProvider.addScope('read:user');
+    githubProvider.addScope('user:email');
+
+    return from(signInWithPopup(this.auth, githubProvider)).pipe(
+      switchMap((userCredential: UserCredential) => {
+        if (!userCredential.user) {
+          return throwError(
+            () => new Error('GitHub user not found after sign-in.'),
+          );
+        }
+        return from(userCredential.user.getIdTokenResult());
+      }),
+      switchMap((idTokenResult: IdTokenResult) => {
+        const token = idTokenResult.token;
+        const expirationTime = Date.parse(idTokenResult.expirationTime);
+
+        this.firebaseIdToken = token;
+        this.firebaseTokenExpiry = expirationTime;
+        const session: FirebaseSession = {token, expiry: expirationTime};
+        localStorage.setItem(FIREBASE_SESSION_KEY, JSON.stringify(session));
+
+        return this.syncUserWithBackend$(token).pipe(
+          switchMap(() => from(this.settingsService.loadSettings())),
+          map(() => token),
+        );
+      }),
+      catchError((error: any) => {
+        console.error('GitHub sign-in error:', error);
+        this.clearSessionData();
+        return throwError(
+          () => new Error(`GitHub sign-in failed. Please try again. ${error}`),
         );
       }),
     );

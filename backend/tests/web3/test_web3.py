@@ -15,7 +15,6 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from src.web3.web3_service import Web3Service
-from src.users.user_model import UserModel, UserRoleEnum
 
 @pytest.mark.asyncio
 async def test_get_nft_metadata_success(mock_user):

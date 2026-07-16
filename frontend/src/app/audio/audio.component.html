@@ -122,6 +122,21 @@
           />
         </mat-form-field>
 
+        <mat-form-field appearance="outline">
+          <mat-label>Solfeggio Resonance (Frequency)</mat-label>
+          <mat-select [(ngModel)]="solfeggioFrequency">
+            <mat-option [value]="'none'">None (Standard)</mat-option>
+            <mat-option [value]="'396'">396 Hz — Liberating Guilt & Fear</mat-option>
+            <mat-option [value]="'417'">417 Hz — Facilitating Change</mat-option>
+            <mat-option [value]="'432'">432 Hz — Cosmic Natural Frequency</mat-option>
+            <mat-option [value]="'528'">528 Hz — DNA Repair & Miracles</mat-option>
+            <mat-option [value]="'639'">639 Hz — Harmonious Relationships</mat-option>
+            <mat-option [value]="'741'">741 Hz — Awakening Intuition</mat-option>
+            <mat-option [value]="'852'">852 Hz — Spiritual Resonance</mat-option>
+            <mat-option [value]="'963'">963 Hz — Divine Consciousness</mat-option>
+          </mat-select>
+        </mat-form-field>
+
         <mat-form-field appearance="outline" class="short-field">
           <mat-label>Seed</mat-label>
           <input matInput type="number" [(ngModel)]="seed" />

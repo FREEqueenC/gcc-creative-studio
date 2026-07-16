@@ -51,47 +51,33 @@ export interface GenerationModelConfig {
 export const MODEL_CONFIGS: GenerationModelConfig[] = [
   // --- Image Models ---
   {
-    value: 'imagen-3.0-generate-002',
-    viewValue: 'Imagen 3 (High Quality)',
+    value: 'gemini-3-pro-image',
+    viewValue: 'Aetheris Ultra Image (Gemini 3 Pro)',
     type: 'IMAGE',
-    icon: 'image',
+    icon: 'auto_awesome',
     capabilities: {
-      supportedModes: ['Text to Image'],
-      maxReferenceImages: 0,
+      supportedModes: ['Text to Image', 'Ingredients to Image'],
+      maxReferenceImages: 14,
       supportedAspectRatios: [
         '1:1',
+        '16:9',
+        '9:16',
         '3:4',
         '4:3',
-        '9:16',
-        '16:9'
+        '2:3',
+        '3:2',
+        '4:5',
+        '5:4',
+        '21:9',
       ],
-      supportsNegativePrompt: true,
-    },
-  },
-  {
-    value: 'imagen-3.0-fast-generate-001',
-    viewValue: 'Imagen 3 (Fast)',
-    type: 'IMAGE',
-    icon: 'bolt',
-    capabilities: {
-      supportedModes: ['Text to Image'],
-      maxReferenceImages: 0,
-      supportedAspectRatios: [
-        '1:1',
-        '3:4',
-        '4:3',
-        '9:16',
-        '16:9'
-      ],
-      supportsNegativePrompt: true,
+      supportsGoogleSearch: true,
     },
   },
   {
     value: 'gemini-3.1-flash-image',
-    viewValue: 'Nano Banana 2',
+    viewValue: 'Aetheris Pro Image (Gemini 3.1 Flash)',
     type: 'IMAGE',
-    imageSrc: 'assets/images/banana-peel.png',
-    isImage: true,
+    icon: 'bolt',
     capabilities: {
       supportedModes: ['Text to Image', 'Ingredients to Image'],
       maxReferenceImages: 14,
@@ -110,40 +96,15 @@ export const MODEL_CONFIGS: GenerationModelConfig[] = [
         '4:1',
         '1:8',
         '8:1',
-      ], // All
-      supportsGoogleSearch: true,
-    },
-  },
-  {
-    value: 'gemini-3-pro-image',
-    viewValue: 'Nano Banana Pro',
-    type: 'IMAGE',
-    imageSrc: 'assets/images/banana-peel.png',
-    isImage: true,
-    capabilities: {
-      supportedModes: ['Text to Image', 'Ingredients to Image'],
-      maxReferenceImages: 14,
-      supportedAspectRatios: [
-        '1:1',
-        '16:9',
-        '9:16',
-        '3:4',
-        '4:3',
-        '2:3',
-        '3:2',
-        '4:5',
-        '5:4',
-        '21:9',
-      ], // All
+      ],
       supportsGoogleSearch: true,
     },
   },
   {
     value: 'gemini-2.5-flash-image',
-    viewValue: 'Nano Banana',
+    viewValue: 'Aetheris Core Image (Gemini 2.5 Flash)',
     type: 'IMAGE',
-    imageSrc: 'assets/images/banana-peel.png',
-    isImage: true,
+    icon: 'image',
     capabilities: {
       supportedModes: ['Text to Image', 'Ingredients to Image'],
       maxReferenceImages: 2,

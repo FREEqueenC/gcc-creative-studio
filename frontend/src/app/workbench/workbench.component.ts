@@ -132,6 +132,123 @@ export class WorkbenchComponent implements OnInit, OnDestroy {
     return Math.max(this.totalDuration() * this.pixelsPerSecond + 800, 800);
   });
 
+  // Sacred Geometry Overlays State
+  activeOverlay = signal<'none' | 'flower_of_life' | 'golden_spiral' | 'metatrons_cube'>('none');
+  overlayOpacity = signal<number>(20); // default 20% opacity as requested: "i want the whole flower of life to have less opacity than the a x"
+  overlayHue = signal<'gold_purple' | 'cosmic_violet' | 'neon_cyan' | 'silverish_white'>('gold_purple');
+
+  // Math-based SVG generation for Flower of Life (19 interlocking circles)
+  flowerOfLifeCircles = computed(() => {
+    const circles: { cx: number; cy: number; r: number }[] = [];
+    const centerX = 500;
+    const centerY = 500;
+    const r = 120; // Circle radius inside a 1000x1000 viewport
+
+    // Center circle
+    circles.push({ cx: centerX, cy: centerY, r });
+
+    // Inner ring (6 circles)
+    for (let i = 0; i < 6; i++) {
+      const angle = (i * Math.PI) / 3;
+      circles.push({
+        cx: centerX + r * Math.cos(angle),
+        cy: centerY + r * Math.sin(angle),
+        r,
+      });
+    }
+
+    // Outer ring (12 circles)
+    for (let i = 0; i < 6; i++) {
+      const angle1 = (i * Math.PI) / 3;
+      const angle2 = angle1 + Math.PI / 6;
+      const distValley = r * Math.sqrt(3);
+      const distPeak = 2 * r;
+
+      // Peak circle
+      circles.push({
+        cx: centerX + distPeak * Math.cos(angle1),
+        cy: centerY + distPeak * Math.sin(angle1),
+        r,
+      });
+
+      // Valley circle
+      circles.push({
+        cx: centerX + distValley * Math.cos(angle2),
+        cy: centerY + distValley * Math.sin(angle2),
+        r,
+      });
+    }
+
+    return circles;
+  });
+
+  // Math-based SVG generation for Metatron's Cube nodes & connections (13 nodes connecting everything)
+  metatronsCubeNodes = computed(() => {
+    const nodes: { x: number; y: number }[] = [];
+    const centerX = 500;
+    const centerY = 500;
+    const r = 130; // node spacing factor
+
+    // Center node
+    nodes.push({ x: centerX, y: centerY });
+
+    // Inner ring (6 nodes)
+    for (let i = 0; i < 6; i++) {
+      const angle = (i * Math.PI) / 3;
+      nodes.push({
+        x: centerX + r * Math.cos(angle),
+        y: centerY + r * Math.sin(angle),
+      });
+    }
+
+    // Outer ring (6 nodes)
+    for (let i = 0; i < 6; i++) {
+      const angle = (i * Math.PI) / 3;
+      nodes.push({
+        x: centerX + 2 * r * Math.cos(angle),
+        y: centerY + 2 * r * Math.sin(angle),
+      });
+    }
+
+    return nodes;
+  });
+
+  metatronsCubeLines = computed(() => {
+    const lines: { x1: number; y1: number; x2: number; y2: number }[] = [];
+    const nodes = this.metatronsCubeNodes();
+
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        lines.push({
+          x1: nodes[i].x,
+          y1: nodes[i].y,
+          x2: nodes[j].x,
+          y2: nodes[j].y,
+        });
+      }
+    }
+
+    return lines;
+  });
+
+  // Math-based SVG generation for Logarithmic Golden ratio spiral
+  goldenSpiralPath = computed(() => {
+    const centerX = 500;
+    const centerY = 500;
+    const points: string[] = [];
+    const b = 0.306349; // logarithmic golden ratio rate
+    const scale = 4;
+
+    for (let theta = 0; theta < 8 * Math.PI; theta += 0.05) {
+      const r = scale * Math.exp(b * theta);
+      const x = centerX + r * Math.cos(theta);
+      const y = centerY + r * Math.sin(theta);
+      points.push(`${theta === 0 ? 'M' : 'L'} ${x.toFixed(2)} ${y.toFixed(2)}`);
+    }
+
+    return points.join(' ');
+  });
+
   // derived signals for active source logic
   activeVideoClip = computed(() => {
     const time = this.currentTime();

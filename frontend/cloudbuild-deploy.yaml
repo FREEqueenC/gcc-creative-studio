@@ -104,5 +104,11 @@ availableSecrets:
     - versionName: projects/${PROJECT_ID}/secrets/FIREBASE_MEASUREMENT_ID/versions/latest
       env: 'FIREBASE_MEASUREMENT_ID'
 
+substitutions:
+  _BACKEND_URL: 'https://aetherisx-backend-766520697417.us-central1.run.app'
+  _BACKEND_SERVICE_ID: 'aetherisx-backend'
+  _FIREBASE_SITE_ID: 'gentle-scene-485705-n4'
+  _FE_SERVICE_NAME: 'aetheris-frontend'
+
 options:
   logging: CLOUD_LOGGING_ONLY

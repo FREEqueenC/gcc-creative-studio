@@ -7,7 +7,7 @@
     "build": "ng build --configuration build-dev",
     "build-dev": "ng build --configuration build-dev",
     "build-qat": "ng build --configuration build-qat",
-    "build-prd": "ng build --configuration build-prd --aot --output-hashing=all",
+    "build-prd": "ng build --configuration build-prd --aot --output-hashing=all && node -e \"const fs = require('fs'); if (fs.existsSync('dist/creative-studio/browser/index.csr.html')) fs.copyFileSync('dist/creative-studio/browser/index.csr.html', 'dist/creative-studio/browser/index.html')\"",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "serve:ssr:creative-studio": "node dist/creative-studio/server/server.mjs",

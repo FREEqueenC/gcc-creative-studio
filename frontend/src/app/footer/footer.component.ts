@@ -32,6 +32,6 @@ export class FooterComponent {
   }
 
   navigateToPrivacyPolicyPage() {
-    window.open(PRIVACY_POLICY_URL, '_blank');
+    void this.router.navigateByUrl('privacy');
   }
 }

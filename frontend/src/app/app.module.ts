@@ -109,6 +109,8 @@ import {WorkflowStatusPipe} from './workflows/workflow-status.pipe';
 import {UpscaleComponent} from './upscale/upscale.component';
 import {MintDialogComponent} from './components/mint-dialog/mint-dialog.component';
 import {DocsComponent} from './docs/docs.component';
+import {PrivacyComponent} from './privacy/privacy.component';
+import {NicoleHubComponent} from './nicole/nicole-hub.component';
 
 @NgModule({
   declarations: [
@@ -144,6 +146,8 @@ import {DocsComponent} from './docs/docs.component';
     BatchExecutionModalComponent,
     UpscaleComponent,
     MintDialogComponent,
+    PrivacyComponent,
+    NicoleHubComponent,
   ],
   imports: [
     BrowserModule,

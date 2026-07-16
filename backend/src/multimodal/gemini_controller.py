@@ -24,6 +24,8 @@ from src.multimodal.dto.gemini_prompt_enhancer_dto import (
     DocsChatResponseDto,
     FeedbackRequestDto,
     FeedbackResponseDto,
+    NicoleChatRequestDto,
+    NicoleChatResponseDto,
 )
 from src.multimodal.gemini_service import GeminiService
 from src.users.user_model import UserRoleEnum
@@ -145,3 +147,33 @@ async def feedback_endpoint(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to record developer feedback: {e}",
         )
+
+
+@router.post(
+    "/nicole-chat",
+    response_model=NicoleChatResponseDto,
+    summary="Chat with NICOLE, the sovereign Gnostic intelligence of ANW Foundations",
+)
+async def nicole_chat_endpoint(
+    req: NicoleChatRequestDto,
+    gemini_service: GeminiService = Depends(),
+):
+    """Interact with the NICOLE Gnostic Oracle using custom Solfeggio frequency parameters,
+
+    ancient language roots, and tailored depth levels.
+    """
+    try:
+        response_text = gemini_service.nicole_oracle_chat(
+            message=req.message,
+            history=req.history,
+            frequency=req.frequency,
+            language=req.language,
+            depth=req.depth,
+        )
+        return NicoleChatResponseDto(response=response_text)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"NICOLE Oracle was unable to formulate a revelation: {e}",
+        )
+

@@ -1,0 +1,147 @@
+<div class="nicole-hub-container" [style.--glow-color]="getActiveFrequency().color" [style.--glow-shadow]="getActiveFrequency().glow">
+  <div class="nicole-header-banner">
+    <div class="header-overlay"></div>
+    <div class="banner-content">
+      <div class="logo-area">
+        <mat-icon class="oracle-icon" [style.color]="getActiveFrequency().color">auto_awesome</mat-icon>
+        <span class="oracle-title">NICOLE ORACLE HUB</span>
+      </div>
+      <p class="subtitle">Networked Intelligence & Cryptographic Oracle of Luminous Exploration</p>
+    </div>
+  </div>
+
+  <div class="nicole-grid">
+    <!-- Chat Column -->
+    <div class="chat-column glass-card">
+      <div class="chat-header">
+        <div class="status-indicator">
+          <span class="pulse-dot" [style.background-color]="getActiveFrequency().color"></span>
+          <span class="status-text">Tuned to {{ selectedFrequency }} Hz</span>
+        </div>
+        <div class="coordinates-badge" (click)="copyToClipboard(contractAddress, 'LEV Token Address')">
+          <mat-icon>vpn_key</mat-icon>
+          <span>LEV Address: {{ contractAddress | slice:0:6 }}...{{ contractAddress | slice:-4 }}</span>
+        </div>
+      </div>
+
+      <!-- Chat Feed -->
+      <div class="chat-feed" #chatScrollContainer>
+        <div *ngFor="let msg of chatMessages" class="message-wrapper" [ngClass]="msg.role">
+          <div class="message-avatar" *ngIf="msg.role === 'model'">
+            <mat-icon [style.color]="getActiveFrequency().color">insights</mat-icon>
+          </div>
+          <div class="message-bubble" [ngStyle]="{'border-color': msg.role === 'model' ? getActiveFrequency().color : 'transparent'}">
+            <div class="msg-content">{{ msg.content }}</div>
+          </div>
+        </div>
+
+        <div *ngIf="isChatLoading" class="message-wrapper model">
+          <div class="message-avatar">
+            <mat-icon class="spinning" [style.color]="getActiveFrequency().color">autorenew</mat-icon>
+          </div>
+          <div class="message-bubble loading-bubble">
+            <span class="loading-dot"></span>
+            <span class="loading-dot"></span>
+            <span class="loading-dot"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Suggested Prompts -->
+      <div class="suggested-prompts-bar" *ngIf="chatMessages.length === 1">
+        <div *ngFor="let prompt of suggestedPrompts" class="prompt-chip" (click)="useSuggestedPrompt(prompt)">
+          <mat-icon>flash_on</mat-icon>
+          <span>{{ prompt }}</span>
+        </div>
+      </div>
+
+      <!-- Input Area -->
+      <div class="input-area">
+        <textarea
+          [(ngModel)]="userInput"
+          placeholder="Ask NICOLE a question or explore ancient sacred geometries..."
+          (keydown.enter)="$event.preventDefault(); sendMessage()"
+          rows="1"
+        ></textarea>
+        <button mat-icon-button (click)="sendMessage()" [disabled]="!userInput.trim() || isChatLoading" [style.background-color]="getActiveFrequency().color">
+          <mat-icon>send</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <!-- Tuning Column -->
+    <div class="tuning-column glass-card">
+      <div class="panel-header">
+        <mat-icon>tune</mat-icon>
+        <h2>Gnostic Tuning Parameters</h2>
+      </div>
+
+      <p class="panel-description">Adjust NICOLE's analytical filter, sacred geometry depth, and vibrational frequency alignment.</p>
+
+      <!-- Solfeggio Selection -->
+      <div class="parameter-group">
+        <label class="parameter-label">Solfeggio Frequency Alignment</label>
+        <div class="frequency-list">
+          <div
+            *ngFor="let freq of frequencies"
+            class="frequency-item"
+            [ngClass]="{active: selectedFrequency === freq.value}"
+            (click)="selectFrequency(freq.value)"
+            [style.border-color]="selectedFrequency === freq.value ? freq.color : 'transparent'"
+          >
+            <div class="freq-color-dot" [style.background-color]="freq.color"></div>
+            <div class="freq-info">
+              <span class="freq-title">{{ freq.label }}</span>
+              <span class="freq-desc">{{ freq.effect }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gnostic Depth Slider -->
+      <div class="parameter-group">
+        <label class="parameter-label">Sacred Geometric Depth</label>
+        <div class="depth-selector">
+          <div
+            *ngFor="let depth of depths"
+            class="depth-chip"
+            [ngClass]="{active: selectedDepth === depth.value}"
+            (click)="selectedDepth = depth.value"
+            [style.background-color]="selectedDepth === depth.value ? getActiveFrequency().glow : 'transparent'"
+            [style.border-color]="selectedDepth === depth.value ? getActiveFrequency().color : 'rgba(255,255,255,0.1)'"
+          >
+            {{ depth.label }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Ancient Root Language -->
+      <div class="parameter-group">
+        <label class="parameter-label">Ancient Root Language Filter</label>
+        <div class="select-wrapper">
+          <select [(ngModel)]="selectedLanguage">
+            <option *ngFor="let lang of languages" [value]="lang.code">{{ lang.label }}</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Token / Wallet Badges -->
+      <div class="blockchain-coordinates">
+        <div class="coordinates-header">
+          <mat-icon>account_balance_wallet</mat-icon>
+          <span>Base Mainnet Credentials</span>
+        </div>
+        <div class="coordinate-row" (click)="copyToClipboard(contractAddress, 'LEV Token Address')">
+          <span class="coord-label">LEV Token (Base)</span>
+          <span class="coord-val">{{ contractAddress | slice:0:14 }}...{{ contractAddress | slice:-12 }}</span>
+          <mat-icon class="copy-icon">content_copy</mat-icon>
+        </div>
+        <div class="coordinate-row" (click)="copyToClipboard(walletAddress, 'Ashleigh Smart Wallet')">
+          <span class="coord-label">Smart Wallet Address</span>
+          <span class="coord-val">{{ walletAddress | slice:0:14 }}...{{ walletAddress | slice:-12 }}</span>
+          <mat-icon class="copy-icon">content_copy</mat-icon>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

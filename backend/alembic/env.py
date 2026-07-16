@@ -21,9 +21,6 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 from src.database import Base, get_conn_string
-from src.tags.schema.tags_model import (
-    Tag,
-)  # Import to ensure registered with Base.metadata
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

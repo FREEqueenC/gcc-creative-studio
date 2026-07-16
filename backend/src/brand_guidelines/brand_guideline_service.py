@@ -59,6 +59,49 @@ logger = logging.getLogger(__name__)
 GEMINI_PDF_LIMIT_BYTES = 50 * 1024 * 1024
 
 
+def _update_guideline_status_to_failed(guideline_id: int, error: Exception, worker_name: str):
+    """Helper function to update a brand guideline status to FAILED in a fresh database session,
+    used in case of worker initialization or event loop failures.
+    """
+    import asyncio
+    import logging
+    from src.database import WorkerDatabase
+    from src.brand_guidelines.repository.brand_guideline_repository import BrandGuidelineRepository
+    from src.common.schema.media_item_model import JobStatusEnum
+
+    logger = logging.getLogger(__name__)
+    logger.info(f"Setting brand guideline {guideline_id} to FAILED due to outer exception in {worker_name}")
+
+    async def _async_update():
+        async with WorkerDatabase() as db_factory:
+            async with db_factory() as db:
+                repo = BrandGuidelineRepository(db)
+                await repo.update(
+                    guideline_id,
+                    {
+                        "status": JobStatusEnum.FAILED,
+                        "error_message": f"{worker_name} failed: {str(error)}",
+                    },
+                )
+
+    try:
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
+        if loop.is_running():
+            loop.create_task(_async_update())
+        else:
+            loop.run_until_complete(_async_update())
+    except Exception as db_err:
+        logger.error(
+            f"Failed to update status to FAILED for brand guideline {guideline_id} in {worker_name}: {db_err}",
+            exc_info=True,
+        )
+
+
 def _process_brand_guideline_in_background(
     guideline_id: int,
     name: str,
@@ -218,6 +261,7 @@ def _process_brand_guideline_in_background(
             extra={"json_fields": {"guideline_id": guideline_id, "error": str(e)}},
             exc_info=True,
         )
+        _update_guideline_status_to_failed(guideline_id, e, "Brand guideline worker")
 
 
 class BrandGuidelineService:

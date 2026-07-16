@@ -74,6 +74,7 @@ export class AudioComponent implements OnInit {
   negativePrompt = '';
   seed: number | undefined;
   sampleCount = 4;
+  solfeggioFrequency = 'none';
 
   // TTS & Chirp Specific Inputs
   selectedLanguage: LanguageEnum = LanguageEnum.EN_US;
@@ -290,6 +291,8 @@ export class AudioComponent implements OnInit {
         this.selectedModel === 'lyria' ? this.negativePrompt : undefined,
       seed: this.selectedModel === 'lyria' ? this.seed : undefined,
       sampleCount: this.sampleCount,
+      solfeggioFrequency:
+        this.selectedModel === 'lyria' ? this.solfeggioFrequency : undefined,
       languageCode:
         this.selectedModel !== 'lyria'
           ? (this.selectedLanguage as LanguageEnum)

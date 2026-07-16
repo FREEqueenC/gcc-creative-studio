@@ -59,6 +59,11 @@ class CreateAudioDto(BaseDto):
         description="[Lyria Only] A seed for deterministic generation.",
     )
 
+    solfeggio_frequency: str | None = Field(
+        default=None,
+        description="[Lyria Only] Harmonic Solfeggio frequency (e.g. 528, 432) to align the track.",
+    )
+
     # --- TTS / Chirp Specific Fields ---
     language_code: LanguageEnum | None = Field(
         default=LanguageEnum.EN_US,

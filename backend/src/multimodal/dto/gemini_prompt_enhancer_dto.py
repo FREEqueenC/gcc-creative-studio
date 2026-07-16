@@ -75,3 +75,15 @@ class FeedbackRequestDto(BaseDto):
 
 class FeedbackResponseDto(BaseDto):
     status: str
+
+
+class NicoleChatRequestDto(BaseDto):
+    message: str
+    history: list[ChatMessageDto] = []
+    frequency: int = 528
+    language: str = "en"
+    depth: str = "moderate"
+
+
+class NicoleChatResponseDto(BaseDto):
+    response: str

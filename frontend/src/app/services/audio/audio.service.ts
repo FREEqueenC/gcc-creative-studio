@@ -44,6 +44,7 @@ export interface CreateAudioDto {
   negativePrompt?: string;
   sampleCount?: number;
   seed?: number;
+  solfeggioFrequency?: string;
 
   // TTS Specific
   languageCode?: LanguageEnum;

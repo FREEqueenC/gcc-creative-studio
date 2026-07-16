@@ -33,10 +33,15 @@ import {WorkbenchComponent} from './workbench/workbench.component';
 import {UpscaleComponent} from './upscale/upscale.component';
 import {UserRolesEnum} from './common/models/user.model';
 import {DocsComponent} from './docs/docs.component';
+import {PrivacyComponent} from './privacy/privacy.component';
+import {NicoleHubComponent} from './nicole/nicole-hub.component';
 
 const routes: Routes = [
   {path: 'login', component: LoginComponent},
+  {path: 'privacy', component: PrivacyComponent},
+  {path: 'terms-of-service', component: PrivacyComponent},
   {path: 'docs', component: DocsComponent, canActivate: [AuthGuardService]},
+  {path: 'nicole', component: NicoleHubComponent, canActivate: [AuthGuardService]},
   {path: '', component: HomeComponent},
   {
     path: 'fun-templates',

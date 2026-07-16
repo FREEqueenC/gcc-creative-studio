@@ -75,13 +75,15 @@ def configure_cors(app):
                 "FRONTEND_URL environment variable not set in production"
             )
         # Normalize allowed origins to prevent trailing slash and www. mismatches
-        base_url = frontend_url.rstrip("/")
-        allowed_origins.append(base_url)
-        allowed_origins.append(f"{base_url}/")
-        if "://www." in base_url:
-            allowed_origins.append(base_url.replace("://www.", "://"))
-        elif "://" in base_url:
-            allowed_origins.append(base_url.replace("://", "://www."))
+        urls = [url.strip() for url in frontend_url.split(",")]
+        for url in urls:
+            base_url = url.rstrip("/")
+            allowed_origins.append(base_url)
+            allowed_origins.append(f"{base_url}/")
+            if "://www." in base_url:
+                allowed_origins.append(base_url.replace("://www.", "://"))
+            elif "://" in base_url:
+                allowed_origins.append(base_url.replace("://", "://www."))
     elif environment in ["development", "test", "local"]:
         allowed_origins.append("*")  # Allow all origins in development
     else:

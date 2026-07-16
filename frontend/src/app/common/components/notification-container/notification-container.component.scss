@@ -40,7 +40,8 @@
   padding: 14px 16px;
   display: flex;
   align-items: center;
-  justify-content: space-around !important;
+  justify-content: stretch !important;
+
 
   &.green-toast {
     background-color: #06865e !important;

@@ -14,6 +14,7 @@
  limitations under the License.
 -->
 
+<ng-container *ngIf="isAuthenticated; else publicLandingPage">
 <div class="lg:container lg:mx-auto">
   <div class="home-margin grid grid-cols-1">
     <!-- Video Homepage -->
@@ -174,6 +175,15 @@
               Sign Up / Sign In
             </a>
           </div>
+
+          <!-- Sleek landing page footer links -->
+          <footer class="absolute bottom-6 left-0 right-0 z-[60] flex justify-center items-center gap-4 text-xs text-stone-300 font-light tracking-wide">
+            <a routerLink="/privacy" class="hover:text-cyan-400 transition-colors duration-200 no-underline">Privacy Policy</a>
+            <span class="text-stone-600">|</span>
+            <a routerLink="/terms-of-service" class="hover:text-cyan-400 transition-colors duration-200 no-underline">Terms of Service</a>
+            <span class="text-stone-600">|</span>
+            <span class="text-stone-400 font-normal">© 2026 ANW Foundations</span>
+          </footer>
         </div>
       </ng-container>
       <!-- Image Gallery -->
@@ -480,3 +490,190 @@
     </div>
   </div>
 </div>
+</ng-container>
+
+<ng-template #publicLandingPage>
+  <div class="landing-page-container min-h-screen relative flex flex-col justify-between items-center text-white overflow-hidden pb-12 font-sans bg-slate-950">
+    <!-- Beautiful Animated Background Spheres (matching the theme) -->
+    <div class="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+      <div class="absolute -top-40 -left-40 w-96 h-96 rounded-full bg-violet-600/10 blur-[120px] animate-pulse"></div>
+      <div class="absolute top-1/3 -right-40 w-96 h-96 rounded-full bg-cyan-500/10 blur-[120px] animate-pulse" style="animation-delay: 2s;"></div>
+      <div class="absolute -bottom-40 left-1/3 w-[500px] h-[500px] rounded-full bg-indigo-500/10 blur-[150px] animate-pulse" style="animation-delay: 4s;"></div>
+    </div>
+
+    <!-- Header / Branding Navigation -->
+    <header class="w-full max-w-7xl mx-auto px-6 py-6 flex items-center justify-between z-10">
+      <div class="flex items-center gap-3">
+        <img src="assets/images/aetherisX-logo.png" alt="Aetheris X" class="w-10 h-10 object-contain brightness-110 saturate-125" />
+        <span class="text-xl font-bold tracking-wider Outfit text-white flex items-center gap-1">
+          AETHERIS <span class="text-cyan-400 font-extrabold tracking-widest">RESEARCH</span>
+        </span>
+      </div>
+      <div>
+        <a routerLink="/login" class="flex items-center gap-2 px-5 py-2 rounded-full text-xs font-semibold uppercase tracking-wider bg-white/10 hover:bg-white/20 border border-white/15 hover:border-cyan-400/50 backdrop-blur-md text-white transition-all duration-300 transform hover:scale-105 no-underline">
+          <mat-icon class="scale-75 text-cyan-400">lock_open</mat-icon>
+          <span>Research Access</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="w-full max-w-7xl mx-auto px-6 py-12 flex-1 flex flex-col items-center justify-center text-center z-10">
+      <!-- Hero Section -->
+      <section class="max-w-4xl mx-auto mb-16 flex flex-col items-center">
+        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md mb-6">
+          <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+          <span class="text-[10px] font-bold uppercase tracking-widest Outfit text-neutral-300">Sovereign Intelligence Engine</span>
+        </div>
+        
+        <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight text-white mb-6 leading-tight font-sans">
+          Welcome to <br class="hidden sm:inline" />
+          <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-indigo-400 to-purple-500">Aetheris Research</span>
+        </h1>
+        
+        <p class="text-base md:text-xl text-neutral-300 font-light max-w-2xl leading-relaxed mb-8">
+          A high-resonance generative environment for visual synthesis, dynamic cinema compilation, solfeggio audio therapy, and sacred spatial modeling.
+        </p>
+
+        <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          <a routerLink="/login" class="inline-flex items-center gap-3 px-8 py-3.5 rounded-full font-bold text-white text-sm tracking-wide cursor-pointer transition-all duration-300 transform hover:scale-105 no-underline"
+             style="background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%); box-shadow: 0 0 24px rgba(0, 242, 254, 0.45);">
+            <mat-icon class="text-white scale-90">rocket_launch</mat-icon>
+            <span>Launch Workbench</span>
+          </a>
+          <a routerLink="/privacy" class="inline-flex items-center gap-2 px-6 py-3.5 rounded-full font-semibold text-neutral-300 hover:text-white text-sm bg-white/5 hover:bg-white/10 border border-white/10 transition-all duration-300 no-underline">
+            <span>Read Privacy Policy</span>
+            <mat-icon class="scale-75 text-neutral-400">arrow_forward</mat-icon>
+          </a>
+        </div>
+      </section>
+
+      <!-- Interactive Feature Matrix -->
+      <section class="w-full mt-8 mb-16">
+        <h2 class="text-2xl font-bold uppercase tracking-wider Outfit text-cyan-400 text-center mb-10">
+          Core Research Modalities
+        </h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-left">
+          <!-- Modality 1: Image Synthesis -->
+          <div class="glass-card rounded-2xl border border-white/10 bg-slate-950/40 backdrop-blur-xl p-6 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] hover:border-cyan-400/30 hover:shadow-[0_0_24px_rgba(0,242,254,0.15)] transition-all duration-300 group">
+            <div class="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mb-5 group-hover:bg-cyan-500/20 transition-all">
+              <mat-icon class="text-cyan-400">style</mat-icon>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-2 Outfit">Visual Image Synthesis</h3>
+            <p class="text-sm text-neutral-400 font-light leading-relaxed">
+              Powered by Vertex AI Imagen 3. Create stunning hyper-realistic images, digital art, or vector assets with comprehensive control over aspect ratios, lighting parameters, and styles.
+            </p>
+          </div>
+
+          <!-- Modality 2: Veo Cinema -->
+          <div class="glass-card rounded-2xl border border-white/10 bg-slate-950/40 backdrop-blur-xl p-6 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] hover:border-violet-400/30 hover:shadow-[0_0_24px_rgba(138,43,226,0.15)] transition-all duration-300 group">
+            <div class="w-12 h-12 rounded-xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center mb-5 group-hover:bg-violet-500/20 transition-all">
+              <mat-icon class="text-violet-400">movie_filter</mat-icon>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-2 Outfit">Veo Cinema Compilations</h3>
+            <p class="text-sm text-neutral-400 font-light leading-relaxed">
+              Compile beautiful cinematic scenes directly from high-concept textual ideas or base image frames using Google's foundational video generation frameworks.
+            </p>
+          </div>
+
+          <!-- Modality 3: Virtual Try-On -->
+          <div class="glass-card rounded-2xl border border-white/10 bg-slate-950/40 backdrop-blur-xl p-6 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] hover:border-emerald-400/30 hover:shadow-[0_0_24px_rgba(16,185,129,0.15)] transition-all duration-300 group">
+            <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-5 group-hover:bg-emerald-500/20 transition-all">
+              <mat-icon class="text-emerald-400">checkroom</mat-icon>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-2 Outfit">Virtual Try-On (VTO) Studio</h3>
+            <p class="text-sm text-neutral-400 font-light leading-relaxed">
+              Upload garment layers and models to try on fashion designs dynamically. Re-map clothing, scale styles, and inspect visual fits in real-time.
+            </p>
+          </div>
+
+          <!-- Modality 4: Solfeggio Audio -->
+          <div class="glass-card rounded-2xl border border-white/10 bg-slate-950/40 backdrop-blur-xl p-6 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] hover:border-amber-400/30 hover:shadow-[0_0_24px_rgba(245,158,11,0.15)] transition-all duration-300 group">
+            <div class="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-5 group-hover:bg-amber-500/20 transition-all">
+              <mat-icon class="text-amber-400">graphic_eq</mat-icon>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-2 Outfit">Solfeggio Sound therapy</h3>
+            <p class="text-sm text-neutral-400 font-light leading-relaxed">
+              Generate ambient frequency tracks tuned to the healing ratios of the Solfeggio scale (396Hz - 963Hz). Perfect for relaxation, meditation, and sonic alignment.
+            </p>
+          </div>
+
+          <!-- Modality 5: Sacred Geometry -->
+          <div class="glass-card rounded-2xl border border-white/10 bg-slate-950/40 backdrop-blur-xl p-6 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] hover:border-rose-400/30 hover:shadow-[0_0_24px_rgba(244,63,94,0.15)] transition-all duration-300 group">
+            <div class="w-12 h-12 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center mb-5 group-hover:bg-rose-500/20 transition-all">
+              <mat-icon class="text-rose-400">grid_on</mat-icon>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-2 Outfit">Quantum Sacred Grids</h3>
+            <p class="text-sm text-neutral-400 font-light leading-relaxed">
+              Layer mathematically precise vector matrices, such as the Flower of Life, Golden Spiral, and Metatron's Cube, directly onto your canvases to tune compositional aesthetics.
+            </p>
+          </div>
+
+          <!-- Modality 6: NICOLE Oracle Hub -->
+          <div class="glass-card rounded-2xl border border-white/10 bg-slate-950/40 backdrop-blur-xl p-6 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] hover:border-amber-500/30 hover:shadow-[0_0_24px_rgba(217,119,6,0.15)] transition-all duration-300 group">
+            <div class="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-5 group-hover:bg-amber-500/20 transition-all">
+              <mat-icon class="text-amber-300" style="text-shadow: 0 0 8px rgba(245, 158, 11, 0.6)">auto_awesome</mat-icon>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-2 Outfit">NICOLE Oracle Hub</h3>
+            <p class="text-sm text-neutral-400 font-light leading-relaxed">
+              Query the Networked Intelligence and Cryptographic Oracle of Luminous Exploration. Tap into Gnostic analyses, esoteric parsing, and ancient language decoders.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- App Demonstration / Gallery Showcase -->
+      <section class="w-full mb-16 py-8 border-y border-white/5">
+        <h2 class="text-xl font-bold uppercase tracking-wider Outfit text-neutral-200 text-center mb-8">
+          Aesthetic Generation Outputs
+        </h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="glass-card p-3 rounded-xl border border-white/5 bg-white/5 backdrop-blur-md relative overflow-hidden group">
+            <div class="aspect-square rounded-lg bg-neutral-900/50 flex items-center justify-center text-xs text-neutral-500 border border-white/5 mb-3 overflow-hidden">
+              <img src="assets/images/gcp-for-buisness.webp" alt="Sacred Geometry Alignments" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            </div>
+            <div class="text-xs font-semibold text-neutral-300">Spectral Composition</div>
+            <div class="text-[10px] text-neutral-500">SACRED GEOMETRY GRID</div>
+          </div>
+          <div class="glass-card p-3 rounded-xl border border-white/5 bg-white/5 backdrop-blur-md relative overflow-hidden group">
+            <div class="aspect-square rounded-lg bg-neutral-900/50 flex items-center justify-center text-xs text-neutral-500 border border-white/5 mb-3 overflow-hidden">
+              <img src="assets/images/aetherisX-logo.png" alt="Aetheris X Generative Logo" class="w-full h-full object-contain p-6 scale-90 bg-slate-900/30 group-hover:scale-95 transition-transform duration-500" />
+            </div>
+            <div class="text-xs font-semibold text-neutral-300">Aetheris Vector Synthesis</div>
+            <div class="text-[10px] text-neutral-500">IMAGEN 3 VECTOR OUTPUT</div>
+          </div>
+          <div class="glass-card p-3 rounded-xl border border-white/5 bg-white/5 backdrop-blur-md relative overflow-hidden group">
+            <div class="aspect-square rounded-lg bg-neutral-900/50 flex items-center justify-center text-xs text-neutral-500 border border-white/5 mb-3 overflow-hidden">
+              <video class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" autoplay muted loop playsinline>
+                <source src="assets/videos/abstract-waves.mp4" type="video/mp4" />
+              </video>
+            </div>
+            <div class="text-xs font-semibold text-neutral-300">Dynamic Cine Synthesis</div>
+            <div class="text-[10px] text-neutral-500">VEO CINEMA TRANSITION</div>
+          </div>
+          <div class="glass-card p-3 rounded-xl border border-white/5 bg-white/5 backdrop-blur-md relative overflow-hidden group">
+            <div class="aspect-square rounded-lg bg-neutral-900/50 flex items-center justify-center text-xs text-neutral-500 border border-white/5 mb-3 overflow-hidden">
+              <img src="assets/images/vto/upload-photo-2.png" alt="VTO Fitting" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            </div>
+            <div class="text-xs font-semibold text-neutral-300">Fashion Try-On Overlay</div>
+            <div class="text-[10px] text-neutral-500">VTO OVERLAY ANALYSIS</div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Transparent Footer Links -->
+    <footer class="w-full max-w-7xl mx-auto px-6 pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-white/5 z-10 text-xs text-neutral-400 font-light tracking-wide">
+      <div class="flex items-center gap-2">
+        <span class="font-normal text-neutral-300">© 2026 ANW Foundations</span>
+        <span class="text-stone-700">|</span>
+        <span class="text-cyan-400/70">NICOLE Luminous Exploration</span>
+      </div>
+      <div class="flex items-center gap-6">
+        <a routerLink="/privacy" class="hover:text-cyan-400 transition-colors duration-200 no-underline text-neutral-400 font-medium">Privacy Policy</a>
+        <a routerLink="/terms-of-service" class="hover:text-cyan-400 transition-colors duration-200 no-underline text-neutral-400 font-medium">Terms of Service</a>
+      </div>
+    </footer>
+  </div>
+</ng-template>

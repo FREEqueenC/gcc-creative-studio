@@ -329,10 +329,6 @@ export class AuthService {
       this.firebaseTokenExpiry > now
     );
 
-    if (!isTokenValid && this.router.url !== LOGIN_ROUTE) {
-      void this.router.navigate([LOGIN_ROUTE]);
-    }
-
     return isTokenValid;
   }
 

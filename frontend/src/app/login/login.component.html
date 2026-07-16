@@ -15,7 +15,7 @@
 -->
 
 <div
-  class="container grid grid-cols-1 lg:grid-cols-2 gap-4 px-5 text-center items-center min-h-screen m-auto text-white font-extrabold"
+  class="container relative grid grid-cols-1 lg:grid-cols-2 gap-4 px-5 text-center items-center min-h-screen m-auto text-white font-extrabold"
 >
   <video
     class="fixed top-0 left-0 h-full w-full object-cover z-0"
@@ -37,7 +37,7 @@
       class="login-logo w-28 h-28 object-contain mb-2"
     />
     <h1 class="mat-display-large">
-      Creative <span class="linear-text">Studio</span>
+      Aetheris <span class="linear-text">Research</span>
     </h1>
     <p class="login-app-text">
       <span class="linear-text">Create</span> at the speed <br />
@@ -72,7 +72,7 @@
             class="login-logo w-36 h-36 object-contain mb-4"
           />
           <h1 class="mat-display-large mb-5">
-            Creative <span class="linear-text">Studio</span>
+            Aetheris <span class="linear-text">Research</span>
           </h1>
         </mat-card-title>
       </mat-card-header>
@@ -95,4 +95,13 @@
       </mat-card-content>
     </mat-card>
   </div>
+
+  <!-- Sleek login screen footer links -->
+  <footer class="absolute bottom-6 left-0 right-0 z-20 flex justify-center items-center gap-4 text-xs text-stone-400 font-light tracking-wide">
+    <a routerLink="/privacy" class="hover:text-cyan-400 transition-colors duration-200">Privacy Policy</a>
+    <span class="text-stone-700">|</span>
+    <a routerLink="/terms-of-service" class="hover:text-cyan-400 transition-colors duration-200">Terms of Service</a>
+    <span class="text-stone-700">|</span>
+    <span class="text-stone-500">© 2026 ANW Foundations</span>
+  </footer>
 </div>

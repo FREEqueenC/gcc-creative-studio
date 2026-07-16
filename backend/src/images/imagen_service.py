@@ -96,6 +96,49 @@ def optimize_image_bytes(data: bytes, max_size: int = 1024) -> bytes:
         return data
 
 
+def _update_job_status_to_failed(media_item_id: int, error: Exception, worker_name: str):
+    """Helper function to update a media item status to FAILED in a fresh database session,
+    used in case of worker initialization or event loop failures.
+    """
+    import asyncio
+    import logging
+    from src.database import WorkerDatabase
+    from src.images.repository.media_item_repository import MediaRepository
+    from src.common.schema.media_item_model import JobStatusEnum
+
+    logger = logging.getLogger(__name__)
+    logger.info(f"Setting job {media_item_id} to FAILED due to outer exception in {worker_name}")
+
+    async def _async_update():
+        async with WorkerDatabase() as db_factory:
+            async with db_factory() as db:
+                media_repo = MediaRepository(db)
+                await media_repo.update(
+                    media_item_id,
+                    {
+                        "status": JobStatusEnum.FAILED,
+                        "error_message": f"{worker_name} failed: {str(error)}",
+                    },
+                )
+
+    try:
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
+        if loop.is_running():
+            loop.create_task(_async_update())
+        else:
+            loop.run_until_complete(_async_update())
+    except Exception as db_err:
+        logger.error(
+            f"Failed to update status to FAILED for media item {media_item_id} in {worker_name}: {db_err}",
+            exc_info=True,
+        )
+
+
 # --- STANDALONE WORKER FUNCTION FOR VTO ---
 def _process_vto_in_background(
     media_item_id: int,
@@ -420,6 +463,7 @@ def _process_vto_in_background(
             extra={"json_fields": {"media_id": media_item_id, "error": str(e)}},
             exc_info=True,
         )
+        _update_job_status_to_failed(media_item_id, e, "VTO worker")
 
 
 def gemini_generate_image(
@@ -940,9 +984,7 @@ def _process_image_in_background(
 
     except Exception as e:
         worker_logger.error("Image generation task failed: %s", e, exc_info=True)
-        # We can't easily update DB here if the loop failed or session failed,
-        # but we can try to create a fresh one if needed, or just log.
-        # For now, just log as we might not have a loop.
+        _update_job_status_to_failed(media_item_id, e, "Image worker")
 
 
 # --- STANDALONE WORKER FUNCTION ---
@@ -1206,6 +1248,7 @@ def _process_upload_upscale_in_background(
 
     except Exception as e:
         worker_logger.error("Image generation task failed: %s", e, exc_info=True)
+        _update_job_status_to_failed(media_item_id, e, "Upscale worker")
 
 
 class ImagenService:

@@ -51,6 +51,49 @@ from src.users.user_model import UserModel
 logger = logging.getLogger(__name__)
 
 
+def _update_job_status_to_failed(media_item_id: int, error: Exception, worker_name: str):
+    """Helper function to update a media item status to FAILED in a fresh database session,
+    used in case of worker initialization or event loop failures.
+    """
+    import asyncio
+    import logging
+    from src.database import WorkerDatabase
+    from src.images.repository.media_item_repository import MediaRepository
+    from src.common.schema.media_item_model import JobStatusEnum
+
+    logger = logging.getLogger(__name__)
+    logger.info(f"Setting job {media_item_id} to FAILED due to outer exception in {worker_name}")
+
+    async def _async_update():
+        async with WorkerDatabase() as db_factory:
+            async with db_factory() as db:
+                media_repo = MediaRepository(db)
+                await media_repo.update(
+                    media_item_id,
+                    {
+                        "status": JobStatusEnum.FAILED,
+                        "error_message": f"{worker_name} failed: {str(error)}",
+                    },
+                )
+
+    try:
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
+        if loop.is_running():
+            loop.create_task(_async_update())
+        else:
+            loop.run_until_complete(_async_update())
+    except Exception as db_err:
+        logger.error(
+            f"Failed to update status to FAILED for media item {media_item_id} in {worker_name}: {db_err}",
+            exc_info=True,
+        )
+
+
 def _process_audio_in_background(
     media_item_id: int,
     request_dto: CreateAudioDto,
@@ -242,7 +285,24 @@ def _process_audio_in_background(
                                         parameters_dict, parameters_value
                                     )
 
-                                    instance_dict = {"prompt": request_dto.prompt}
+                                    # Enhance prompt with Solfeggio frequency if specified
+                                    final_prompt = request_dto.prompt
+                                    if request_dto.solfeggio_frequency and request_dto.solfeggio_frequency != "none":
+                                        freq = request_dto.solfeggio_frequency
+                                        meanings = {
+                                            "396": "tuned to 396Hz Solfeggio frequency (Liberating Guilt and Fear)",
+                                            "417": "tuned to 417Hz Solfeggio frequency (Undoing Situations and Facilitating Change)",
+                                            "432": "tuned to 432Hz Cosmic Natural Resonance frequency (Harmonic scale of the universe)",
+                                            "528": "tuned to 528Hz Solfeggio frequency (Transformation and Miracles, DNA repair resonance)",
+                                            "639": "tuned to 639Hz Solfeggio frequency (Harmonious Connection and Relationships)",
+                                            "741": "tuned to 741Hz Solfeggio frequency (Awakening Intuition and Cleansing)",
+                                            "852": "tuned to 852Hz Solfeggio frequency (Returning to Spiritual Order and Unconditional Love)",
+                                            "963": "tuned to 963Hz Solfeggio frequency (Pure Divine Consciousness and Crown Chakra activation)"
+                                        }
+                                        resonance_msg = meanings.get(freq, f"tuned to {freq}Hz Solfeggio harmonic frequency")
+                                        final_prompt = f"{final_prompt}, {resonance_msg}"
+
+                                    instance_dict = {"prompt": final_prompt}
                                     if request_dto.negative_prompt:
                                         instance_dict["negative_prompt"] = (
                                             request_dto.negative_prompt
@@ -393,6 +453,7 @@ def _process_audio_in_background(
         loop.run_until_complete(_async_worker())
     except Exception as outer_e:
         worker_logger.error(f"Fatal error in worker thread: {outer_e}", exc_info=True)
+        _update_job_status_to_failed(media_item_id, outer_e, "Audio worker")
 
 
 class AudioService:

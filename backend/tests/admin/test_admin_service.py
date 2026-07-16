@@ -21,7 +21,6 @@ from src.admin.dto.admin_response_dto import (
     AdminWorkspaceStats,
     AdminActiveRole,
     AdminGenerationHealth,
-    AdminMonthlyActiveUsers,
 )
 
 

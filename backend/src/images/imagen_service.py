@@ -646,7 +646,10 @@ def _process_image_in_background(
                     cfg = config_service
 
                     # Initialize GenAI client in the worker process
-                    client = GenAIModelSetup.init()
+                    if request_dto.generation_model.is_gemini_image_model:
+                        client = GenAIModelSetup.get_omni_client()
+                    else:
+                        client = GenAIModelSetup.init()
 
                     # --- GENERATION LOGIC ---
                     start_time = time.monotonic()

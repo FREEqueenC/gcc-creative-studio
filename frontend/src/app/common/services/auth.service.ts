@@ -265,11 +265,11 @@ export class AuthService {
    * 2. If expired or missing, attempts a silent refresh.
    * 3. If silent refresh fails, it emits an error, signaling a required re-login.
    */
-  getValidIdentityPlatformToken$(): Observable<string> {
+  getValidIdentityPlatformToken$(): Observable<string | null> {
     // First, check our own session info which is loaded from localStorage.
     // This is synchronous and tells us if we have a valid, non-expired token.
     if (!this.isLoggedIn()) {
-      return of();
+      return of(null);
     }
 
     // Fallback case: The Firebase Auth instance is not yet initialized, but we

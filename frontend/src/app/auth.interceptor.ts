@@ -38,11 +38,15 @@ export class AuthInterceptor implements HttpInterceptor {
     // Asynchronously get a valid token. This will use the cache or trigger a silent refresh.
     return this.authService.getValidIdentityPlatformToken$().pipe(
       switchMap(token => {
-        // Token was retrieved successfully. Clone the request and add the auth header.
-        const authorizedRequest = request.clone({
-          setHeaders: {Authorization: `Bearer ${token}`},
-        });
-        return next.handle(authorizedRequest);
+        if (token) {
+          // Token was retrieved successfully. Clone the request and add the auth header.
+          const authorizedRequest = request.clone({
+            setHeaders: {Authorization: `Bearer ${token}`},
+          });
+          return next.handle(authorizedRequest);
+        }
+        // No token available. Proceed with the original unauthenticated request.
+        return next.handle(request);
       }),
       catchError(error => {
         // If the error is NOT an HttpErrorResponse, it's a token refresh failure
